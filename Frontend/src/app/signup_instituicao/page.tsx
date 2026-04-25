@@ -6,8 +6,14 @@ import { api } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getCookieClient } from "@/lib/cookieClient";
+import Select from 'react-select'; 
 
 export const dynamic = 'force-dynamic';
+
+interface Option {
+  value: string;
+  label: string;
+}
 
 interface InstituicaoUnidadeProps {
   id: string;
@@ -21,8 +27,15 @@ interface SetorProps {
 
 export default function Signup() {
   const router = useRouter();
-  const [instituicoes, setInstituicoes] = useState<InstituicaoUnidadeProps[]>([]);
-  const [setor, setSetor] = useState<SetorProps[]>([]);
+  
+  // Estados para os dados da API
+  const [instituicoes, setInstituicoes] = useState<Option[]>([]);
+  const [setores, setSetores] = useState<Option[]>([]);
+  
+  // Estados para as seleções do usuário
+  const [selectedInstituicao, setSelectedInstituicao] = useState<Option | null>(null);
+  const [selectedSetor, setSelectedSetor] = useState<Option | null>(null);
+  
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +43,6 @@ export default function Signup() {
     async function loadResources() {
       try {
         setLoading(true);
-        setError("");
-
         const token = typeof getCookieClient === 'function' ? getCookieClient() : null;
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
@@ -39,19 +50,23 @@ export default function Signup() {
           api.get("/listinstuicao", config),
           api.get("/listsetores", config)
         ]);
-        if (resInstituicoes.data && resInstituicoes.data.instituicoes) {
-          setInstituicoes(resInstituicoes.data.instituicoes);
-        } else {
-          setInstituicoes(resInstituicoes.data || []);
-        }
-        setSetor(resSetores.data || []);
+
+        // Mapeando dados para o formato do React Select { value, label }
+        const instData = resInstituicoes.data?.instituicoes || resInstituicoes.data || [];
+        setInstituicoes(instData.map((item: InstituicaoUnidadeProps) => ({
+          value: item.id,
+          label: item.name
+        })));
+
+        const setorData = resSetores.data || [];
+        setSetores(setorData.map((item: SetorProps) => ({
+          value: item.id,
+          label: item.name
+        })));
 
       } catch (err: any) {
-        if (err.response?.status === 401) {
-          setError("Sessão expirada. Faça login novamente.");
-        } else {
-          setError("Erro ao carregar dados do servidor.");
-        }
+        setError("Erro ao carregar dados. Verifique sua conexão.");
+        toast.error("Falha ao carregar listas.");
       } finally {
         setLoading(false);
       }
@@ -60,105 +75,108 @@ export default function Signup() {
     loadResources();
   }, []);
 
-async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setError(""); 
-  
-  const formData = new FormData(event.currentTarget);
-  const name = formData.get("name");
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const instituicaoId = formData.get("instituicaoUnidade");
-  const setorId = formData.get("setor");
+  async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
 
-  if (!name || !email || !password || !instituicaoId || !setorId) {
-    toast.warning("Preencha todos os campos obrigatórios.");
-    return;
+    const formData = new FormData(event.currentTarget);
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    // Validação
+    if (!name || !email || !password || !selectedInstituicao || !selectedSetor) {
+      toast.warning("Preencha todos os campos, incluindo as seleções.");
+      return;
+    }
+
+    try {
+      await api.post("/users", {
+        name,
+        email,
+        password,
+        instituicaoUnidade_id: selectedInstituicao.value,
+        setor_id: selectedSetor.value,
+      });
+
+      toast.success("Usuário cadastrado com sucesso!");
+      
+      setTimeout(() => {
+        router.push("/dashboard/usuarios");
+      }, 2000);
+
+    } catch (err: any) {
+      const message = err.response?.data?.error || "Erro ao cadastrar usuário.";
+      toast.error(message);
+      setError(message);
+    }
   }
 
-  try {
-    await api.post("/users", {
-      name,
-      email,
-      password,
-      instituicaoUnidade_id: instituicaoId,
-      setor_id: setorId,
-    });
-
-    // Feedback de Sucesso
-    toast.success("Usuário cadastrado com sucesso!");
-    
-    // Pequeno delay para o usuário ver o toast antes de ser redirecionado
-    setTimeout(() => {
-      router.push("/dashboard/usuarios");
-    }, 2000);
-
-  } catch (err: any) {
-    console.error("Erro no cadastro:", err);
-    const message = err.response?.data?.error || "Erro ao cadastrar usuário.";
-    toast.error(message);
-    setError(message);
-  }
-}
   return (
     <div className={styles.container}>
       <div className={styles.conteiner}>
         <section className={styles.login}>
-          <h1 className={styles.textHeader}>Cadastre um Novo Usuário</h1>
+          <h1 className={styles.textHeader}>Novo Usuário</h1>
           
           <form onSubmit={handleRegister}>
             <input
               type="text"
-              required
               name="name"
               placeholder="Nome completo"
+              required
               className={styles.input}
             />
 
             <input
               type="email"
-              required
               name="email"
               placeholder="E-mail"
+              required
               className={styles.input}
             />
 
             <input
               type="password"
-              required
               name="password"
               placeholder="Senha"
+              required
               className={styles.input}
             />
 
-            <p className={styles.text}>Instituição / Unidade</p>
-            <select name="instituicaoUnidade" className={styles.input} required defaultValue="">
-              <option value="" disabled>Selecione uma Instituição</option>
-              {instituicoes.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+            <div className={styles.selectWrapper}>
+              <p className={styles.text}>Instituição / Unidade</p>
+              <Select
+                options={instituicoes}
+                value={selectedInstituicao}
+                onChange={(opt) => setSelectedInstituicao(opt)}
+                placeholder="Selecione a unidade..."
+                isLoading={loading}
+                className={styles.reactSelect}
+                noOptionsMessage={() => "Nenhuma instituição encontrada"}
+              />
+            </div>
 
-            <p className={styles.text}>Setor de Atendimento</p>
-            <select name="setor" className={styles.input} required defaultValue="">
-              <option value="" disabled>Escolha um setor</option>
-              {setor.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+            <div className={styles.selectWrapper}>
+              <p className={styles.text}>Setor de Atendimento</p>
+              <Select
+                options={setores}
+                value={selectedSetor}
+                onChange={(opt) => setSelectedSetor(opt)}
+                placeholder="Selecione o setor..."
+                isLoading={loading}
+                className={styles.reactSelect}
+                noOptionsMessage={() => "Nenhum setor encontrado"}
+              />
+            </div>
 
             {error && <p className={styles.errorMessage}>{error}</p>}
 
             <div className={styles.buttonGroup}>
               <button type="submit" disabled={loading} className={styles.btnRegister}>
-                {loading ? "Carregando..." : "Finalizar Cadastro"}
+                {loading ? "Processando..." : "Finalizar Cadastro"}
               </button>
               <button type="button" onClick={() => router.back()} className={styles.btnBack}>
-                Voltar
+                Cancelar
               </button>
             </div>
           </form>
