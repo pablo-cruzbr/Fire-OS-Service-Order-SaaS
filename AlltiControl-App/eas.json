@@ -4,10 +4,6 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
     "preview": {
       "distribution": "store",
       "android": {
@@ -16,15 +12,6 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://allti-control-backend.vercel.app/"
       }
-    },
-    "production": {
-      "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://allti-control-backend.vercel.app/"
-      }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }
