@@ -1,5 +1,10 @@
 node_modules/
-.next/
 .expo/
+.next/
 dist/
 build/
+android/
+ios/
+*.zip
+*.rar
+*.exe
