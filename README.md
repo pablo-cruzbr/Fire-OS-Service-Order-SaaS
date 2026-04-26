@@ -16,8 +16,8 @@ Diferente de projetos acadêmicos, o **AlltiControl** nasceu da necessidade real
 
 **Minha missão foi clara:** Projetar e codificar uma solução que removesse o atrito operacional, permitindo que técnicos foquem na resolução de problemas e gestores na inteligência de dados.
 
-### 📈 Impacto e Escala (Case Mogi das Cruzes)
-Atualmente, o AlltiControl é a espinha dorsal da operação de TI em Mogi das Cruzes/SP, gerenciando:
+### 📈 Impacto e Escala
+* **68 Usuários** cadastrados na Plataforma.
 * **130+ Instituições Públicas** (Postos de Saúde e Escolas Municipais).
 * **100% da Infraestrutura Crítica** da prefeitura sob gestão do software.
 * **Redução Drástica de Fricção:** Otimização de fluxo de 6 telas para apenas **2 telas principais**.
