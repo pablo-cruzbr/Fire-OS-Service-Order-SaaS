@@ -65,9 +65,7 @@ Atualmente em implantação em prefeituras, escolas e postos de saúde.
 
 Ele foi projetado para **facilitar a rotina operacional**, organizar atendimentos e melhorar a comunicação entre técnicos e clientes.  
 
-
-
-<img width="1280" height="800" alt="5" src="https://github.com/user-attachments/assets/2a391f74-2da2-4bd9-94e6-3dc382919e3e" />
+<img width="1280" height="800" alt="download (3)" src="https://github.com/user-attachments/assets/d31a0cc7-cdcb-45d1-ba0e-5f8f706cc603" />
 
 ---
 
