@@ -19,11 +19,10 @@ class AIChatController {
 
       const listService = new ListTecnicoService();
 
-      // Forçamos o objeto todo como any para evitar que o TS bloqueie propriedades do Agente
+
     const result = await generateText({
         model: groq("llama-3.3-70b-versatile") as any,
         maxSteps: 5, 
-        // Mudamos o system para ele entender que a tool é só o começo
         system: `Você é o assistente do AlltiControl.
         Sua tarefa é:
         1. Usar a ferramenta 'getTecnicos' para obter dados.
