@@ -108,12 +108,17 @@ import { CreateStatusTarefaController } from "./controllers/status_categorias/ta
 import { ListStatusTarefaController } from "./controllers/status_categorias/tarefa/ListStatusTarefaController";
 import { ListAtividadePadraoController } from "./controllers/status_categorias/Atividade/ListAtividadePadraoController";
 import { ExportOrdemdeServicoController } from "./controllers/controles_forms/OrdemdeServico/ExportOrdemdeServicoController";
+import { AIChatController } from "./api/ai/chat/route";
 const router = Router();
 //get,post, update, delete
 
 //const upload = multer(uploadConfig.upload("./tmp"));
 
 const upload = multer(uploadConfig.upload());
+
+// ROTA DE IA
+const aiChatController = new AIChatController();
+router.post("/ai/chat", aiChatController.handle);
 
 //1  - ROTAS DE LOGIN DE USUÁRIO --
 // 1.1 - Criar/Cadastrar um usuário
