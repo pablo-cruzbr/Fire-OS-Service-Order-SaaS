@@ -87,25 +87,50 @@
         }
       }
 
-      button {
-        width: 150px;
-        height: 49px;
-        background-color: #4E3182;
-        border: none;
-        border-radius: 49px;
-        color: #fff;
-        text-transform: uppercase;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.5s;
+     .button {
+  width: 150px;
+  height: 49px;
+  background-color: #4E3182;
+  border: 2px solid transparent; 
+  border-radius: 49px;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  
 
-        &:hover {
-          background-color: #fff;
-          color: #4E3182;
-          border: 2px solid #4E3182;
-          transform: scale(1.05);
-        }
-      }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background-color: #fff;
+    color: #4E3182;
+    border: 2px solid #4E3182;
+    transform: scale(1.05);
+  }
+
+  &:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
     }
 
     .text {

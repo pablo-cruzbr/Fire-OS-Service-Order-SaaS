@@ -12,7 +12,7 @@ export function Button() {
       disabled={pending} 
       className={styles.button}
     >
-      {pending ? "Carregando..." : "Acessar Sistema"}
+      {pending ? <span className={styles.spinner}></span> : "Acessar Sistema"}
     </button>
   );
 }
