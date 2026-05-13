@@ -4,6 +4,7 @@ import logoImg from "../../public/Logo10.svg";
 import { cookies } from "next/headers";
 import { api } from "@/services/api";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { Button } from "./components/Button";
 
@@ -70,6 +71,12 @@ export default async function Home({ searchParams }: PageProps) {
         <section className={styles.login}>
           <Image src={logoImg} alt="Logo" width={200} height={100} priority />
           <h1>Portal Administrativo</h1>
+          <div className={styles.userAreaContainer}>
+            <p className={styles.text}>É um cliente?</p>
+            <Link href="/AreadeUsuario" className={styles.userLink}>
+              Entre na conta de Usuário
+            </Link>
+          </div>
 
           {errorMsg && (
             <p style={{ 
