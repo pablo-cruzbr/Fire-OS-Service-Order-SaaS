@@ -3,6 +3,7 @@ import logo from "../../assets/Logo9.svg";
 import styles from "./logindeUsuario.module.scss";
 import { api } from "@/services/api";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { OrdemdeServicoProps } from "@/lib/getOrdemdeServico.type";
@@ -84,6 +85,13 @@ export default function AreadeUsuario() {
                 placeholder="Senha"
                 required
               />
+            </div>
+
+            <div className={styles.userAreaContainer}>
+              <p className={styles.text}>É um colaborador?</p>
+              <Link href="https://allti-control-frontend.vercel.app/" className={styles.userLink}>
+                Portal Administrativo
+              </Link>
             </div>
 
             <button type="submit" className={`${styles.btn} ${styles.solid}`}>
