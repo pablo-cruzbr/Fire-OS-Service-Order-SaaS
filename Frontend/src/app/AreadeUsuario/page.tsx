@@ -6,22 +6,17 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import { OrdemdeServicoProps } from "@/lib/getOrdemdeServico.type";
+import { Button } from "./Button"; 
 
 export default function AreadeUsuario() {
-  async function handleAddForm(formData: FormData){
-    "use server";
-
-    const name = formData.get("name");
-  }
- async function handleLogin(formData: FormData) {
+  
+  async function handleLogin(formData: FormData) {
     "use server";
 
     const email = formData.get("email");
     const password = formData.get("password");
 
-    if (!email || !password || email.toString().trim() === "" || password.toString().trim() === "") {
-      console.log("Campos vazios ou inválidos.");
+    if (!email || !password || email.toString().trim() === "") {
       return;
     }
 
@@ -35,28 +30,22 @@ export default function AreadeUsuario() {
         return;
       }
 
-      console.log(response.data);
-
-    //Cria um tempo estimado para o cookie expirar
-    const expressTime = 60 * 60 * 24 * 30 * 1000;
-    //Função assincrona
-    const cookieStore = await cookies();
-    cookieStore.set("session", response.data.token,{
-    //Tempo que queremos que o cookie expire
-      maxAge: expressTime,
-      path:"/",
-      httpOnly: false,
-    //Só habilitar em produção pois ainda estamos em localhost
-    secure: process.env.NODE_ENV === "production"
-      })
+      const expressTime = 60 * 60 * 24 * 30 * 1000;
+      const cookieStore = await cookies();
       
+      cookieStore.set("session", response.data.token, {
+        maxAge: expressTime,
+        path: "/",
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production"
+      });
 
     } catch (err) {
       console.log("Erro ao fazer login:", err);
-    
       return;
     } 
-      redirect("/AreadeUsuario/formularioAddTickets")
+
+    redirect("/AreadeUsuario/formularioAddTickets");
   }
   
   return (
@@ -93,9 +82,8 @@ export default function AreadeUsuario() {
               </Link>
             </div>
 
-            <button type="submit" className={`${styles.btn} ${styles.solid}`}>
-              Acessar
-            </button>
+            <Button />        
+            
           </form>
         </div>
       </div>
@@ -105,7 +93,7 @@ export default function AreadeUsuario() {
           <div className={styles.content}>
             <Image
               src={logo}
-              alt="Ilustração de boas-vindas"
+              alt="Logo AlltiControl"
               width={400}
               height={500}
               className={styles.image}

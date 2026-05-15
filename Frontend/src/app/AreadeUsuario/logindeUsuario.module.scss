@@ -178,6 +178,35 @@
   }
 }
 
+.button {
+  width: 150px;
+  height: 49px;
+  background-color: #4E3182;
+  border: 2px solid transparent;
+  border-radius: 49px;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background-color: #fff;
+    color: #4E3182;
+    border: 2px solid #4E3182;
+    transform: scale(1.05);
+  }
+
+  &:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+  }
+}
+
+
 .btn {
   width: 150px;
   height: 49px;
@@ -190,6 +219,9 @@
   margin: 10px 0;
   cursor: pointer;
   transition: 0.5s;
+  display: flex; // Adicionado para centralizar o spinner
+  align-items: center; // Adicionado para centralizar o spinner
+  justify-content: center; // Adicionado para centralizar o spinner
 
   &.solid {
     background-color: #4E3182;
@@ -299,7 +331,6 @@
   }
 }
 
-/* NOVO BLOCO ADICIONADO ABAIXO */
 .userAreaContainer {
   display: flex;
   flex-direction: column;
@@ -330,4 +361,28 @@
       opacity: 0.8;
     }
   }
+}
+
+/* --- BLOCO DO LOADING ADICIONADO ABAIXO --- */
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Garante que o botão desabilitado mostre que algo está acontecendo
+.btn:disabled, .button:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
 }
