@@ -65,7 +65,9 @@ export default function TicketsList({ ticketsData, tokenDoServidor }: Props) {
    
       <div className={styles.headerClient} style={{ marginTop: '40px' }}>
         <h1 className={styles.titleClient}>Calendário Técnico</h1>
-        <Calendar initialToken={tokenDoServidor} />
+        <Calendar 
+          initialToken={tokenDoServidor} 
+          events={ticketsData.controles}  />
       </div>
     </>
   );
