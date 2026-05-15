@@ -5,6 +5,7 @@ interface FormOrdemdeServicoRequest {
   name: string;
   descricaodoProblemaouSolicitacao: string;
   nomedoContatoaserProcuradonoLocal?: string;
+  patrimoniodoequipamento?: string;
   cliente_id?: string;
   tecnico_id?: string;
   tarefa_id?: string;
@@ -26,6 +27,7 @@ class CreateOrdemdeServicoService {
   async execute({
     name,
     descricaodoProblemaouSolicitacao,
+    patrimoniodoequipamento,
     nomedoContatoaserProcuradonoLocal,
     assinante,
     cliente_id,
@@ -44,7 +46,7 @@ class CreateOrdemdeServicoService {
     fotos
   }: FormOrdemdeServicoRequest) {
 
-    if (!name || !descricaodoProblemaouSolicitacao || !tipodeChamado_id || !user_id) {
+    if (!name || !descricaodoProblemaouSolicitacao || !tipodeChamado_id || !user_id || !patrimoniodoequipamento) {
       throw new Error("Campos obrigatórios não informados.");
     }
 
@@ -58,6 +60,7 @@ class CreateOrdemdeServicoService {
           name,
           assinante,
           descricaodoProblemaouSolicitacao,
+          patrimoniodoequipamento,
           nomedoContatoaserProcuradonoLocal,
 
           tipodeChamado: {
@@ -113,6 +116,7 @@ class CreateOrdemdeServicoService {
           numeroOS: true, 
           name: true,
           descricaodoProblemaouSolicitacao: true,
+          patrimoniodoequipamento: true,
           cliente: { select: { name: true, endereco: true } },
           tarefa: {select: {name: true}},
           tecnico: { select: { name: true } },
