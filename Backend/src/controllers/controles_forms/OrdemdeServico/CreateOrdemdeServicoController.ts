@@ -4,6 +4,7 @@ import prismaClient from "../../../prisma";
 interface CreateOrdemServicoRequest {
   name: string;
   descricaodoProblemaouSolicitacao: string;
+  patrimoniodoequipamento: string;
   nomedoContatoaserProcuradonoLocal?: string;
   tipodeOrdemdeServico_id?: string;
   statusOrdemdeServico_id?: string; 
@@ -32,6 +33,7 @@ class CreateOrdemServicoService {
         numeroOS,
         name: data.name || "Sem nome",
         descricaodoProblemaouSolicitacao: data.descricaodoProblemaouSolicitacao,
+        patrimoniodoequipamento: data.patrimoniodoequipamento,
         nomedoContatoaserProcuradonoLocal: data.nomedoContatoaserProcuradonoLocal || null,
         tipodeChamado: { connect: { id: data.tipodeChamado_id } },
         user: { connect: { id: data.user_id } },
@@ -112,6 +114,7 @@ class CreateOrdemServicoController {
     const {
       name,
       descricaodoProblemaouSolicitacao,
+      patrimoniodoequipamento,
       tipodeOrdemdeServico_id,
       statusOrdemdeServico_id, 
       nomedoContatoaserProcuradonoLocal,
@@ -134,6 +137,7 @@ class CreateOrdemServicoController {
       const ordem = await service.execute({
         name,
         descricaodoProblemaouSolicitacao,
+        patrimoniodoequipamento,
         nomedoContatoaserProcuradonoLocal,
         tipodeOrdemdeServico_id,
         statusOrdemdeServico_id, 
