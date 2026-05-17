@@ -39,7 +39,7 @@ class ListOrdemdeServicoService {
       if (!user.tecnico_id) {
         return { 
           controles: [], total: 0, totalAberta: 0, totalEmAndamento: 0, 
-          totalConcluida: 0, totalPausada: 0, totalTicket: 0, totalOrdemdeServico: 0 
+          totalConcluida: 0, totalPausada: 0, totalTicket: 0, totalOrdemdeServico: 0, totalEmDeslocamento: 0
         }; 
       }
       whereCondition = {
@@ -164,7 +164,8 @@ class ListOrdemdeServicoService {
 
     const [
       total, 
-      totalAberta, 
+      totalAberta,
+      totalEmDeslocamento, 
       totalEmAndamento, 
       totalPausada, 
       totalConcluida, 
@@ -173,6 +174,7 @@ class ListOrdemdeServicoService {
     ] = await Promise.all([
       prismaClient.ordemdeServico.count({ where: whereCondition }),
       prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "ABERTA" } } }),
+      prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "EM DESLOCAMENTO" } } }),
       prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "EM ANDAMENTO" } } }),
       prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "PAUSADA" } } }),
       prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "CONCLUIDA" } } }),
@@ -184,6 +186,7 @@ class ListOrdemdeServicoService {
       controles,
       total,
       totalAberta,
+      totalEmDeslocamento,
       totalEmAndamento,
       totalConcluida,
       totalPausada,
