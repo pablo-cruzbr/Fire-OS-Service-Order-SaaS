@@ -140,6 +140,7 @@ export interface OrdemdeServicoResponseData{
     controles: OrdemdeServicoProps[];
     total: number;
     totalAberta: number;
+    totalEmDeslocamento: number;
     totalEmAndamento: number;
     totalConcluida: number;
     totalPausada: number;
