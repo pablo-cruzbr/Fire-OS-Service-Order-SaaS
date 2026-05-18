@@ -68,7 +68,7 @@ export default function TicketsList({ ticketsData }: Props) {
   const [endDate, setEndDate] = useState("");
   const [isExporting, setIsExporting] = useState(false);
 
-  const { total = 0, totalPausada = 0, totalAberta = 0, totalEmAndamento = 0, totalConcluida = 0, totalOrdemdeServico = 0, totalTicket = 0, controles = [] } = ticketsData || {};
+  const { total = 0, totalPausada = 0, totalAberta = 0, totalEmDeslocamento = 0, totalEmAndamento = 0, totalConcluida = 0, totalOrdemdeServico = 0, totalTicket = 0, controles = [] } = ticketsData || {};
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -353,6 +353,7 @@ return value
         {[
           { label: 'Total', value: total, status: null },
           { label: 'OS Aberta', value: totalAberta, status: 'ABERTA' },
+          { label: 'OS Em Deslocamento', value: totalEmDeslocamento, status: 'EM DESLOCAMENTO' },
           { label: 'OS em Andamento', value: totalEmAndamento, status: 'EM ANDAMENTO' },
           { label: 'OS Concluída', value: totalConcluida, status: 'CONCLUIDA' },
           { label: 'OS PAUSADA', value: totalPausada, status: 'PAUSADA' },
