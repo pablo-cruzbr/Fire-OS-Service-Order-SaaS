@@ -35,20 +35,20 @@ class ListOrdemdeServicoService {
     let whereCondition: any = {};
 
     // 2. Aplica restrição por Role (Segurança)
-   // COMENTE O BLOCO ABAIXO TEMPORARIAMENTE
-/*
-if (user.role === "TECNICO") {
-  if (!user.tecnico_id) {
-    return { ... }; 
-  }
-  whereCondition = {
-    tecnico_id: user.tecnico_id,
-    statusOrdemdeServico_id: {
-      not: "fa69ed32-20b2-4d3a-9a6d-e61c5b45efea"
+    if (user.role === "TECNICO") {
+      if (!user.tecnico_id) {
+        return { 
+          controles: [], total: 0, totalAberta: 0, totalEmAndamento: 0, 
+          totalConcluida: 0, totalPausada: 0, totalTicket: 0, totalOrdemdeServico: 0, totalEmDeslocamento: 0
+        }; 
+      }
+      whereCondition = {
+        tecnico_id: user.tecnico_id,
+        statusOrdemdeServico_id: {
+          not: "fa69ed32-20b2-4d3a-9a6d-e61c5b45efea"
+        }
+      };
     }
-  };
-}
-*/
 
     // 3. Aplica filtros de Período (created_at)
     if (startDate || endDate) {
