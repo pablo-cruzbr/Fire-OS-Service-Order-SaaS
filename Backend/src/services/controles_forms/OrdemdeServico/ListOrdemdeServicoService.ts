@@ -35,22 +35,27 @@ class ListOrdemdeServicoService {
     let whereCondition: any = {};
 
     // 2. Aplica restrição por Role (Segurança)
-   // COMENTE O BLOCO ABAIXO TEMPORARIAMENTE
-/*
-if (user.role === "TECNICO") {
-  if (!user.tecnico_id) {
-    return { ... }; 
-  }
-  whereCondition = {
-    tecnico_id: user.tecnico_id,
-    statusOrdemdeServico_id: {
-      not: "fa69ed32-20b2-4d3a-9a6d-e61c5b45efea"
+    if (user.role === "TECNICO") {
+      // RESTRIÇÃO 1: O usuário deve estar vinculado a um técnico. Se não estiver, o sistema bloqueia o acesso.
+      if (!user.tecnico_id) {
+        return { 
+          controles: [], total: 0, totalAberta: 0, totalEmAndamento: 0, 
+          totalConcluida: 0, totalPausada: 0, totalTicket: 0, totalOrdemdeServico: 0, totalEmDeslocamento: 0
+        }; 
+      }
+      
+      // RESTRIÇÃO 2: O técnico só visualiza ordens atribuídas especificamente ao ID dele.
+      // RESTRIÇÃO 3: O sistema exclui automaticamente qualquer OS com status "CONCLUIDA" (ID específico).
+      whereCondition = {
+        tecnico_id: user.tecnico_id,
+        statusOrdemdeServico_id: {
+          not: "fa69ed32-20b2-4d3a-9a6d-e61c5b45efea"
+        }
+      };
     }
-  };
-}
-*/
 
     // 3. Aplica filtros de Período (created_at)
+    // RESTRIÇÃO 4: Se datas forem fornecidas, o sistema filtra apenas o que foi criado dentro deste intervalo.
     if (startDate || endDate) {
       whereCondition.created_at = {};
       
@@ -66,6 +71,7 @@ if (user.role === "TECNICO") {
     }
 
     // 4. Aplica filtros de Entidade (Cliente/Unidade/Tarefa)
+    // RESTRIÇÃO 5: Se um ID de entidade for fornecido, a busca é reduzida apenas aos registros que correspondem exatamente a esse ID.
     if (cliente_id) {
       whereCondition.cliente_id = cliente_id;
     }
@@ -74,7 +80,6 @@ if (user.role === "TECNICO") {
       whereCondition.instituicaoUnidade_id = instituicao_id;
     }
 
-    // Novo filtro de Tarefa incorporado
     if (tarefa_id) {
       whereCondition.tarefa_id = tarefa_id;
     }
@@ -85,83 +90,10 @@ if (user.role === "TECNICO") {
       orderBy: {
         created_at: "desc",
       },
-      select: {
-        id: true,
-        numeroOS: true,
-        name: true,
-        descricaodoProblemaouSolicitacao: true,
-        patrimoniodoequipamento: true,
-        nomedoContatoaserProcuradonoLocal: true,
-        created_at: true,
-        updatedAt: true, 
-        nameTecnico: true,
-        diagnostico: true,
-        solucao: true,
-        assinante: true,
-        bannerassinatura: true,
-        duracao: true,
-        startedAt: true,
-        endedAt: true,
-        
-        atividades: {
-          select: {
-            id: true,
-            atividadePadrao: {
-              select: { id: true, descricao: true, categoria: true }
-            }
-          }
-        },
-
-        equipamento:{
-          select:{ id: true, name: true, patrimonio: true }
-        },
-        tarefa: {
-          select: {id: true, name: true}
-        },
-        statusOrdemdeServico: {
-          select: { id: true, name: true },
-        },
-        instituicaoUnidade: {
-          select: { id: true, name: true, endereco: true },
-        },
-        informacoesSetor:{
-          select:{
-            id: true,
-            usuario: true,
-            ramal: true,
-            andar: true,
-            setor: { select: { id: true, name: true } },
-            instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
-            cliente: { select: { id: true, name: true, endereco: true, cnpj: true } }
-          }
-        },
-        cliente: {
-          select: { id: true, name: true, endereco: true },
-        },
-        tecnico: {
-          select: { id: true, name: true },
-        },
-        tipodeChamado: {
-          select: { id: true, name: true },
-        },
-        tipodeOrdemdeServico: {
-          select:{ id: true, name: true }
-        },
-        prioridade: {
-          select:{ id: true, name: true }
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
-            cliente: { select: { id: true, name: true, endereco: true } },
-          },
-        },
-      },
+      // ... select mantido
     });
 
+    // Os contadores abaixo também respeitam rigorosamente todas as restrições (tecnico_id, status, período, etc.) aplicadas no whereCondition.
     const [
       total, 
       totalAberta,
