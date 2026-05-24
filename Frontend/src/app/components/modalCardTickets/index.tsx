@@ -104,7 +104,7 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
                 <label>Número da OS e Tipo:</label>
                 <span>{OrdemdeServico.numeroOS} - {OrdemdeServico.tipodeOrdemdeServico?.name ?? "Tipo de Ordem de Serviço Não Informado"}</span>
               </div>
-
+   
               <div className={styles.infoItem}>
                 <label>Quem abriu a OS: </label>
                 <span>{OrdemdeServico.name ?? "Nome de Usuário Não Informado no Formulário"}</span>
@@ -114,6 +114,11 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
                
               </div>
             </div>
+
+            <p className={styles.sectionTitle}>Problema: </p>
+               <p>
+                  {OrdemdeServico.descricaodoProblemaouSolicitacao || "Não informada"}
+            </p>
 
            <p className={styles.sectionTitle}>Dados de Localização</p>
             <div className={styles.infoItem}>
@@ -174,6 +179,16 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
                 <span>{OrdemdeServico.statusOrdemdeServico?.name ?? "-"}</span>
               </div>
 
+               <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span>{OrdemdeServico.equipamento?.name}</span> 
+                <span> {OrdemdeServico.equipamento?.patrimonio}</span>
+                <label>Patrimônio:</label>
+                {OrdemdeServico.patrimoniodoequipamento || "Não informada"}
+              </div>
+            </div>
+
+
               <div className={styles.infoItem}>
                 <label>Técnico Responsável:</label>
                 <span>{OrdemdeServico.tecnico?.name ?? "Não informado"}</span>
@@ -199,13 +214,7 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
               </div>
 
             </div>
-             <div className={styles.infoGrid}>
-              <div className={styles.infoItem}>
-                <label>Equipamento:</label>
-                <span>{OrdemdeServico.equipamento?.name}</span> <span> Patrimônio: {OrdemdeServico.equipamento?.patrimonio}</span>
-              </div>
-            </div>
-
+            
 
             {/* BOTÕES */}
             <div className={styles.areaButton}>
