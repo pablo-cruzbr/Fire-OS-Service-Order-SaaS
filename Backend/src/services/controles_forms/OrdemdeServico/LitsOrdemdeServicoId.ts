@@ -18,6 +18,7 @@ class ListOrdemdeServicoId {
                 descricaodoProblemaouSolicitacao: true,
                 patrimoniodoequipamento: true,
                 nomedoContatoaserProcuradonoLocal: true,
+                agendadoEm: true,
                 created_at: true,
                 updatedAt: true,
                 nameTecnico: true,

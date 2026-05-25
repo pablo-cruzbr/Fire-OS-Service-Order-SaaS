@@ -50,9 +50,9 @@ class ListOrdemdeServicoService {
       };
     }
 
-    // 3. Aplica filtros de Período (created_at)
+    // 3. Aplica filtros de Período (agendadoEm) para o calendário de OS reagendadas
     if (startDate || endDate) {
-      whereCondition.created_at = {};
+      whereCondition.agendadoEm = {};
       
       if (startDate) {
         whereCondition.created_at.gte = new Date(startDate);
@@ -61,7 +61,7 @@ class ListOrdemdeServicoService {
       if (endDate) {
         const end = new Date(endDate);
         end.setUTCHours(23, 59, 59, 999); 
-        whereCondition.created_at.lte = end;
+        whereCondition.agendadoEm.lte = end;
       }
     }
 
@@ -92,6 +92,7 @@ class ListOrdemdeServicoService {
         descricaodoProblemaouSolicitacao: true,
         patrimoniodoequipamento: true,
         nomedoContatoaserProcuradonoLocal: true,
+        agendadoEm: true,
         created_at: true,
         updatedAt: true, 
         nameTecnico: true,
