@@ -32,8 +32,9 @@ export function ModalNavegacao({ ordem, handleCloseModal }: ModalDetailOsProps) 
   const [time] = useState(0);
 
   const abrirWaze = (endereco: string) => {
-    const url = `https://waze.com/ul?q=${encodeURIComponent(endereco)}`;
-    Linking.canOpenURL(url).then(supported => supported ? Linking.openURL(url) : Alert.alert("Erro", "Waze não instalado."));
+    const url = `waze://?q=${encodeURIComponent(endereco)}&navigate=yes`;
+    const fallback = `https://waze.com/ul?q=${encodeURIComponent(endereco)}&navigate=yes`;
+    Linking.openURL(url).catch(() => Linking.openURL(fallback).catch(() => Alert.alert("Erro", "Não foi possível abrir o Waze.")));
   };
 
   const abrirGoogleMaps = (endereco: string) => {
