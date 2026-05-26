@@ -355,8 +355,8 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         {/* Local do chamado */}
         {!!local && (
           <View style={styles.cardRowInfo}>
-            <Ionicons name="business-outline" size={13} color="#888" />
-            <Text style={styles.cardInfoText} numberOfLines={1}>{local}</Text>
+            <Ionicons name="business" size={14} color="#4E3182" />
+            <Text style={styles.cardLocalText} numberOfLines={1}>{local}</Text>
           </View>
         )}
 
@@ -617,6 +617,12 @@ const styles = StyleSheet.create({
   cardInfoText: {
     fontSize: 12,
     color: "#555",
+    flex: 1,
+  },
+  cardLocalText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2C1F5E",
     flex: 1,
   },
   priorityBadge: {
