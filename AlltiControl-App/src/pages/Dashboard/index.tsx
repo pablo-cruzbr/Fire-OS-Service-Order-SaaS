@@ -67,6 +67,37 @@ type Cliente = { id: string; name: string };
 type TipodeOrdem = { id: string; name: string };
 type Prioridade = { id: string; name: string };
 
+const STATUS_COLORS: Record<string, string> = {
+  "ABERTA": "#27AE60",
+  "EM ANDAMENTO": "#2980B9",
+  "CONCLUIDA": "#95A5A6",
+  "PAUSADA": "#F39C12",
+};
+
+function getStatusColor(name?: string | null): string {
+  return STATUS_COLORS[name?.trim().toUpperCase() ?? ""] ?? "#BDC3C7";
+}
+
+function getPrioridadeColor(name: string): string {
+  const l = name.toLowerCase();
+  if (l.includes("alta") || l.includes("urgent") || l.includes("crít")) return "#E74C3C";
+  if (l.includes("méd") || l.includes("med")) return "#F39C12";
+  return "#27AE60";
+}
+
+function timeAgo(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  if (minutes < 1) return "agora mesmo";
+  if (minutes < 60) return `há ${minutes}min`;
+  if (hours < 24) return `há ${hours}h`;
+  if (days === 1) return "ontem";
+  return `há ${days} dias`;
+}
+
 export default function Dashboard() {
   const navigation = useNavigation();
   const { signOut } = useContext(AuthContext);
@@ -297,60 +328,67 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
       <FlatList
         data={filteredOrdens}
         keyExtractor={(item) => item.id}
-       renderItem={({ item }) => (
-  <TouchableOpacity
-    style={styles.card}
-    onPress={() => {
-      setSelectedOrdem(item);
-      setModalOsVisible(true);
-    }}
-  >
-    <View style={styles.cardInfo}>
-      <Text style={styles.cardTitle}>
-        Número da OS: {item?.numeroOS ?? "N/A"}
-      </Text>
-      
-      <Text style={styles.cardStatus}>
-        Status: {item?.statusOrdemdeServico?.name ?? "Não definido"}
-      </Text>
+       renderItem={({ item }) => {
+  const statusColor = getStatusColor(item.statusOrdemdeServico?.name);
+  const local = item.instituicaoUnidade?.name || item.user?.cliente?.name || item.cliente?.name;
 
-      {item?.prioridade?.name && (
-        <Text style={styles.cardSubtitle}>
-          Prioridade: {item.prioridade.name}
-        </Text>
-      )}
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => { setSelectedOrdem(item); setModalOsVisible(true); }}
+      activeOpacity={0.85}
+    >
+      <View style={[styles.cardAccent, { backgroundColor: statusColor }]} />
 
-      {/* Uso de Optional Chaining (?.) e Operador de Coalescência (??) */}
-      {item?.cliente?.name && (
-        <Text style={styles.cardSubtitle}>
-          Empresa: {item.cliente.name}
-        </Text>
-      )}
-      
-      {item?.cliente?.endereco && (
-        <Text style={styles.cardSubtitle}>
-          Endereço: {item.cliente.endereco}
-        </Text>
-      )}
+      <View style={styles.cardBody}>
 
-      {item?.instituicaoUnidade?.name && (
-        <Text style={styles.cardSubtitle}>
-          Instituição: {item.instituicaoUnidade.name}
-        </Text>
-      )}
+        {/* Linha 1: número + badge de status */}
+        <View style={styles.cardRowSpaced}>
+          <Text style={styles.cardNumber}>OS #{item?.numeroOS ?? "N/A"}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + "22" }]}>
+            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+              {item?.statusOrdemdeServico?.name ?? "—"}
+            </Text>
+          </View>
+        </View>
 
-      <Text style={styles.cardItem}>
-        Problema: {item?.descricaodoProblemaouSolicitacao || "Sem descrição"}
-      </Text>
-      
-      <Text style={styles.cardItem}>
-        Contato: {item?.nomedoContatoaserProcuradonoLocal || "Não informado"}
-      </Text>
-    </View>
-    
-    <Ionicons name="ellipsis-vertical" size={20} color="#333" />
-  </TouchableOpacity>
-)}
+        {/* Local do chamado */}
+        {!!local && (
+          <View style={styles.cardRowInfo}>
+            <Ionicons name="business-outline" size={13} color="#888" />
+            <Text style={styles.cardInfoText} numberOfLines={1}>{local}</Text>
+          </View>
+        )}
+
+        {/* Prioridade */}
+        {item?.prioridade?.name && (
+          <View style={[styles.priorityBadge, { backgroundColor: getPrioridadeColor(item.prioridade.name) + "18" }]}>
+            <Text style={[styles.priorityBadgeText, { color: getPrioridadeColor(item.prioridade.name) }]}>
+              ⚠  {item.prioridade.name}
+            </Text>
+          </View>
+        )}
+
+        {/* Descrição do problema */}
+        {!!item?.descricaodoProblemaouSolicitacao && (
+          <View style={styles.cardRowInfo}>
+            <Ionicons name="chatbubble-outline" size={13} color="#888" />
+            <Text style={styles.cardProblemText} numberOfLines={1}>
+              {item.descricaodoProblemaouSolicitacao}
+            </Text>
+          </View>
+        )}
+
+        {/* Data */}
+        <View style={styles.cardRowInfo}>
+          <Ionicons name="time-outline" size={12} color="#bbb" />
+          <Text style={styles.cardDateText}>{timeAgo(item?.created_at)}</Text>
+        </View>
+
+      </View>
+    </TouchableOpacity>
+  );
+}}
         contentContainerStyle={{ paddingBottom: 90, paddingTop: 10 }}
       />
 
@@ -518,16 +556,77 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginHorizontal: 10,
     marginTop: 9,
-    padding: 20,
-    borderRadius: 8,
-    alignItems: "center",
+    borderRadius: 10,
+    overflow: "hidden",
     elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
-  cardInfo: { flex: 1 },
-  cardTitle: { fontWeight: "bold", fontSize: 14 },
-  cardStatus: { fontWeight: "bold", fontSize: 14, marginTop: 4 },
-  cardSubtitle: { fontSize: 12, color: "#666" },
-  cardItem: { fontSize: 12, color: "#333" },
+  cardAccent: {
+    width: 4,
+    alignSelf: "stretch",
+  },
+  cardBody: {
+    flex: 1,
+    paddingVertical: 13,
+    paddingHorizontal: 13,
+    gap: 5,
+  },
+  cardRowSpaced: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  cardNumber: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0F1431",
+  },
+  statusBadge: {
+    borderRadius: 20,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  cardRowInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  cardInfoText: {
+    fontSize: 12,
+    color: "#555",
+    flex: 1,
+  },
+  priorityBadge: {
+    alignSelf: "flex-start",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 1,
+  },
+  priorityBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  cardProblemText: {
+    fontSize: 12,
+    color: "#666",
+    flex: 1,
+    fontStyle: "italic",
+  },
+  cardDateText: {
+    fontSize: 11,
+    color: "#bbb",
+  },
   fab: {
     position: "absolute",
     bottom: 120,
