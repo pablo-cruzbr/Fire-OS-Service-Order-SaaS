@@ -330,7 +330,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         keyExtractor={(item) => item.id}
        renderItem={({ item }) => {
   const statusColor = getStatusColor(item.statusOrdemdeServico?.name);
-  const local = item.instituicaoUnidade?.name || item.user?.cliente?.name || item.cliente?.name;
+  const local = item.instituicaoUnidade?.name ?? null;
 
   return (
     <TouchableOpacity
