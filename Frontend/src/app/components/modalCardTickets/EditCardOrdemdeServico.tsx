@@ -32,9 +32,10 @@ type TipodeOrdemdeServico = { id: string; name: string };
 type Props = {
   ordemdeServico?: OrdemdeServicoProps;
   onClose: () => void;
+  onSave?: () => void;
 };
 
-export default function EditCardOrdemdeServico({ ordemdeServico, onClose }: Props) {
+export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
     tecnico_id: "",
@@ -204,7 +205,11 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose }: Prop
         alert("Ordem de serviço criada com sucesso!");
       }
 
-      onClose();
+      if (onSave) {
+        onSave();
+      } else {
+        onClose();
+      }
       router.refresh();
     } catch (err: any) {
       console.error("Erro ao enviar dados:", err);

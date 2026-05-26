@@ -11,12 +11,14 @@ import { FaSignature } from "react-icons/fa";
 import { FaComputer } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import { useGlobalModal } from "@/provider/GlobalModalProvider";
-import { OrdemdeServicoProps } from "@/lib/getOrdemdeServico.type";
+import { OrdemdeServicoProps } from "@/lib/getlocalOS.type";
 import { UsuariosProps } from '@/lib/getUsuario.type';
 import EditCardOrdemdeServico from "./EditCardOrdemdeServico";
 import ViewCardFoto from "./ViewCardFoto";
 import DetailTecnico from "./DetailTecnico";
 import Assinatura from "./Assinatura";
+import { api } from "@/services/api";
+import { getCookieClient } from "@/lib/cookieClient";
 
 interface ModalOrdemdeServicoProps {
   data: OrdemdeServicoProps[];
@@ -25,6 +27,7 @@ interface ModalOrdemdeServicoProps {
 export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
   const { closeModal, modalData, modalType, isOpen } = useGlobalModal();
   const OrdemdeServico: OrdemdeServicoProps | undefined = modalData?.[0] || modalData;
+  const [localOS, setLocalOS] = useState<OrdemdeServicoProps | undefined>(OrdemdeServico);
   const [usuario, setUsuario] = useState<UsuariosProps | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isFotos, setIsFotos] = useState(false);
@@ -33,9 +36,24 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
 
   const router = useRouter();
 
-  function handleRefresh() {
+  useEffect(() => {
+    setLocalOS(OrdemdeServico);
+  }, [OrdemdeServico?.id]);
+
+  async function handleSaved() {
+    if (localOS?.id) {
+      try {
+        const token = await getCookieClient();
+        const res = await api.get(`/ordemdeservico/${localOS.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setLocalOS(res.data);
+      } catch (e) {
+        console.error('Erro ao re-buscar OS:', e);
+      }
+    }
+    setIsEditing(false);
     router.refresh();
-    closeModal();
   }
 
   useEffect(() => {
@@ -44,7 +62,7 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
     }
   }, [OrdemdeServico, modalType, closeModal]);
 
-  if (modalType !== "OrdemdeServico" || !isOpen || !OrdemdeServico) return null;
+  if (modalType !== "OrdemdeServico" || !isOpen || !localOS) return null;
 
    async function handleAddCard() {
     router.push('/dashboard/formulariosadd/formularioMaquinas');
@@ -66,14 +84,14 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
 
         {isFotos && (
           <ViewCardFoto
-            ordemdeServico={OrdemdeServico}
+            ordemdeServico={localOS}
             onClose={() => setIsFotos(false)}
           />
         )}
 
         {isAssinatura && (
           <Assinatura
-            ordemdeServico={OrdemdeServico}
+            ordemdeServico={localOS}
             onClose={() => setAssinatura(false)}
           />
         )}
@@ -81,15 +99,16 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
         {/* Se estiver em modo Edição */}
         {isEditing && (
           <EditCardOrdemdeServico
-            ordemdeServico={OrdemdeServico}
+            ordemdeServico={localOS}
             onClose={() => setIsEditing(false)}
+            onSave={handleSaved}
           />
         )}
 
         {/* Se estiver em modo Detalhe Técnico */}
         {isDetailTecnico && (
           <DetailTecnico
-            ordemdeServico={OrdemdeServico}
+            ordemdeServico={localOS}
             onClose={() => setDetailTecnico(false)}
           />
         )}
@@ -102,60 +121,60 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <label>Número da OS e Tipo:</label>
-                <span>{OrdemdeServico.numeroOS} - {OrdemdeServico.tipodeOrdemdeServico?.name ?? "Tipo de Ordem de Serviço Não Informado"}</span>
+                <span>{localOS.numeroOS} - {localOS.tipodeOrdemdeServico?.name ?? "Tipo de Ordem de Serviço Não Informado"}</span>
               </div>
    
               <div className={styles.infoItem}>
                 <label>Quem abriu a OS: </label>
-                <span>{OrdemdeServico.name ?? "Nome de Usuário Não Informado no Formulário"}</span>
+                <span>{localOS.name ?? "Nome de Usuário Não Informado no Formulário"}</span>
 
                 <label>Nome de cadastro do usuário: </label>
-                <span>{OrdemdeServico.user.name}</span>
+                <span>{localOS.user.name}</span>
                
               </div>
             </div>
 
             <p className={styles.sectionTitle}>Problema: </p>
                <p>
-                  {OrdemdeServico.descricaodoProblemaouSolicitacao || "Não informada"}
+                  {localOS.descricaodoProblemaouSolicitacao || "Não informada"}
             </p>
 
            <p className={styles.sectionTitle}>Dados de Localização</p>
             <div className={styles.infoItem}>
 
-              {OrdemdeServico.instituicaoUnidade || OrdemdeServico.cliente ? (
+              {localOS.instituicaoUnidade || localOS.cliente ? (
                 <div className={styles.locationBlock} style={{ marginBottom: '12px' }}>
                   <strong style={{ display: 'block' }}>
-                    {OrdemdeServico.instituicaoUnidade?.name || OrdemdeServico.cliente?.name}
+                    {localOS.instituicaoUnidade?.name || localOS.cliente?.name}
                   </strong>
                   <span style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>
-                    {OrdemdeServico.instituicaoUnidade?.endereco || OrdemdeServico.cliente?.endereco || "Endereço não disponível"}
+                    {localOS.instituicaoUnidade?.endereco || localOS.cliente?.endereco || "Endereço não disponível"}
                   </span>
                 </div>
-              ) : (OrdemdeServico.user?.instituicaoUnidade || OrdemdeServico.user?.cliente) && (
+              ) : (localOS.user?.instituicaoUnidade || localOS.user?.cliente) && (
                 <div className={styles.locationBlock} style={{ marginBottom: '12px' }}>
                   <label>Local de Abertura (Usuário):</label>
                   <strong style={{ display: 'block' }}>
-                    {OrdemdeServico.user?.instituicaoUnidade?.name || OrdemdeServico.user?.cliente?.name}
+                    {localOS.user?.instituicaoUnidade?.name || localOS.user?.cliente?.name}
                   </strong>
                   <span style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>
-                    {OrdemdeServico.user?.instituicaoUnidade?.endereco || OrdemdeServico.user?.cliente?.endereco || "Endereço não disponível"}
+                    {localOS.user?.instituicaoUnidade?.endereco || localOS.user?.cliente?.endereco || "Endereço não disponível"}
                   </span>
                 </div>
               )}
 
-              {((OrdemdeServico.user?.instituicaoUnidade || OrdemdeServico.user?.cliente) && 
-                (OrdemdeServico.instituicaoUnidade || OrdemdeServico.cliente) &&
-                (OrdemdeServico.user?.instituicaoUnidade?.name !== OrdemdeServico.instituicaoUnidade?.name)) && (
+              {((localOS.user?.instituicaoUnidade || localOS.user?.cliente) && 
+                (localOS.instituicaoUnidade || localOS.cliente) &&
+                (localOS.user?.instituicaoUnidade?.name !== localOS.instituicaoUnidade?.name)) && (
                 <div className={styles.locationBlock} style={{ borderTop: '1px solid #eee', paddingTop: '8px' }}>
                   <label>Origem da abertura (Usuário):</label>
                   <span style={{ display: 'block', fontSize: '0.85rem' }}>
-                    {OrdemdeServico.user?.instituicaoUnidade?.name || OrdemdeServico.user?.cliente?.name}
+                    {localOS.user?.instituicaoUnidade?.name || localOS.user?.cliente?.name}
                   </span>
                 </div>
               )}
 
-              {!(OrdemdeServico.instituicaoUnidade || OrdemdeServico.cliente || OrdemdeServico.user?.instituicaoUnidade || OrdemdeServico.user?.cliente) && (
+              {!(localOS.instituicaoUnidade || localOS.cliente || localOS.user?.instituicaoUnidade || localOS.user?.cliente) && (
                 <span>Localização não informada</span>
               )}
             </div>
@@ -165,38 +184,40 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <label>Tipo de Serviço:</label>
-                <span>{OrdemdeServico.tipodeChamado.name}</span>
+                <span>{localOS.tipodeChamado.name}</span>
               </div>
 
              
               <div className={styles.infoItem}>
                 <label>Pessoa a ser procurada no local:</label>
-                <span>{OrdemdeServico.nomedoContatoaserProcuradonoLocal}</span>
+                <span>{localOS.nomedoContatoaserProcuradonoLocal}</span>
               </div>
 
               <div className={styles.infoItem}>
                 <label>Status da OS:</label>
-                <span>{OrdemdeServico.statusOrdemdeServico?.name ?? "-"}</span>
+                <span>{localOS.statusOrdemdeServico?.name ?? "-"}</span>
               </div>
 
-               <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
-                <span>{OrdemdeServico.equipamento?.name}</span> 
-                <span> {OrdemdeServico.equipamento?.patrimonio}</span>
-                <label>Patrimônio:</label>
-                {OrdemdeServico.patrimoniodoequipamento || "Não informada"}
+                <label>Equipamento:</label>
+                {localOS.equipamento ? (
+                  <span>{localOS.equipamento.name} — Patrimônio: {localOS.equipamento.patrimonio}</span>
+                ) : localOS.patrimoniodoequipamento ? (
+                  <span>Patrimônio: {localOS.patrimoniodoequipamento}</span>
+                ) : (
+                  <span>Não informado</span>
+                )}
               </div>
-            </div>
 
 
               <div className={styles.infoItem}>
                 <label>Técnico Responsável:</label>
-                <span>{OrdemdeServico.tecnico?.name ?? "Não informado"}</span>
+                <span>{localOS.tecnico?.name ?? "Não informado"}</span>
               </div>
 
               <div className={styles.infoItem}>
                 <label>Tarefa:</label>
-                  <span>{OrdemdeServico.tarefa?.name ?? "Não informado"}</span>
+                  <span>{localOS.tarefa?.name ?? "Não informado"}</span>
               </div>
 
         
@@ -204,8 +225,8 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
               <div className={styles.infoItem}>
                 <label>Data de Criação:</label>
                 <span>
-                  {OrdemdeServico.created_at
-                    ? new Date(OrdemdeServico.created_at).toLocaleDateString("pt-BR", {
+                  {localOS.created_at
+                    ? new Date(localOS.created_at).toLocaleDateString("pt-BR", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
