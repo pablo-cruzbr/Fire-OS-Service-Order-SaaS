@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../../contexts/AuthContext";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,6 +19,7 @@ export default function Signin() {
   const { signIn, loadingAuth } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "", general: "" });
 
   function clearFieldError(field: keyof typeof errors) {
@@ -88,15 +90,29 @@ export default function Signin() {
         </View>
 
         <View style={styles.fieldWrapper}>
-          <TextInput
-            placeholder="Digite sua senha"
-            style={[styles.input, !!errors.password && styles.inputError]}
-            secureTextEntry={true}
-            value={password}
-            onChangeText={(v) => { setPassword(v); clearFieldError("password"); }}
-            autoCapitalize="none"
-            placeholderTextColor="#aaa"
-          />
+          <View style={[styles.passwordWrapper, !!errors.password && styles.inputError]}>
+            <TextInput
+              placeholder="Digite sua senha"
+              style={styles.passwordInput}
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={(v) => { setPassword(v); clearFieldError("password"); }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor="#aaa"
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword((prev) => !prev)}
+              style={styles.eyeButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#888"
+              />
+            </TouchableOpacity>
+          </View>
           {!!errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
         </View>
 
@@ -181,6 +197,24 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: "#E74C3C",
+  },
+  passwordWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    paddingHorizontal: 15,
+    height: 50,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  eyeButton: {
+    padding: 4,
   },
   errorText: {
     color: "#E74C3C",
