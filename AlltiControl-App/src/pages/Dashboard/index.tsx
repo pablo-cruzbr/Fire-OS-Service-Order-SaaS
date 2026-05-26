@@ -10,12 +10,13 @@ import {
   Modal,
   ActivityIndicator,
   TextInput,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Picker } from "@react-native-picker/picker";
+import { Dropdown } from "react-native-element-dropdown";
 import { AuthContext } from "../../contexts/AuthContext";
 import { api } from "../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -450,53 +451,83 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
             )}
           </View>
 
-          <Text style={styles.filterLabel}>Tipo de OS</Text>
-          <Picker
-            selectedValue={tipoOrdemFilter}
-            style={styles.picker}
-            onValueChange={(value) => setTipoOrdemFilter(value)}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
           >
-            <Picker.Item label="Todos os tipos" value="" />
-            {tiposOrdem.map((tipo) => (
-              <Picker.Item key={tipo.id} label={tipo.name} value={tipo.id} />
-            ))}
-          </Picker>
+            <Text style={styles.filterLabel}>Tipo de OS</Text>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.dropdownPlaceholder}
+              selectedTextStyle={styles.dropdownSelected}
+              inputSearchStyle={styles.dropdownSearchInput}
+              containerStyle={styles.dropdownContainer}
+              data={[{ label: "Todos os tipos", value: "" }, ...tiposOrdem.map(t => ({ label: t.name, value: t.id }))]}
+              labelField="label"
+              valueField="value"
+              placeholder="Todos os tipos"
+              search
+              searchPlaceholder="Buscar tipo..."
+              value={tipoOrdemFilter}
+              onChange={(item) => setTipoOrdemFilter(item.value)}
+              maxHeight={220}
+            />
 
-          <Text style={styles.filterLabel}>Instituição</Text>
-          <Picker
-            selectedValue={instituicaoFilter}
-            style={styles.picker}
-            onValueChange={(value) => setInstituicaoFilter(value)}
-          >
-            <Picker.Item label="Todas as instituições" value="" />
-            {instituicoes.map((inst) => (
-              <Picker.Item key={inst.id} label={inst.name} value={inst.id} />
-            ))}
-          </Picker>
+            <Text style={styles.filterLabel}>Instituição</Text>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.dropdownPlaceholder}
+              selectedTextStyle={styles.dropdownSelected}
+              inputSearchStyle={styles.dropdownSearchInput}
+              containerStyle={styles.dropdownContainer}
+              data={[{ label: "Todas as instituições", value: "" }, ...instituicoes.map(i => ({ label: i.name, value: i.id }))]}
+              labelField="label"
+              valueField="value"
+              placeholder="Todas as instituições"
+              search
+              searchPlaceholder="Buscar instituição..."
+              value={instituicaoFilter}
+              onChange={(item) => setInstituicaoFilter(item.value)}
+              maxHeight={220}
+            />
 
-          <Text style={styles.filterLabel}>Cliente</Text>
-          <Picker
-            selectedValue={clienteFilter}
-            style={styles.picker}
-            onValueChange={(value) => setClienteFilter(value)}
-          >
-            <Picker.Item label="Todos os clientes" value="" />
-            {clientes.map((cli) => (
-              <Picker.Item key={cli.id} label={cli.name} value={cli.id} />
-            ))}
-          </Picker>
+            <Text style={styles.filterLabel}>Cliente</Text>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.dropdownPlaceholder}
+              selectedTextStyle={styles.dropdownSelected}
+              inputSearchStyle={styles.dropdownSearchInput}
+              containerStyle={styles.dropdownContainer}
+              data={[{ label: "Todos os clientes", value: "" }, ...clientes.map(c => ({ label: c.name, value: c.id }))]}
+              labelField="label"
+              valueField="value"
+              placeholder="Todos os clientes"
+              search
+              searchPlaceholder="Buscar cliente..."
+              value={clienteFilter}
+              onChange={(item) => setClienteFilter(item.value)}
+              maxHeight={220}
+            />
 
-          <Text style={styles.filterLabel}>Prioridade</Text>
-          <Picker
-            selectedValue={prioridadeFilter}
-            style={styles.picker}
-            onValueChange={(value) => setPrioridadeFilter(value)}
-          >
-            <Picker.Item label="Todas as prioridades" value="" />
-            {prioridades.map((prio) => (
-              <Picker.Item key={prio.id} label={prio.name} value={prio.id} />
-            ))}
-          </Picker>
+            <Text style={styles.filterLabel}>Prioridade</Text>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.dropdownPlaceholder}
+              selectedTextStyle={styles.dropdownSelected}
+              inputSearchStyle={styles.dropdownSearchInput}
+              containerStyle={styles.dropdownContainer}
+              data={[{ label: "Todas as prioridades", value: "" }, ...prioridades.map(p => ({ label: p.name, value: p.id }))]}
+              labelField="label"
+              valueField="value"
+              placeholder="Todas as prioridades"
+              search
+              searchPlaceholder="Buscar prioridade..."
+              value={prioridadeFilter}
+              onChange={(item) => setPrioridadeFilter(item.value)}
+              maxHeight={220}
+            />
+          </ScrollView>
 
           <TouchableOpacity
             style={styles.filterApplyButton}
@@ -538,12 +569,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   filterRow: { flexDirection: "row", marginHorizontal: 10, marginBottom: 10 },
-  picker: {
-    height: 60,
-  width: "100%",
-  backgroundColor: "#fff",
-  borderRadius: 8,
-  marginBottom: 10,
+  dropdown: {
+    height: 48,
+    backgroundColor: "#F4F4F8",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  dropdownPlaceholder: {
+    fontSize: 13,
+    color: "#aaa",
+  },
+  dropdownSelected: {
+    fontSize: 13,
+    color: "#0F1431",
+    fontWeight: "600",
+  },
+  dropdownSearchInput: {
+    height: 40,
+    fontSize: 13,
+    borderRadius: 8,
+    borderColor: "#ddd",
+  },
+  dropdownContainer: {
+    borderRadius: 10,
+    borderColor: "#ddd",
+    elevation: 4,
   },
   statusRow: { flexDirection: "row", paddingHorizontal: 10, marginBottom: 10, flexWrap: "wrap" },
   statusButton: {
