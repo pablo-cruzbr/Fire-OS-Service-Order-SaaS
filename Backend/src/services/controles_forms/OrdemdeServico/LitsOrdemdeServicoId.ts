@@ -93,6 +93,24 @@ class ListOrdemdeServicoId {
                         name: true,
                     },
                 },
+                tipodeOrdemdeServico: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                prioridade: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                tarefa: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
                 user: {
                     select: {
                         id: true,
