@@ -59,11 +59,13 @@ export type OrdensDeServico = {
   tecnico: { id: string; name: string } | null;
   instituicaoUnidade: { id: string; name: string; endereco: string } | null;
   statusOrdemdeServico: { id: string; name: string} | null;
+  prioridade: { id: string; name: string } | null;
 };
 
 type Instituicao = { id: string; name: string };
 type Cliente = { id: string; name: string };
-type TipodeOrdem = {id: string; name: string};
+type TipodeOrdem = { id: string; name: string };
+type Prioridade = { id: string; name: string };
 
 export default function Dashboard() {
   const navigation = useNavigation();
@@ -82,6 +84,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [tiposOrdem, setTiposOrdem] = useState<TipodeOrdem[]>([]);
   const [tipoOrdemFilter, setTipoOrdemFilter] = useState<string>("");
+  const [prioridades, setPrioridades] = useState<Prioridade[]>([]);
+  const [prioridadeFilter, setPrioridadeFilter] = useState<string>("");
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+
+  const activeFiltersCount = [tipoOrdemFilter, instituicaoFilter, clienteFilter, prioridadeFilter].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setTipoOrdemFilter("");
+    setInstituicaoFilter("");
+    setClienteFilter("");
+    setPrioridadeFilter("");
+  };
 
   const statusList = [
     { id: "all", name: "TODOS" },
@@ -145,12 +159,14 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
       const tipoResponse = await api.get("/listtipodeordemdeservico", {
         headers: {},
       });
-
       const tipoList = tipoResponse.data || [];
+      setTiposOrdem(tipoList.map((tipo: any) => ({ id: tipo.id, name: tipo.name })));
 
-      setTiposOrdem(
-        tipoList.map((tipo: any) => ({ id: tipo.id, name: tipo.name }))
-      );
+      const prioResponse = await api.get("/liststatusprioridade", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const prioList = prioResponse.data || [];
+      setPrioridades(prioList.map((p: any) => ({ id: p.id, name: p.name })));
 
     } catch (error) {
       console.error("Erro ao carregar filtros:", error);
@@ -197,9 +213,14 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
       );
     }
 
+    if (prioridadeFilter) {
+      result = result.filter(
+        (os) => os.prioridade?.id === prioridadeFilter
+      );
+    }
 
     setFilteredOrdens(result);
-  }, [search, statusFilter, instituicaoFilter, clienteFilter, ordensDeServico, tipoOrdemFilter]);
+  }, [search, statusFilter, instituicaoFilter, clienteFilter, ordensDeServico, tipoOrdemFilter, prioridadeFilter]);
 
  
   useEffect(() => {
@@ -239,38 +260,19 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
       />
 
     
-  <Picker
-    selectedValue={tipoOrdemFilter}
-      style={styles.picker}
-      onValueChange={(value) => setTipoOrdemFilter(value)}
-    >
-      <Picker.Item label="Todos Tipos de OS" value="" />
-      {tiposOrdem.map((tipo) => (
-        <Picker.Item key={tipo.id} label={tipo.name} value={tipo.id} />
-      ))}
-    </Picker>
-
-      <Picker
-        selectedValue={instituicaoFilter}
-        style={styles.picker}
-        onValueChange={(value) => setInstituicaoFilter(value)}
+      <TouchableOpacity
+        style={styles.filterButton}
+        onPress={() => setFilterModalVisible(true)}
+        activeOpacity={0.8}
       >
-        <Picker.Item label="Todas Instituições" value="" />
-        {instituicoes.map((inst) => (
-          <Picker.Item key={inst.id} label={inst.name} value={inst.id} />
-        ))}
-      </Picker>
-
-      <Picker
-        selectedValue={clienteFilter}
-        style={styles.picker}
-        onValueChange={(value) => setClienteFilter(value)}
-      >
-        <Picker.Item label="Todos Clientes" value="" />
-        {clientes.map((cli) => (
-          <Picker.Item key={cli.id} label={cli.name} value={cli.id} />
-        ))}
-      </Picker>
+        <Ionicons name="options-outline" size={18} color="#4E3182" />
+        <Text style={styles.filterButtonText}>Filtros</Text>
+        {activeFiltersCount > 0 && (
+          <View style={styles.filterBadge}>
+            <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
      
       <View style={styles.statusRow}>
         {statusList.map((status) => {
@@ -311,6 +313,12 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
       <Text style={styles.cardStatus}>
         Status: {item?.statusOrdemdeServico?.name ?? "Não definido"}
       </Text>
+
+      {item?.prioridade?.name && (
+        <Text style={styles.cardSubtitle}>
+          Prioridade: {item.prioridade.name}
+        </Text>
+      )}
 
       {/* Uso de Optional Chaining (?.) e Operador de Coalescência (??) */}
       {item?.cliente?.name && (
@@ -371,6 +379,89 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
       >
         <MaterialCommunityIcons name="form-select" size={30} color="#fff" />
       </TouchableOpacity>
+
+      {/* Modal de filtros — bottom sheet */}
+      <Modal
+        visible={filterModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.filterOverlay}
+          activeOpacity={1}
+          onPress={() => setFilterModalVisible(false)}
+        />
+        <View style={styles.filterSheet}>
+          <View style={styles.filterHandle} />
+
+          <View style={styles.filterHeader}>
+            <Text style={styles.filterTitle}>Filtros</Text>
+            {activeFiltersCount > 0 && (
+              <TouchableOpacity onPress={clearFilters}>
+                <Text style={styles.filterClearText}>Limpar tudo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={styles.filterLabel}>Tipo de OS</Text>
+          <Picker
+            selectedValue={tipoOrdemFilter}
+            style={styles.picker}
+            onValueChange={(value) => setTipoOrdemFilter(value)}
+          >
+            <Picker.Item label="Todos os tipos" value="" />
+            {tiposOrdem.map((tipo) => (
+              <Picker.Item key={tipo.id} label={tipo.name} value={tipo.id} />
+            ))}
+          </Picker>
+
+          <Text style={styles.filterLabel}>Instituição</Text>
+          <Picker
+            selectedValue={instituicaoFilter}
+            style={styles.picker}
+            onValueChange={(value) => setInstituicaoFilter(value)}
+          >
+            <Picker.Item label="Todas as instituições" value="" />
+            {instituicoes.map((inst) => (
+              <Picker.Item key={inst.id} label={inst.name} value={inst.id} />
+            ))}
+          </Picker>
+
+          <Text style={styles.filterLabel}>Cliente</Text>
+          <Picker
+            selectedValue={clienteFilter}
+            style={styles.picker}
+            onValueChange={(value) => setClienteFilter(value)}
+          >
+            <Picker.Item label="Todos os clientes" value="" />
+            {clientes.map((cli) => (
+              <Picker.Item key={cli.id} label={cli.name} value={cli.id} />
+            ))}
+          </Picker>
+
+          <Text style={styles.filterLabel}>Prioridade</Text>
+          <Picker
+            selectedValue={prioridadeFilter}
+            style={styles.picker}
+            onValueChange={(value) => setPrioridadeFilter(value)}
+          >
+            <Picker.Item label="Todas as prioridades" value="" />
+            {prioridades.map((prio) => (
+              <Picker.Item key={prio.id} label={prio.name} value={prio.id} />
+            ))}
+          </Picker>
+
+          <TouchableOpacity
+            style={styles.filterApplyButton}
+            onPress={() => setFilterModalVisible(false)}
+          >
+            <Text style={styles.filterApplyText}>
+              {activeFiltersCount > 0 ? `Aplicar (${activeFiltersCount})` : "Fechar"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -461,5 +552,100 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
+  },
+
+  // Botão de filtro
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginHorizontal: 10,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#4E3182",
+    backgroundColor: "#fff",
+    gap: 6,
+  },
+  filterButtonText: {
+    color: "#4E3182",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  filterBadge: {
+    backgroundColor: "#4E3182",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+
+  // Bottom sheet de filtros
+  filterOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  filterSheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+    paddingTop: 10,
+    maxHeight: "85%",
+  },
+  filterHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#ddd",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 14,
+  },
+  filterHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  filterTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#0F1431",
+  },
+  filterClearText: {
+    fontSize: 13,
+    color: "#E74C3C",
+    fontWeight: "600",
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#555",
+    marginTop: 14,
+    marginBottom: 2,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  filterApplyButton: {
+    marginTop: 14,
+    backgroundColor: "#4E3182",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  filterApplyText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
