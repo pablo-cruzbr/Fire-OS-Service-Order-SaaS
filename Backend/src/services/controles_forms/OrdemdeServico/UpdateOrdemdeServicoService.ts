@@ -19,7 +19,7 @@ type UpdateOrdemdeServicoRequest = {
   informacoesSetorId?: string;
   instituicaoUnidade_id?: string;
   cliente_id?: string;
-  equipamentoid?: string;
+  equipamento_id?: string;
   tarefa_id?: string;
   nameTecnico?: string;
   diagnostico?: string;
@@ -88,7 +88,7 @@ class UpdateOrdemdeServicoService {
       if (body.tipodeChamado_id) updateData.tipodeChamado = { connect: { id: body.tipodeChamado_id } };
       if (body.tipodeOrdemdeServico_id) updateData.tipodeOrdemdeServico = { connect: { id: body.tipodeOrdemdeServico_id } };
       if (body.prioridade_id) updateData.prioridade = { connect: { id: body.prioridade_id } };
-      if (body.equipamentoid) updateData.equipamento = { connect: { id: body.equipamentoid } };
+      if (body.equipamento_id) updateData.equipamento = { connect: { id: body.equipamento_id } };
       if (body.tarefa_id) updateData.tarefa = { connect: { id: body.tarefa_id } };
       if (body.informacoesSetorId) updateData.informacoesSetor = { connect: { id: body.informacoesSetorId } };
       if (body.cliente_id) updateData.cliente = { connect: { id: body.cliente_id } };
