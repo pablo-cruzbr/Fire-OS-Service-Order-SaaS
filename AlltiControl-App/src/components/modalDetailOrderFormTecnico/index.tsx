@@ -100,7 +100,7 @@ useEffect(() => {
           assinante,
           assinatura: signature,
           duracao: tempoFinal,
-          atividades_ids: JSON.stringify(selectedItems), 
+          atividades_ids: selectedItems,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
