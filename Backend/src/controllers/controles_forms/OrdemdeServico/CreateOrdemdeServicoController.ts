@@ -7,10 +7,11 @@ interface CreateOrdemServicoRequest {
   patrimoniodoequipamento: string;
   nomedoContatoaserProcuradonoLocal?: string;
   tipodeOrdemdeServico_id?: string;
-  statusOrdemdeServico_id?: string; 
+  statusOrdemdeServico_id?: string;
   cliente_id?: string;
   tipodeChamado_id: string;
-  tarefa_id: string;
+  tarefa_id?: string;
+  prioridade_id?: string;
   instituicaoUnidade_id?: string;
   tecnico_id?: string;
   user_id: string;
@@ -45,10 +46,12 @@ class CreateOrdemServicoService {
         cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
         instituicaoUnidade: data.instituicaoUnidade_id ? { connect: { id: data.instituicaoUnidade_id } } : undefined,
         tecnico: data.tecnico_id ? { connect: { id: data.tecnico_id } } : undefined,
-        tipodeOrdemdeServico: data.tipodeOrdemdeServico_id 
-          ? { connect: { id: data.tipodeOrdemdeServico_id } } 
+        tipodeOrdemdeServico: data.tipodeOrdemdeServico_id
+          ? { connect: { id: data.tipodeOrdemdeServico_id } }
           : undefined,
-        
+        tarefa: data.tarefa_id ? { connect: { id: data.tarefa_id } } : undefined,
+        prioridade: data.prioridade_id ? { connect: { id: data.prioridade_id } } : undefined,
+
         nameTecnico: data.nameTecnico || null,
         diagnostico: data.diagnostico || null,
         solucao: data.solucao,
@@ -97,11 +100,11 @@ class CreateOrdemServicoService {
           },
         },
         tarefa: {
-              select: {
-                id: true,
-                name: true,
-              }
-            },
+          select: { id: true, name: true }
+        },
+        prioridade: {
+          select: { id: true, name: true }
+        },
       },
     });
 
@@ -116,12 +119,13 @@ class CreateOrdemServicoController {
       descricaodoProblemaouSolicitacao,
       patrimoniodoequipamento,
       tipodeOrdemdeServico_id,
-      statusOrdemdeServico_id, 
+      statusOrdemdeServico_id,
       nomedoContatoaserProcuradonoLocal,
       cliente_id,
       tipodeChamado_id,
       instituicaoUnidade_id,
       tarefa_id,
+      prioridade_id,
       tecnico_id,
       user_id,
       nameTecnico,
@@ -140,9 +144,10 @@ class CreateOrdemServicoController {
         patrimoniodoequipamento,
         nomedoContatoaserProcuradonoLocal,
         tipodeOrdemdeServico_id,
-        statusOrdemdeServico_id, 
+        statusOrdemdeServico_id,
         cliente_id,
         tarefa_id,
+        prioridade_id,
         tipodeChamado_id,
         instituicaoUnidade_id,
         tecnico_id,
