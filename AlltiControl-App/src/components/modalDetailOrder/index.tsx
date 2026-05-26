@@ -47,6 +47,11 @@ interface Setor {
 const { width: WIDTH, height: HEIGHT } = Dimensions.get("window");
 const IMAGE_SIZE = (WIDTH - 90) / 3;
 
+const getImageFingerprint = (base64: string) => {
+  const raw = base64.replace(/^data:[^;]+;base64,/, '');
+  return `${raw.length}|${raw.slice(0, 80)}|${raw.slice(-80)}`;
+};
+
 export function ModalDetailOrder({ ordem, handleCloseModal }: ModalDetailOsProps) {
 
   const [signature, setSignature] = useState<string | null>(null);
@@ -106,11 +111,6 @@ useEffect(() => {
   if (!ordemAtual) return null;
 
   const endereco = ordemAtual.cliente?.endereco ?? ordemAtual.instituicaoUnidade?.endereco ?? "";
-
-  const abrirWaze = (endereco: string) => {
-    const url = `https://waze.com/ul?q=${encodeURIComponent(endereco)}`;
-    Linking.canOpenURL(url).then(supported => supported ? Linking.openURL(url) : Alert.alert("Erro", "Não foi possível abrir o Waze."));
-  };
 
   const abrirGoogleMaps = (endereco: string) => {
   const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`; // <-- ERRO AQUI
@@ -217,11 +217,21 @@ const fetchTempo = async (ordemId: string) => {
 });
 
     if (!result.canceled) {
-      const imagesWithBase64 = result.assets.map(asset => ({
+      const candidatas = result.assets.map(asset => ({
         uri: asset.uri,
         base64: `data:${asset.type};base64,${asset.base64}`,
       }));
-      setSelectedImages([...selectedImages, ...imagesWithBase64]);
+
+      const urisExistentes = new Set(selectedImages.map(img => img.uri));
+      const fingerprintsExistentes = new Set(selectedImages.map(img => getImageFingerprint(img.base64)));
+
+      const novas = candidatas.filter(
+        img => !urisExistentes.has(img.uri) && !fingerprintsExistentes.has(getImageFingerprint(img.base64))
+      );
+
+      const ignoradas = candidatas.length - novas.length;
+      if (ignoradas > 0) Alert.alert("Atenção", `${ignoradas} imagem(ns) já adicionada(s) foi ignorada.`);
+      if (novas.length > 0) setSelectedImages(prev => [...prev, ...novas]);
     }
   };
 
@@ -236,11 +246,21 @@ const fetchTempo = async (ordemId: string) => {
     });
 
     if (!result.canceled) {
-      const imagesWithBase64 = result.assets.map(asset => ({
+      const candidatas = result.assets.map(asset => ({
         uri: asset.uri,
         base64: `data:${asset.type};base64,${asset.base64}`,
       }));
-      setSelectedImages([...selectedImages, ...imagesWithBase64]);
+
+      const urisExistentes = new Set(selectedImages.map(img => img.uri));
+      const fingerprintsExistentes = new Set(selectedImages.map(img => getImageFingerprint(img.base64)));
+
+      const novas = candidatas.filter(
+        img => !urisExistentes.has(img.uri) && !fingerprintsExistentes.has(getImageFingerprint(img.base64))
+      );
+
+      const ignoradas = candidatas.length - novas.length;
+      if (ignoradas > 0) Alert.alert("Atenção", `${ignoradas} imagem(ns) já adicionada(s) foi ignorada.`);
+      if (novas.length > 0) setSelectedImages(prev => [...prev, ...novas]);
     }
   };
 
@@ -327,10 +347,18 @@ const takePhoto = async () => {
     const asset = result.assets[0];
     const newImage = {
       uri: asset.uri,
-      base64: asset.base64 ?? "", 
+      base64: asset.base64 ?? "",
     };
 
-    setSelectedImages((prev) => [...prev, newImage]);
+    const jaExiste = selectedImages.some(
+      img => img.uri === newImage.uri || getImageFingerprint(img.base64) === getImageFingerprint(newImage.base64)
+    );
+
+    if (jaExiste) {
+      Alert.alert("Atenção", "Essa foto já foi adicionada.");
+    } else {
+      setSelectedImages(prev => [...prev, newImage]);
+    }
   }
 };
 
