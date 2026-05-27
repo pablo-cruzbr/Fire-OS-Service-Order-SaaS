@@ -156,7 +156,7 @@ export default function Sidebar() {
             className={styles.item} 
             style={{ fontSize: "17px" }} 
           >
-            <FaCalendarDays /> <span  style={{ fontSize: "16px" }} >Calendário Técnico</span>
+            <FaCalendarDays /> <span  style={{ fontSize: "15px" }} >Calendário Técnico</span>
           </Link>
             <div className={styles.itemContainer}>
               <div className={styles.item} onClick={() => toggleDropdown("controles")} style={{ cursor: "pointer" }}>
