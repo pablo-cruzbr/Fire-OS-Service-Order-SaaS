@@ -14,6 +14,7 @@ import { ModalContext } from '@/provider/compras';
 import { exportOrdemServicoExcel } from '@/lib/exportExcel';
 import { RiFileExcel2Line } from "react-icons/ri";
 import { toast } from 'sonner';
+import Select, { StylesConfig } from 'react-select';
 
 interface Props {
   ticketsData: OrdemdeServicoResponseData;
@@ -43,6 +44,38 @@ interface TipodeOrdemdeServico {
   id: string;
   name: string;
 }
+
+type SelectOption = { value: string; label: string };
+
+const reportSelectStyles: StylesConfig<SelectOption, false> = {
+  control: (base, state) => ({
+    ...base,
+    borderColor: state.isFocused ? '#4E3182' : '#e2e8f0',
+    borderWidth: '1.5px',
+    borderRadius: '8px',
+    boxShadow: state.isFocused ? '0 0 0 3px rgba(78,49,130,0.1)' : 'none',
+    backgroundColor: '#f8fafc',
+    minHeight: '40px',
+    fontSize: '0.85rem',
+    fontFamily: '"Poppins", sans-serif',
+    cursor: 'pointer',
+    '&:hover': { borderColor: '#4E3182' },
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#4E3182' : state.isFocused ? '#f4f0ff' : '#fff',
+    color: state.isSelected ? '#fff' : '#1e293b',
+    fontSize: '0.85rem',
+    fontFamily: '"Poppins", sans-serif',
+    cursor: 'pointer',
+  }),
+  placeholder: (base) => ({ ...base, color: '#94a3b8', fontSize: '0.85rem' }),
+  singleValue: (base) => ({ ...base, color: '#1e293b', fontSize: '0.85rem' }),
+  clearIndicator: (base) => ({ ...base, color: '#94a3b8', '&:hover': { color: '#4E3182' } }),
+  dropdownIndicator: (base) => ({ ...base, color: '#4E3182' }),
+  menu: (base) => ({ ...base, borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }),
+  menuPortal: (base) => ({ ...base, zIndex: 10000 }),
+};
 
 export default function TicketsList({ ticketsData }: Props) {
   const router = useRouter();
@@ -296,68 +329,68 @@ return value
         </div>
         <div className={styles.reportRow}>
           <label className={styles.reportLabel}>Tarefa</label>
-          <select
-            value={selectedTarefa[0] || ""}
-            onChange={(e) => setSelectedTarefa(e.target.value ? [e.target.value] : [])}
-            className={styles.reportSelect}
-          >
-            <option value="">Todas as Tarefas</option>
-            {tarefa.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+          <Select<SelectOption>
+            options={tarefa.map(t => ({ value: t.id, label: t.name }))}
+            value={tarefa.find(t => t.id === selectedTarefa[0]) ? { value: selectedTarefa[0], label: tarefa.find(t => t.id === selectedTarefa[0])!.name } : null}
+            onChange={(opt) => setSelectedTarefa(opt ? [opt.value] : [])}
+            placeholder="Todas as Tarefas"
+            isClearable
+            styles={reportSelectStyles}
+            menuPortal={typeof window !== 'undefined' ? document.body : undefined}
+            noOptionsMessage={() => 'Nenhuma tarefa encontrada'}
+          />
         </div>
         <div className={styles.reportRow}>
           <label className={styles.reportLabel}>Instituição</label>
-          <select
-            value={selectedInstituicao}
-            onChange={(e) => setSelectedInstituicao(e.target.value)}
-            className={styles.reportSelect}
-          >
-            <option value="">Todas Instituições</option>
-            {instituicoes.map(inst => (
-              <option key={inst.id} value={inst.id}>{inst.name}</option>
-            ))}
-          </select>
+          <Select<SelectOption>
+            options={instituicoes.map(i => ({ value: i.id, label: i.name }))}
+            value={instituicoes.find(i => i.id === selectedInstituicao) ? { value: selectedInstituicao, label: instituicoes.find(i => i.id === selectedInstituicao)!.name } : null}
+            onChange={(opt) => setSelectedInstituicao(opt?.value ?? '')}
+            placeholder="Todas as Instituições"
+            isClearable
+            styles={reportSelectStyles}
+            menuPortal={typeof window !== 'undefined' ? document.body : undefined}
+            noOptionsMessage={() => 'Nenhuma instituição encontrada'}
+          />
         </div>
         <div className={styles.reportRow}>
           <label className={styles.reportLabel}>Cliente</label>
-          <select
-            value={selectedCliente}
-            onChange={(e) => setSelectedCliente(e.target.value)}
-            className={styles.reportSelect}
-          >
-            <option value="">Todos Clientes</option>
-            {clientes.map(cli => (
-              <option key={cli.id} value={cli.id}>{cli.name}</option>
-            ))}
-          </select>
+          <Select<SelectOption>
+            options={clientes.map(c => ({ value: c.id, label: c.name }))}
+            value={clientes.find(c => c.id === selectedCliente) ? { value: selectedCliente, label: clientes.find(c => c.id === selectedCliente)!.name } : null}
+            onChange={(opt) => setSelectedCliente(opt?.value ?? '')}
+            placeholder="Todos os Clientes"
+            isClearable
+            styles={reportSelectStyles}
+            menuPortal={typeof window !== 'undefined' ? document.body : undefined}
+            noOptionsMessage={() => 'Nenhum cliente encontrado'}
+          />
         </div>
         <div className={styles.reportRow}>
           <label className={styles.reportLabel}>Status</label>
-          <select
-            value={reportStatusId}
-            onChange={(e) => setReportStatusId(e.target.value)}
-            className={styles.reportSelect}
-          >
-            <option value="">Todos os Status</option>
-            {statusList.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
+          <Select<SelectOption>
+            options={statusList.map(s => ({ value: s.id, label: s.name }))}
+            value={statusList.find(s => s.id === reportStatusId) ? { value: reportStatusId, label: statusList.find(s => s.id === reportStatusId)!.name } : null}
+            onChange={(opt) => setReportStatusId(opt?.value ?? '')}
+            placeholder="Todos os Status"
+            isClearable
+            styles={reportSelectStyles}
+            menuPortal={typeof window !== 'undefined' ? document.body : undefined}
+            noOptionsMessage={() => 'Nenhum status encontrado'}
+          />
         </div>
         <div className={styles.reportRow}>
           <label className={styles.reportLabel}>Tipo de OS</label>
-          <select
-            value={reportTipoOSId}
-            onChange={(e) => setReportTipoOSId(e.target.value)}
-            className={styles.reportSelect}
-          >
-            <option value="">Todos os Tipos</option>
-            {tiposOrdem.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+          <Select<SelectOption>
+            options={tiposOrdem.map(t => ({ value: t.id, label: t.name }))}
+            value={tiposOrdem.find(t => t.id === reportTipoOSId) ? { value: reportTipoOSId, label: tiposOrdem.find(t => t.id === reportTipoOSId)!.name } : null}
+            onChange={(opt) => setReportTipoOSId(opt?.value ?? '')}
+            placeholder="Todos os Tipos"
+            isClearable
+            styles={reportSelectStyles}
+            menuPortal={typeof window !== 'undefined' ? document.body : undefined}
+            noOptionsMessage={() => 'Nenhum tipo encontrado'}
+          />
         </div>
       </div>
       <div className={styles.reportModalFooter}>
