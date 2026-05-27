@@ -68,6 +68,9 @@ export default function TicketsList({ ticketsData }: Props) {
   const [endDate, setEndDate] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportStatusId, setReportStatusId] = useState("");
+  const [reportTipoOSId, setReportTipoOSId] = useState("");
+  const [statusList, setStatusList] = useState<StatusPrioridade[]>([]);
 
   const { total = 0, totalPausada = 0, totalAberta = 0, totalEmDeslocamento = 0, totalEmAndamento = 0, totalConcluida = 0, totalOrdemdeServico = 0, totalTicket = 0, controles = [] } = ticketsData || {};
 
@@ -92,18 +95,20 @@ export default function TicketsList({ ticketsData }: Props) {
     const fetchFilters = async () => {
       try {
         const token = await getCookieClient();
-        const [instRes, cliRes, tipoRes, prioRes, tareRes] = await Promise.all([
+        const [instRes, cliRes, tipoRes, prioRes, tareRes, statusRes] = await Promise.all([
           api.get("/listinstuicao", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/listcliente", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/listtipodeordemdeservico", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/liststatusprioridade", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/liststatustarefa", { headers: { Authorization: `Bearer ${token}` } }),
+          api.get("/liststatusordemdeservico", { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         setInstituicoes(instRes.data.instituicoes ?? []);
         setClientes(cliRes.data.controles ?? []);
         setTiposOrdem(tipoRes.data ?? []);
         setPrioridade(prioRes.data ?? []);
         setTarefa(tareRes.data ?? []);
+        setStatusList(statusRes.data ?? []);
       } catch (error) {
         console.error("Erro ao carregar filtros:", error);
       }
@@ -139,11 +144,13 @@ const handleExportClick = async () => {
   setIsExporting(true);
   try {
     await exportOrdemServicoExcel({
-      startDate: convertToIso(startDate), 
-      endDate: convertToIso(endDate),     
+      startDate: convertToIso(startDate),
+      endDate: convertToIso(endDate),
       tarefa_id: selectedTarefa[0] || undefined,
       cliente_id: selectedCliente || undefined,
       instituicao_id: selectedInstituicao || undefined,
+      status_id: reportStatusId || undefined,
+      tipoOS_id: reportTipoOSId || undefined,
     });
   } finally {
     setIsExporting(false);
@@ -323,6 +330,32 @@ return value
             <option value="">Todos Clientes</option>
             {clientes.map(cli => (
               <option key={cli.id} value={cli.id}>{cli.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.reportRow}>
+          <label className={styles.reportLabel}>Status</label>
+          <select
+            value={reportStatusId}
+            onChange={(e) => setReportStatusId(e.target.value)}
+            className={styles.reportSelect}
+          >
+            <option value="">Todos os Status</option>
+            {statusList.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.reportRow}>
+          <label className={styles.reportLabel}>Tipo de OS</label>
+          <select
+            value={reportTipoOSId}
+            onChange={(e) => setReportTipoOSId(e.target.value)}
+            className={styles.reportSelect}
+          >
+            <option value="">Todos os Tipos</option>
+            {tiposOrdem.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>
         </div>
