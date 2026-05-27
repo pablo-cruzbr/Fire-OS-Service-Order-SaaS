@@ -507,7 +507,7 @@ return value
         {[
           { label: 'Total', value: total, status: null },
           { label: 'OS Aberta', value: totalAberta, status: 'ABERTA' },
-          { label: 'OS Em Deslocamento', value: totalEmDeslocamento, status: 'EM DESLOCAMENTO' },
+          //{ label: 'OS Em Deslocamento', value: totalEmDeslocamento, status: 'EM DESLOCAMENTO' },
           { label: 'OS em Andamento', value: totalEmAndamento, status: 'EM ANDAMENTO' },
           { label: 'OS Concluída', value: totalConcluida, status: 'CONCLUIDA' },
           { label: 'OS PAUSADA', value: totalPausada, status: 'PAUSADA' },
