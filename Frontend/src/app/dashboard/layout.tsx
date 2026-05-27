@@ -1,10 +1,8 @@
 import Sidebar from '../components/sidebar/Sidebar';
-import styles from './dashboard.module.scss';
-import { ModalProvider } from '../../provider/compras';
-import { Toaster } from 'sonner'; 
+import { Toaster } from 'sonner';
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex" }}>
+    <div style={{ display: "flex", width: "100%", minWidth: 0 }}>
       <Sidebar />
       <main className="main-content">
         {children}

@@ -60,8 +60,8 @@ a {
 }
 
 .main-content {
-  margin-left: 250px; 
+  margin-left: 250px;
   width: calc(100% - 250px);
+  min-width: 0;
   padding: 1rem;
-  overflow-x: hidden;
 }
