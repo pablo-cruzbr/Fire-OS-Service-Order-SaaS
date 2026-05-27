@@ -448,7 +448,7 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
       <div
         ref={containerRef}
         className="dhx_cal_container shadow-sm border rounded-xl"
-        style={{ width: "100%", height: "600px", backgroundColor: "#fff" }}
+        style={{ width: "100%", height: "750px", backgroundColor: "#fff" }}
       >
         <div className="dhx_cal_navline">
           <div className="dhx_cal_prev_button">&nbsp;</div>
