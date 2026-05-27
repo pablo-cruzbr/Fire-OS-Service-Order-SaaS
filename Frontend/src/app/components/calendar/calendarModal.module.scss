@@ -197,6 +197,8 @@ $transition-fast: 0.3s ease;
 }
 
 .morePopupList {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 8px 0;
 
@@ -217,13 +219,18 @@ $transition-fast: 0.3s ease;
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  cursor: pointer;
-  transition: background $transition-fast;
+  cursor: grab;
+  transition: background $transition-fast, opacity $transition-fast;
   font-size: 0.78rem;
   color: #333;
 
   &:hover {
     background: #f8f5ff;
+  }
+
+  &:active {
+    cursor: grabbing;
+    opacity: 0.7;
   }
 }
 
@@ -247,3 +254,4 @@ $transition-fast: 0.3s ease;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+

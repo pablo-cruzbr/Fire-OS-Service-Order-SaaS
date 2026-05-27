@@ -35,6 +35,7 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
     top: number;
     left: number;
   } | null>(null);
+  const [isDraggingPopupEvent, setIsDraggingPopupEvent] = useState(false);
 
   const pendingRef = useRef<PendingReschedule | null>(null);
 
@@ -285,6 +286,71 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
     }
   }, [schedulerReady, events, parseToScheduler, initialToken]);
 
+  // Drag-and-drop from popup onto calendar cells
+  useEffect(() => {
+    if (!schedulerReady || !containerRef.current) return;
+    const container = containerRef.current;
+
+    const handleDragOver = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("application/popup-os")) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      const evId = e.dataTransfer?.getData("application/popup-os");
+      if (!evId) return;
+      e.preventDefault();
+
+      // Find which day cell the user dropped onto using header positions
+      const heads = Array.from(container.querySelectorAll(".dhx_month_head")) as HTMLElement[];
+      let bestHead: HTMLElement | null = null;
+      for (const head of heads) {
+        const hr = head.getBoundingClientRect();
+        if (e.clientX < hr.left || e.clientX > hr.right) continue;
+        if (e.clientY < hr.top) continue;
+        if (!bestHead || hr.top > bestHead.getBoundingClientRect().top) bestHead = head;
+      }
+      const dayNum = parseInt(bestHead?.textContent?.trim() ?? "0", 10);
+      if (!dayNum) { setIsDraggingPopupEvent(false); return; }
+
+      const scheduler = schedulerInstance.current;
+      const state = scheduler?.getState();
+      if (!state) { setIsDraggingPopupEvent(false); return; }
+
+      const cellDate = new Date(state.date.getFullYear(), state.date.getMonth(), dayNum);
+      const ev = scheduler.getEvent(evId);
+      if (!ev) { setIsDraggingPopupEvent(false); return; }
+
+      const orig: Date = ev.start_date;
+      const newDate = new Date(
+        cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate(),
+        orig.getHours(), orig.getMinutes(), 0, 0
+      );
+
+      try {
+        await updateEventOnServer(evId, newDate);
+        const duration = +ev.end_date - +ev.start_date;
+        ev.start_date = newDate;
+        ev.end_date = new Date(+newDate + duration);
+        if (ev.rawTicket) ev.rawTicket.agendadoEm = newDate.toISOString();
+        scheduler.updateEvent(evId);
+        setMorePopup(null);
+      } catch (err) {
+        console.error("[CAL] Erro ao reagendar via drag:", err);
+      } finally {
+        setIsDraggingPopupEvent(false);
+      }
+    };
+
+    container.addEventListener("dragover", handleDragOver);
+    container.addEventListener("drop", handleDrop);
+    return () => {
+      container.removeEventListener("dragover", handleDragOver);
+      container.removeEventListener("drop", handleDrop);
+    };
+  }, [schedulerReady, initialToken]);
+
   const formatDate = (d: Date) =>
     new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" }).format(new Date(d));
 
@@ -337,7 +403,11 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
 
       {morePopup && (
         <>
-          <div className={styles.moreBackdrop} onClick={() => setMorePopup(null)} />
+          <div
+            className={styles.moreBackdrop}
+            onClick={() => setMorePopup(null)}
+            style={{ pointerEvents: isDraggingPopupEvent ? "none" : "auto" }}
+          />
           <div
             className={styles.morePopup}
             style={{ top: morePopup.top, left: morePopup.left }}
@@ -351,6 +421,13 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
                 <div
                   key={ev.id}
                   className={styles.morePopupItem}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/popup-os", ev.id);
+                    e.dataTransfer.effectAllowed = "move";
+                    setIsDraggingPopupEvent(true);
+                  }}
+                  onDragEnd={() => setIsDraggingPopupEvent(false)}
                   onClick={() => {
                     if (ev.rawTicket) openModal("OrdemdeServico", [ev.rawTicket]);
                     setMorePopup(null);
