@@ -1,5 +1,7 @@
 # AlltiControl — Service Order Management SaaS
 
+![Tests](https://github.com/pablo-cruzbr/Allti-Control/actions/workflows/test.yml/badge.svg)
+
 ### *"Engenharia focada na eficiência: Eliminando a burocracia na gestão de Serviços de Informática."*
 
 <p align="center">
