@@ -51,7 +51,6 @@ export default function ComprasList({ comprasData }: Props) {
       });
       alert("Card Deletado com sucesso!");
 
-      console.log("Removido com sucesso:", compra_id);
       router.refresh();
     } catch (error) {
       console.error("Erro ao deletar a compra:", error);

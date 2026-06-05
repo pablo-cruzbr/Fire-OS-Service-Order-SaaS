@@ -15,7 +15,6 @@ export async function getServerSideProps() {
 
     const compras = response.data || [];
 
-    console.log("Compras Buscadas no banco de dados:", compras); 
     return {
       props: { compras },
     };

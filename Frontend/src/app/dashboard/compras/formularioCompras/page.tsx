@@ -23,7 +23,6 @@ export default function FormularioCompras() {
     async function fetchStatusCompras() {
       try {
         const token = await getCookieClient();
-        console.log("TOKEN DO USUÁRIO: ", token);
         const response = await api.get("/liststatuscompras", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -48,15 +47,6 @@ export default function FormularioCompras() {
     const preco = Number(formData.get("preco"));
     const linkDeCompra = formData.get("linkDeCompra");
     const statusCompras_id = formData.get("statusCompras_id");
-
-    console.log("Form Data:", {
-      itemSolicitado,
-      solicitante,
-      motivoDaSolicitacao,
-      preco,
-      linkDeCompra,
-      statusCompras_id,
-    });
 
     try {
       const token = await getCookieClient();
