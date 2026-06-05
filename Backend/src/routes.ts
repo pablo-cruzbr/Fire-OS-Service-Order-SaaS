@@ -63,6 +63,7 @@ import { DeleteSolicitacaodeComprasController } from "./controllers/controles_fo
 import { DetailComprasController } from "./controllers/controles_forms/SolicitacaodeCompras/DetailSolicitacaodeComprasController";
 import { DetailAssistenciaTecnicaController } from "./controllers/controles_forms/ControledeAssistenciaTecnica/DetailControledeAssistenciaTecnicaController";
 import { ListUserController } from "./controllers/user/ListUserController";
+import { UpdateUserController } from "./controllers/user/UpdateUserController";
 import { DetailLaudoTenicoController } from "./controllers/controles_forms/ControledeLaudoTécnico/DetailControledeLaudoTenicoController";
 import { DetailControledeLaboratorioController } from "./controllers/controles_forms/ControledeLaboratorio/DetailControledeLaboratorioController";
 import { DetailMaquinasPendentesLabController } from "./controllers/controles_forms/ControledeMaquinasPendentesLab/DetailMaquinasPendentesLabController";
@@ -131,6 +132,7 @@ router.post('/session', new AuthUserController().handle)
 //router.get('/listusers', isAuthenticated, new AuthUserController().handle)
 router.get('/listusers', new ListUserController().handle)
 router.get('/users/detail', isAuthenticated, new DetailUserController().handle)
+router.patch('/user/update/:id', isAuthenticated, new UpdateUserController().handle)
 
 //---> CATEGORIAS <---
 
