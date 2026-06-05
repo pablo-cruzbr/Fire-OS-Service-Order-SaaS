@@ -105,7 +105,7 @@ $transition-fast: 0.3s ease;
   margin-bottom: 15px;
 
   &:focus-within {
-    background-color: darken($bg-input, 3%);
+    background-color: #eef1f5;
     box-shadow: 0 0 0 2px rgba($primary-purple, 0.1);
   }
 
@@ -215,7 +215,7 @@ $transition-fast: 0.3s ease;
     color: $white;
     width: 100%;
     margin-top: 20px;
-    &:hover { background-color: lighten($primary-purple, 5%); transform: translateY(-2px); }
+    &:hover { background-color: #6b47a8; transform: translateY(-2px); }
   }
 
   &.transparent {
