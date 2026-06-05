@@ -61,7 +61,6 @@ const filteredControles = controles.filter(ticket => {
         params: { controle_id },
       });
 
-      console.log("Removido com sucesso:", controle_id);
       router.refresh();
     } catch (error) {
       console.error("Erro ao deletar a compra:", error);

@@ -14,8 +14,6 @@ async function getEstabilizadores(): Promise<EstabilizadoresResponse> {
       },
     });
 
-    console.log("Estabilizadores response:", response.data);
-
     return response.data || {
       controles: [],
       total: 0,

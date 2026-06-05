@@ -12,7 +12,6 @@ async function getEquipamento(): Promise<EquipamentoProps[]> {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response)
     return response.data || [];
     
   } catch (err) {
