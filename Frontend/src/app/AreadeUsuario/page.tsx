@@ -41,7 +41,6 @@ export default function AreadeUsuario() {
       });
 
     } catch (err) {
-      console.log("Erro ao fazer login:", err);
       return;
     } 
 

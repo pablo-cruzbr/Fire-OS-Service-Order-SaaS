@@ -14,7 +14,6 @@ export default function Home() {
     const password = formData.get("password");
 
     if (!email || !password || email.toString().trim() === "" || password.toString().trim() === "") {
-      console.log("Campos vazios ou inválidos.");
       return;
     }
     try {
@@ -26,8 +25,6 @@ export default function Home() {
       if (!response.data.token) {
         return;
       }
-
-      console.log(response.data);
 
       const maxAgeSeconds = 60 * 60 * 24 * 30;
 
@@ -41,7 +38,6 @@ export default function Home() {
 
       redirect("/dashboard");
     } catch (err) {
-      console.log("Erro ao fazer login:", err);
       return;
     }
   }
