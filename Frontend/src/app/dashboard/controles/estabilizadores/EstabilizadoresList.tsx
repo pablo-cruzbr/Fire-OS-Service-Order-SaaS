@@ -80,7 +80,6 @@ export default function EstabilizadoresList({ EstabilizadoresData }: Props): Rea
         params: { controle_id: id },
       });
 
-      console.log("Removido com sucesso:", id);
       router.refresh();
     } catch (error) {
       console.error("Erro ao deletar:", error);
