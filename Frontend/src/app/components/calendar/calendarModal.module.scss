@@ -104,7 +104,7 @@ $transition-fast: 0.3s ease;
   gap: 8px;
 
   &:hover:not(:disabled) {
-    background: lighten($primary-purple, 8%);
+    background: #6b47a8;
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba($primary-purple, 0.35);
   }
