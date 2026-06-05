@@ -120,7 +120,7 @@ class ListOrdemdeServicoService {
           select: {
             id: true,
             atividadePadrao: {
-              select: { id: true, descricao: true, categoria: true }
+              select: { id: true, descricao: true, descricaoDetalhada: true, categoria: true }
             }
           }
         },
