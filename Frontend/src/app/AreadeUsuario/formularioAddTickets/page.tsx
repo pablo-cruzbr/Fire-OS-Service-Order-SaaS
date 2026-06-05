@@ -129,6 +129,7 @@ export default function FormularioAddTickets() {
       numeroOS,
       name,
       tipodeChamado_id,
+      tipodeOrdemdeServico_id: tipodeOrdemdeServico_id || undefined,
       descricaodoProblemaouSolicitacao,
       patrimoniodoequipamento,
       nomedoContatoaserProcuradonoLocal,
