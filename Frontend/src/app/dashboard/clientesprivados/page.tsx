@@ -11,7 +11,6 @@ async function getClientes(): Promise<ClienteResponse> {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response)
     return response.data || {
       controles: [], 
       total: 0, 

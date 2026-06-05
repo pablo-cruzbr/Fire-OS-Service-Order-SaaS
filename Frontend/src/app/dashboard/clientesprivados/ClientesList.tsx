@@ -49,7 +49,6 @@ export default function ClientesList({ clienteData }: Props) {
         },
       });
 
-      console.log('Removido com sucesso:', clienteId);
       router.refresh();
     } catch (error) {
       console.error('Erro ao deletar o cliente:', error);
