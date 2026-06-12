@@ -30,13 +30,7 @@
 
 ## ▶ Demonstração em Vídeo
 
-<p align="center">
-  <a href="https://youtu.be/UNatcCfJASE" target="_blank">
-    <img src="https://img.youtube.com/vi/UNatcCfJASE/maxresdefault.jpg" alt="Assistir demonstração do AlltiControl" width="800" />
-  </a>
-  <br/>
-  <em>Clique na imagem para assistir a demonstração completa no YouTube</em>
-</p>
+https://github.com/user-attachments/assets/18c971a1-217b-44b3-b4f7-c99946b37cba
 
 ---
 
