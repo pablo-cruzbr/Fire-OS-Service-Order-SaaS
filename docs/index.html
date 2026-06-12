@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlltiControl — Demonstração</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      max-width: 900px;
+      padding: 52px 24px 28px;
+      text-align: center;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #1f6feb, #388bfd);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      color: #58a6ff;
+    }
+
+    .tagline {
+      font-size: 1.05rem;
+      color: #8b949e;
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    .sub-tagline {
+      font-size: 0.9rem;
+      color: #484f58;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .badge {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      color: #79c0ff;
+    }
+
+    main {
+      width: 100%;
+      max-width: 900px;
+      padding: 16px 24px 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 44px;
+    }
+
+    /* ── vídeo ── */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #30363d;
+      background: #010409;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* ── seções ── */
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #c9d1d9;
+      margin-bottom: 18px;
+      border-left: 3px solid #58a6ff;
+      padding-left: 10px;
+    }
+
+    /* ── stat bar ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+
+    .stat-card .number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #58a6ff;
+    }
+
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+
+    /* ── features ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #79c0ff;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 0.85rem;
+      color: #8b949e;
+      line-height: 1.55;
+    }
+
+    /* ── stack ── */
+    .stack-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .stack-group {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+
+    .stack-group h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .stack-group ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stack-group ul li {
+      font-size: 0.85rem;
+      color: #c9d1d9;
+    }
+
+    .stack-group ul li::before {
+      content: "▸ ";
+      color: #58a6ff;
+    }
+
+    /* ── cta ── */
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 13px 30px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.82; }
+
+    .btn-primary {
+      background: #1f6feb;
+      color: #fff;
+      border: 1px solid #388bfd;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #58a6ff;
+      border: 1px solid #58a6ff;
+    }
+
+    footer {
+      width: 100%;
+      text-align: center;
+      padding: 20px 24px;
+      border-top: 1px solid #21262d;
+      color: #484f58;
+      font-size: 0.82rem;
+    }
+
+    footer a { color: #58a6ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-area">
+      <div class="logo-icon">⚙️</div>
+      <h1>AlltiControl</h1>
+    </div>
+    <p class="tagline">Eliminando a burocracia na gestão de Ordens de Serviço de TI.</p>
+    <p class="sub-tagline">De 5–6 telas para apenas 2 — web + app mobile para técnicos em campo.</p>
+    <div class="badges">
+      <span class="badge">Next.js 14</span>
+      <span class="badge">React Native</span>
+      <span class="badge">Node.js</span>
+      <span class="badge">Prisma</span>
+      <span class="badge">PostgreSQL</span>
+      <span class="badge">JWT</span>
+      <span class="badge">Cloudinary</span>
+      <span class="badge">Expo</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── VÍDEO ─────────────────────────────────── -->
+    <div>
+      <p class="section-title">Demonstração em Vídeo</p>
+      <div class="video-wrapper">
+        <iframe
+          src="https://www.youtube.com/embed/UNatcCfJASE"
+          title="AlltiControl — Demonstração do Sistema"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+    <!-- ── NÚMEROS ────────────────────────────────── -->
+    <div>
+      <p class="section-title">O Projeto em Números</p>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="number">80+</div>
+          <div class="label">Endpoints REST</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">5</div>
+          <div class="label">Status de OS</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">2</div>
+          <div class="label">Telas (antes eram 6)</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">3</div>
+          <div class="label">Plataformas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FUNCIONALIDADES ────────────────────────── -->
+    <div>
+      <p class="section-title">Funcionalidades Principais</p>
+      <div class="features">
+        <div class="feature-card">
+          <h3>📋 Dashboard de OS</h3>
+          <p>Visualização completa das ordens com 5 status: Aberta, Em Deslocamento, Em Andamento, Pausada e Concluída.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📅 Calendário com Drag & Drop</h3>
+          <p>Agendamento técnico visual com DHTMLX Scheduler v7 — arraste e reorganize OS em tempo real.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📱 App para Técnicos</h3>
+          <p>Aplicativo React Native com timer de OS, upload de fotos e assinatura digital em campo.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📊 Relatórios em Excel</h3>
+          <p>Exportação de relatórios filtrados diretamente do painel gerencial.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📍 Geolocalização</h3>
+          <p>Registro de localização do técnico ao iniciar e concluir cada OS.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔐 Autenticação JWT</h3>
+          <p>Tokens seguros com cookies HttpOnly, controle de permissões por perfil de usuário.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STACK ─────────────────────────────────── -->
+    <div>
+      <p class="section-title">Stack Técnica</p>
+      <div class="stack-groups">
+        <div class="stack-group">
+          <h4>Frontend Web</h4>
+          <ul>
+            <li>Next.js 14</li>
+            <li>TypeScript</li>
+            <li>SCSS Modules</li>
+            <li>DHTMLX Scheduler</li>
+          </ul>
+        </div>
+        <div class="stack-group">
+          <h4>Mobile</h4>
+          <ul>
+            <li>React Native</li>
+            <li>Expo</li>
+            <li>Context API</li>
+          </ul>
+        </div>
+        <div class="stack-group">
+          <h4>Backend</h4>
+          <ul>
+            <li>Node.js + Express</li>
+            <li>TypeScript</li>
+            <li>JWT + bcrypt</li>
+            <li>80+ endpoints</li>
+          </ul>
+        </div>
+        <div class="stack-group">
+          <h4>Dados & Infra</h4>
+          <ul>
+            <li>PostgreSQL</li>
+            <li>Prisma ORM</li>
+            <li>Cloudinary</li>
+            <li>Vercel Deploy</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CTA ───────────────────────────────────── -->
+    <div class="cta">
+      <a class="btn btn-primary" href="https://landing-page-allti-control.vercel.app" target="_blank" rel="noopener">
+        Ver Landing Page
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/pablo-cruzbr/Allti-Control" target="_blank" rel="noopener">
+        Ver no GitHub
+      </a>
+    </div>
+
+  </main>
+
+  <footer>
+    Desenvolvido por <a href="https://github.com/pablo-cruzbr" target="_blank" rel="noopener">Pablo Cruz</a> &mdash; 2026
+  </footer>
+
+</body>
+</html>
