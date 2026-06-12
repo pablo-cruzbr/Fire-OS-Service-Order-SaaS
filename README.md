@@ -32,12 +32,6 @@ https://github.com/user-attachments/assets/efd1a521-6f85-4665-85ff-24a6ef1e14bf
 
 ---
 
-## ▶ Demonstração em Vídeo
-
-https://github.com/user-attachments/assets/efd1a521-6f85-4665-85ff-24a6ef1e14bf
-
----
-
 ## 🎯 O Problema Real
 
 A [**Alltiservice**](https://alltiservice.com.br) é uma empresa de TI terceirizada com 4+ anos de mercado, prestando serviços para prefeituras, escolas e postos de saúde em Mogi das Cruzes/SP. Seus técnicos de campo perdiam horas por dia navegando por **5 a 6 telas diferentes** em sistemas legados para registrar uma única ordem de serviço — gastando mais tempo no software do que no hardware.
