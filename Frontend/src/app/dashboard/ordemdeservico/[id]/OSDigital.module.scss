@@ -1,0 +1,197 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+
+  strong:first-child {
+    font-size: 14px;
+    margin-bottom: 4px;
+    display: block;
+  }
+}
+
+.logo {
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ccc;
+}
+
+.tableHeader {
+  background: #e8e8e8;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+}
+
+.tableHeaderDark {
+  background: #555;
+  color: #fff;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+}
+
+.cell {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  vertical-align: top;
+  font-size: 12px;
+  width: 50%;
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+}
+
+.value {
+  display: block;
+  color: #666;
+  margin-top: 2px;
+}
+
+.fotosGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.fotoBox {
+  border: 1px solid #ccc;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #fafafa;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.assinaturaBox {
+  border: 1px solid #ccc;
+  min-height: 90px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+}
+
+.assinaturaImg {
+  max-height: 80px;
+  max-width: 320px;
+  object-fit: contain;
+}
+
+.assinanteNome {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border-top: 1px solid #ccc;
+  padding-top: 6px;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.btnImprimir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+.btnPdf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px;
+  background: #4E3182;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+
+  &:hover {
+    background: #3d2668;
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #666;
+}
+
+@media print {
+  .actions {
+    display: none;
+  }
+
+  .page {
+    padding: 0;
+    max-width: 100%;
+  }
+}
