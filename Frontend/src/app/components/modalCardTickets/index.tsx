@@ -7,7 +7,7 @@ import { HiOutlinePencilSquare } from "react-icons/hi2";
 import { SiGoogledocs } from "react-icons/si";
 import { FaUserPlus } from "react-icons/fa6";
 import { BsImages } from "react-icons/bs";
-import { FaSignature } from "react-icons/fa";
+import { FaSignature, FaFileAlt } from "react-icons/fa";
 import { FaComputer } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import { useGlobalModal } from "@/provider/GlobalModalProvider";
@@ -257,6 +257,14 @@ export function ModalOrdemdeServico({ data }: ModalOrdemdeServicoProps) {
               <button className={styles.buttonBuy} onClick={handleAddCard}>
                 <FaComputer size={21} />
                 Cadastrar nova Máquina
+              </button>
+
+              <button
+                className={styles.buttonBuy}
+                onClick={() => window.open(`/dashboard/ordemdeservico/${localOS.id}`, '_blank')}
+              >
+                <FaFileAlt size={18} />
+                Ordem de Serviço Digital
               </button>
             </div>
           </>
