@@ -109,6 +109,7 @@ import { CreateStatusTarefaController } from "./controllers/status_categorias/ta
 import { ListStatusTarefaController } from "./controllers/status_categorias/tarefa/ListStatusTarefaController";
 import { ListAtividadePadraoController } from "./controllers/status_categorias/Atividade/ListAtividadePadraoController";
 import { ExportOrdemdeServicoController } from "./controllers/controles_forms/OrdemdeServico/ExportOrdemdeServicoController";
+import { RelatorioSecretariaController } from "./controllers/controles_forms/OrdemdeServico/RelatorioSecretariaController";
 import { AIChatController } from "./api/ai/chat/route";
 const router = Router();
 //get,post, update, delete
@@ -335,3 +336,4 @@ router.get('/listtipodeordemdeservico', new ListtipodeOrdemdeServicoController()
 
 //Excel
 router.get('/ordens/exportar', isAuthenticated, (req, res) => new ExportOrdemdeServicoController().handle(req, res));
+router.get('/ordens/relatorio-secretaria', isAuthenticated, (req, res) => new RelatorioSecretariaController().handle(req, res));
