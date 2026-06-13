@@ -13,6 +13,7 @@ import { useGlobalModal } from '@/provider/GlobalModalProvider';
 import { ModalContext } from '@/provider/compras';
 import { exportOrdemServicoExcel } from '@/lib/exportExcel';
 import { RiFileExcel2Line } from "react-icons/ri";
+import RelatorioSecretariaModal from '@/app/components/relatorioSecretaria/RelatorioSecretariaModal';
 import { toast } from 'sonner';
 import Select, { StylesConfig } from 'react-select';
 
@@ -132,6 +133,7 @@ export default function TicketsList({ ticketsData }: Props) {
   const [endDate, setEndDate] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [relatorioSecretaria, setRelatorioSecretaria] = useState<'saude' | 'educacao' | null>(null);
   const [reportStatusId, setReportStatusId] = useState("");
   const [reportTipoOSId, setReportTipoOSId] = useState("");
   const [statusList, setStatusList] = useState<StatusPrioridade[]>([]);
@@ -293,7 +295,14 @@ return value
 
   return (
     <section>
-     
+
+      {relatorioSecretaria && (
+        <RelatorioSecretariaModal
+          secretaria={relatorioSecretaria}
+          onClose={() => setRelatorioSecretaria(null)}
+        />
+      )}
+
       <header className={styles.headerContainer}>
         <div className={styles.topSection}>
           <div className={styles.titleWrapper}>
@@ -307,6 +316,14 @@ return value
               <button className={styles.btnReport} onClick={() => setIsReportOpen(true)} title="Gerar Relatório">
                 <RiFileExcel2Line size={18} />
                 Relatório
+              </button>
+              <button className={styles.btnReport} onClick={() => setRelatorioSecretaria('educacao')} title="Relatório Secretaria da Educação">
+                <RiFileExcel2Line size={18} />
+                Rel. Educação
+              </button>
+              <button className={styles.btnReport} onClick={() => setRelatorioSecretaria('saude')} title="Relatório Secretaria da Saúde">
+                <RiFileExcel2Line size={18} />
+                Rel. Saúde
               </button>
               <button className={styles.btnSecondary} onClick={handleAddCardOrdemdeServico}>
                 Nova OS
