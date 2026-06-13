@@ -99,11 +99,6 @@ export default function ViewCardFoto({ ordemdeServico, onClose }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
              <div className={styles.lightboxActions}>
-              <button
-                className={styles.deleteBtn}
-                onClick={() => handleDeleteFoto(selectedFoto.id)}>🗑 Excluir
-              </button>
-
               <button 
                 className={styles.closeBtn}
                 onClick={() => setSelectedFoto(null)}>✕
