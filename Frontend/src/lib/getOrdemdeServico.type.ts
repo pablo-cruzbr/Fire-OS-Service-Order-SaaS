@@ -16,6 +16,7 @@ export interface Setor {
     id: string;
     name: string;
     endereco?: string;
+    cnpj?: string;
   };
 }
 
