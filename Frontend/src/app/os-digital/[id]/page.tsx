@@ -140,7 +140,7 @@ export default function OSDigitalPage() {
             <span><strong>Endereço:</strong> Rua Braz Cubas, 251, Sala 22, Centro em Mogi das Cruzes – SP</span>
           </div>
           <div className={styles.headerLogo}>
-            <Image src="/Logo11.svg" alt="Allti Service" width={80} height={80} className={styles.logo} />
+            <Image src="/logoAlltiService.JPG" alt="Allti Service" width={90} height={90} className={styles.logo} />
           </div>
         </header>
 
