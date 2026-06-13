@@ -16,21 +16,14 @@ interface TipoDeChamado {
   name: string;
 }
 
-interface TipoDeOrdemdeServico {
-  id: string;
-  name: string;
-}
-
 export default function FormularioAddTickets() {
   const [tiposDeChamado, setTiposDeChamado] = useState<TipoDeChamado[]>([]);
-  const [tipodeOrdemdeServico, setTipodeOrdemdeServico] = useState<TipoDeOrdemdeServico[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [usuario, setUsuario] = useState<UsuariosProps | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
-  // Função para gerar número de OS de 5 dígitos
   function gerarNumeroOS(): string {
     return Math.floor(10000 + Math.random() * 90000).toString();
   }
@@ -50,23 +43,6 @@ export default function FormularioAddTickets() {
       }
     }
     fetchTiposDeChamado();
-  }, []);
-
-   useEffect(() => {
-    async function fetchTiposDeOrdemdeServico() {
-      try {
-         const token = await getCookieClient();
-        const response = await api.get('/listtipodeordemdeservico', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setTipodeOrdemdeServico(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar tipos de chamado:', error);
-      }
-    }
-    fetchTiposDeOrdemdeServico();
   }, []);
 
   useEffect(() => {
@@ -100,7 +76,6 @@ export default function FormularioAddTickets() {
   const formData = new FormData(event.currentTarget);
   const name = formData.get('name')?.toString().trim();
   const tipodeChamado_id = formData.get('tipodeChamado_id')?.toString().trim();
-  const tipodeOrdemdeServico_id = formData.get('tipodeOrdemdeServico_id')?.toString().trim();
   const descricaodoProblemaouSolicitacao = formData.get('descricaodoProblemaouSolicitacao')?.toString().trim();
   const patrimoniodoequipamento = formData.get('patrimoniodoequipamento')?.toString().trim();
   const nomedoContatoaserProcuradonoLocal =
@@ -129,7 +104,7 @@ export default function FormularioAddTickets() {
       numeroOS,
       name,
       tipodeChamado_id,
-      tipodeOrdemdeServico_id: tipodeOrdemdeServico_id || undefined,
+      tipodeOrdemdeServico_id: '94e32deb-2a02-41f1-9573-b4b5c265e80a',
       descricaodoProblemaouSolicitacao,
       patrimoniodoequipamento,
       nomedoContatoaserProcuradonoLocal,
@@ -211,17 +186,6 @@ export default function FormularioAddTickets() {
               <div className={styles.inputField}>
                 <FaClipboardList className={styles.icon} />
                 <input type="text" name="name" placeholder="Nome completo" required />
-              </div>
-
-              <p>Tipo de Ordem de Serviço</p>
-              <div className={styles.inputField}>
-                <FaClipboardList className={styles.icon} />
-                <select name="tipodeOrdemdeServico_id" required className={styles.select}>
-                  <option value="" disabled hidden>Selecione o Tipo de OS</option>
-                  {tipodeOrdemdeServico.map((tipo) => (
-                    <option key={tipo.id} value={tipo.id}>{tipo.name}</option>
-                  ))}
-                </select>
               </div>
 
               <p>Tipo de Chamado</p>
