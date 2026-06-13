@@ -25,6 +25,10 @@ class ListOrdemdeServicoId {
                 diagnostico: true,
                 solucao: true,
                 assinante: true,
+                bannerassinatura: true,
+                startedAt: true,
+                endedAt: true,
+                duracao: true,
                 equipamento: {
                     select: {
                         id: true,
