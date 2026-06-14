@@ -8,7 +8,6 @@ import { OrdemdeServicoProps } from '@/lib/getOrdemdeServico.type';
 import styles from './OSDigital.module.scss';
 import { FaPrint } from 'react-icons/fa';
 import { MdPictureAsPdf } from 'react-icons/md';
-import Image from 'next/image';
 
 type Foto = { id: string; url: string };
 
@@ -69,8 +68,16 @@ export default function OSDigitalPage() {
       const canvas = await html2canvas(contentRef.current, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 15000,
+        onclone: (doc) => {
+          const imgs = doc.querySelectorAll('img');
+          imgs.forEach((img) => {
+            img.crossOrigin = 'anonymous';
+          });
+        },
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -140,7 +147,15 @@ export default function OSDigitalPage() {
             <span><strong>Endereço:</strong> Rua Braz Cubas, 251, Sala 22, Centro em Mogi das Cruzes – SP</span>
           </div>
           <div className={styles.headerLogo}>
-            <Image src="/logoAlltiService.JPG" alt="Allti Service" width={140} height={140} className={styles.logo} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logoAlltiService.JPG"
+              alt="Allti Service"
+              width={140}
+              height={140}
+              className={styles.logo}
+              crossOrigin="anonymous"
+            />
           </div>
         </header>
 
