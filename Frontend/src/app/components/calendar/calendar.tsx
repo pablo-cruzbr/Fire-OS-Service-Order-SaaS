@@ -224,6 +224,9 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
         return false;
       });
 
+      // Block the built-in "Novo evento" lightbox when clicking on empty slots
+      scheduler.attachEvent("onBeforeEventCreated", () => false);
+
       let oldDateBeforeMove: Date | null = null;
 
       scheduler.attachEvent(
