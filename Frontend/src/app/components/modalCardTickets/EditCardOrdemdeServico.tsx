@@ -16,7 +16,8 @@ type Instituicoes = { id: string; name: string; endereco?: string };
 type Cliente = { id: string; name: string; endereco?: string; cnpj?: string };
 type Equipamento = {id: string; name: string; patrimonio: string};
 type Prioridade = {id: string; name: string};
-type Tarefa = {id: string; name: string}; 
+type Tarefa = {id: string; name: string};
+type AtividadePadrao = {id: string; descricao: string; categoria: string};
 type FormState = {
   tecnico_id: string;
   statusOrdemdeServico_id: string;
@@ -60,7 +61,10 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
   const [equipamentoList, setEquipamentoList] = useState<Equipamento[]>([]);
   const [tipodeordemdeservicoList, setTipodeOrdemdeServicoList] = useState<TipodeOrdemdeServico[]>([]);
   const [prioridade, setPrioridade] = useState<Prioridade[]>([]);
-  const [tarefaList, setTarefaList] = useState<Tarefa[]>([]); 
+  const [tarefaList, setTarefaList] = useState<Tarefa[]>([]);
+  const [atividadeList, setAtividadeList] = useState<AtividadePadrao[]>([]);
+  const [selectedAtivIds, setSelectedAtivIds] = useState<Set<string>>(new Set());
+  const [existingAtivIds, setExistingAtivIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
   const customSelectStyles = {
@@ -135,6 +139,12 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
       solucao: (ordemdeServico as any)?.solucao ?? "",
       descricaodoProblemaouSolicitacao: (ordemdeServico as any)?.descricaodoProblemaouSolicitacao ?? "",
     });
+
+    const ids = new Set<string>(
+      ((ordemdeServico as any)?.atividades ?? []).map((a: any) => a.atividadePadrao.id as string)
+    );
+    setExistingAtivIds(ids);
+    setSelectedAtivIds(new Set(ids));
   }, [ordemdeServico]);
 
   useEffect(() => {
@@ -151,7 +161,8 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
           equipamentoRes,
           tipodeOrdemdeServicoRes,
           prioridadeRes,
-          tarefaRes 
+          tarefaRes,
+          atividadeRes,
         ] = await Promise.all([
           api.get("/listtecnico", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/liststatusordemdeservico", { headers: { Authorization: `Bearer ${token}` } }),
@@ -160,7 +171,8 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
           api.get("/listequipamento", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/listtipodeordemdeservico", { headers: { Authorization: `Bearer ${token}` } }),
           api.get("/liststatusprioridade", { headers: { Authorization: `Bearer ${token}` } }),
-          api.get("/liststatustarefa", { headers: { Authorization: `Bearer ${token}` } }), 
+          api.get("/liststatustarefa", { headers: { Authorization: `Bearer ${token}` } }),
+          api.get("/listatividade", { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
         setTecnicoList(tecnicosRes.data.controles ?? []);
@@ -168,9 +180,10 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
         setClienteList(clienteRes.data.controles ?? []);
         setInstituicaoList(instituicoesRes.data.instituicoes ?? []);
         setEquipamentoList(equipamentoRes.data ?? []);
-        setTipodeOrdemdeServicoList(tipodeOrdemdeServicoRes.data ?? [])
-        setPrioridade(prioridadeRes.data ?? [])
-        setTarefaList(tarefaRes.data ?? []); 
+        setTipodeOrdemdeServicoList(tipodeOrdemdeServicoRes.data ?? []);
+        setPrioridade(prioridadeRes.data ?? []);
+        setTarefaList(tarefaRes.data ?? []);
+        setAtividadeList(atividadeRes.data ?? []);
 
       } catch (error) {
         console.error("Erro ao buscar listas:", error);
@@ -204,6 +217,11 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
         solucao: form.solucao || undefined,
         descricaodoProblemaouSolicitacao: form.descricaodoProblemaouSolicitacao || undefined,
       };
+
+      const novasAtividades = [...selectedAtivIds].filter(id => !existingAtivIds.has(id));
+      if (novasAtividades.length > 0) {
+        payload.atividades_ids = JSON.stringify(novasAtividades);
+      }
 
       if (ordemdeServico) {
         await api.patch(`/ordemdeservico/update/${ordemdeServico.id}`, payload, {
@@ -350,6 +368,62 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
           placeholder="Descreva a solução aplicada..."
         />
       </label>
+
+      {atividadeList.length > 0 && (() => {
+        const categorias = [...new Set(atividadeList.map(a => a.categoria))].sort();
+        return (
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ fontWeight: 600, color: '#4B4B4B', fontSize: 14, marginBottom: 10 }}>
+              Atividades Realizadas
+            </p>
+            {categorias.map(cat => (
+              <div key={cat} style={{ marginBottom: 12 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#888', textTransform: 'uppercase', marginBottom: 6 }}>
+                  {cat}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {atividadeList.filter(a => a.categoria === cat).map(atv => (
+                    <label
+                      key={atv.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                        borderRadius: 8,
+                        border: `1.5px solid ${selectedAtivIds.has(atv.id) ? '#4E3182' : '#dde6ed'}`,
+                        background: selectedAtivIds.has(atv.id) ? '#f4f0ff' : '#f9fbfd',
+                        fontSize: 13,
+                        color: '#333',
+                        fontWeight: 'normal',
+                        margin: 0,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedAtivIds.has(atv.id)}
+                        onChange={() => {
+                          setSelectedAtivIds(prev => {
+                            const next = new Set(prev);
+                            next.has(atv.id) ? next.delete(atv.id) : next.add(atv.id);
+                            return next;
+                          });
+                        }}
+                        style={{ width: 16, height: 16, accentColor: '#4E3182', cursor: 'pointer', flexShrink: 0, margin: 0 }}
+                      />
+                      {atv.descricao}
+                      {existingAtivIds.has(atv.id) && (
+                        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#10b981', fontWeight: 600 }}>já adicionada</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       <div className={styles.buttonArea}>
         <button type="button" onClick={handleSubmit} disabled={loading}>
