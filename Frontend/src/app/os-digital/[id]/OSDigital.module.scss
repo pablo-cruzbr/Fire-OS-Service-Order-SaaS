@@ -116,6 +116,40 @@
   }
 }
 
+.atividadesBox {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #ddd;
+}
+
+.atividadesTitle {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.atividadeCategoria {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 6px 0 3px;
+}
+
+.atividadesList {
+  margin: 0 0 4px 16px;
+  padding: 0;
+  font-size: 12px;
+  color: #444;
+
+  li {
+    margin-bottom: 2px;
+  }
+}
+
 .assinaturaBox {
   border: 1px solid #ccc;
   min-height: 90px;
