@@ -115,6 +115,18 @@ class ListOrdemdeServicoId {
                         name: true,
                     },
                 },
+                atividades: {
+                    select: {
+                        id: true,
+                        atividadePadrao: {
+                            select: {
+                                id: true,
+                                descricao: true,
+                                categoria: true,
+                            },
+                        },
+                    },
+                },
                 user: {
                     select: {
                         id: true,
