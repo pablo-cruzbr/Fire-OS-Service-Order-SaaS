@@ -295,6 +295,23 @@ export default function OSDigitalPage() {
               <td colSpan={2} className={styles.cell}>
                 <strong>3) Procedimento realizado. (resolução do atendimento)</strong>
                 <span className={styles.value}>{os.solucao || os.diagnostico || '-'}</span>
+                {os.atividades && os.atividades.length > 0 && (
+                  <div className={styles.atividadesBox}>
+                    <strong className={styles.atividadesTitle}>Atividades realizadas:</strong>
+                    {[...new Set(os.atividades.map(a => a.atividadePadrao.categoria))].sort().map(cat => (
+                      <div key={cat}>
+                        <span className={styles.atividadeCategoria}>{cat}</span>
+                        <ul className={styles.atividadesList}>
+                          {os.atividades!
+                            .filter(a => a.atividadePadrao.categoria === cat)
+                            .map(a => (
+                              <li key={a.id}>{a.atividadePadrao.descricao}</li>
+                            ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </td>
             </tr>
 
