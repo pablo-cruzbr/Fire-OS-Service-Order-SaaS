@@ -66,7 +66,7 @@ export default function OSDigitalPage() {
       const jsPDF = (await import('jspdf')).default;
 
       const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
@@ -80,27 +80,41 @@ export default function OSDigitalPage() {
         },
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const MAX_BYTES = 4 * 1024 * 1024;
 
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      const buildPDF = (imgData: string) => {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
+        while (heightLeft > 0) {
+          position -= pageHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        return pdf;
+      };
+
+      let blob: Blob | null = null;
+      for (const quality of [0.8, 0.6, 0.4]) {
+        const imgData = canvas.toDataURL('image/jpeg', quality);
+        const pdf = buildPDF(imgData);
+        blob = pdf.output('blob');
+        if (blob.size <= MAX_BYTES) break;
       }
 
-      pdf.save(`OS-${os.numeroOS}.pdf`);
+      const url = URL.createObjectURL(blob!);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `OS-${os.numeroOS}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (e) {
       console.error('Erro ao gerar PDF:', e);
     } finally {
