@@ -1,6 +1,7 @@
 .wrapper {
-  background: #fff;
+  background: #e8e8e8;
   min-height: 100vh;
+  padding: 2rem 1rem;
 }
 
 .page {
@@ -11,6 +12,8 @@
   font-size: 13px;
   color: #333;
   background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
 }
 
 .pageTitle {
@@ -207,10 +210,13 @@
 
   .wrapper {
     padding: 0;
+    background: #fff;
   }
 
   .page {
     padding: 1rem;
     max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
   }
 }
