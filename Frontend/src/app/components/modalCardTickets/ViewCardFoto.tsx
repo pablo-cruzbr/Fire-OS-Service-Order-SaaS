@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import styles from "../modalCardCompras/editForm.module.scss";
 import { OrdemdeServicoProps } from "@/lib/getOrdemdeServico.type";
 import { getCookieClient } from "@/lib/cookieClient";
 import { HiOutlinePencilSquare } from "react-icons/hi2";
+import { MdUpload } from "react-icons/md";
+import { MdDeleteOutline } from "react-icons/md";
 
 type Status = { id: string; name: string };
 type Tecnicos = { id: string; name: string };
@@ -27,6 +29,8 @@ export default function ViewCardFoto({ ordemdeServico, onClose }: Props) {
 
   const [fotos, setFotos] = useState<FotoProps[]>([]);
   const [selectedFoto, setSelectedFoto] = useState<FotoProps | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,20 +48,40 @@ export default function ViewCardFoto({ ordemdeServico, onClose }: Props) {
     fetchData();
   }, [ordemdeServico.id]);
 
-  // Função para deletar foto
   const handleDeleteFoto = async (id: string) => {
     try {
       const token = await getCookieClient();
-
       await api.delete(`/foto/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Atualiza estado local (remove a foto sem precisar recarregar a página)
       setFotos((prev) => prev.filter((foto) => foto.id !== id));
       setSelectedFoto(null);
     } catch (error) {
       console.error("Erro ao deletar foto:", error);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const token = await getCookieClient();
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("ordemdeServico_id", ordemdeServico.id);
+        const res = await api.post("/foto", formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const novas = Array.isArray(res.data) ? res.data : [res.data];
+        setFotos((prev) => [...novas, ...prev]);
+      }
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -85,7 +109,24 @@ export default function ViewCardFoto({ ordemdeServico, onClose }: Props) {
 </div>
 
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={handleUpload}
+      />
+
       <div className={styles.buttonArea}>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+        >
+          <MdUpload size={18} />
+          {uploading ? "Enviando..." : "Adicionar Fotos"}
+        </button>
         <button onClick={onClose} type="button">
           Fechar
         </button>
@@ -99,7 +140,13 @@ export default function ViewCardFoto({ ordemdeServico, onClose }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
              <div className={styles.lightboxActions}>
-              <button 
+              <button
+                className={styles.deleteBtn}
+                onClick={() => handleDeleteFoto(selectedFoto.id)}
+              >
+                <MdDeleteOutline size={18} /> Excluir
+              </button>
+              <button
                 className={styles.closeBtn}
                 onClick={() => setSelectedFoto(null)}>✕
               </button>

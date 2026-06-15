@@ -25,7 +25,10 @@ type FormState = {
   equipamento_id: string;
   tipodeOrdemdeServico_id: string;
   prioridade_id: string;
-  tarefa_id: string; 
+  tarefa_id: string;
+  diagnostico: string;
+  solucao: string;
+  descricaodoProblemaouSolicitacao: string;
 };
 
 type TipodeOrdemdeServico = { id: string; name: string };
@@ -45,7 +48,10 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
     equipamento_id: "",
     tipodeOrdemdeServico_id: "",
     prioridade_id: "",
-    tarefa_id: "" 
+    tarefa_id: "",
+    diagnostico: "",
+    solucao: "",
+    descricaodoProblemaouSolicitacao: "",
   });
   const [statusList, setStatusList] = useState<Status[]>([]);
   const [tecnicoList, setTecnicoList] = useState<Tecnicos[]>([]);
@@ -123,8 +129,11 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
       cliente_id: clienteId?.toString() ?? "",
       equipamento_id: equipamentoId?.toString() ?? "",
       tipodeOrdemdeServico_id: tipodeordemdeservicoId?.toString() ?? "",
-      prioridade_id: prioridadeId?.toString()?? "",
-      tarefa_id: tarefaId?.toString() ?? "" 
+      prioridade_id: prioridadeId?.toString() ?? "",
+      tarefa_id: tarefaId?.toString() ?? "",
+      diagnostico: (ordemdeServico as any)?.diagnostico ?? "",
+      solucao: (ordemdeServico as any)?.solucao ?? "",
+      descricaodoProblemaouSolicitacao: (ordemdeServico as any)?.descricaodoProblemaouSolicitacao ?? "",
     });
   }, [ordemdeServico]);
 
@@ -185,12 +194,15 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
       const payload: any = {
         tecnico_id: form.tecnico_id || undefined,
         statusOrdemdeServico_id: form.statusOrdemdeServico_id || undefined,
-        cliente_id: form.cliente_id || null, 
+        cliente_id: form.cliente_id || null,
         instituicaoUnidade_id: form.instituicaoUnidade_id || null,
         equipamento_id: form.equipamento_id || null,
         tipodeOrdemdeServico_id: form.tipodeOrdemdeServico_id || null,
         prioridade_id: form.prioridade_id || null,
-        tarefa_id: form.tarefa_id || null, 
+        tarefa_id: form.tarefa_id || null,
+        diagnostico: form.diagnostico || undefined,
+        solucao: form.solucao || undefined,
+        descricaodoProblemaouSolicitacao: form.descricaodoProblemaouSolicitacao || undefined,
       };
 
       if (ordemdeServico) {
@@ -307,6 +319,36 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
             <option key={equi.id} value={equi.id}>{equi.patrimonio} - {equi.name}</option>
           ))}
         </select>
+      </label>
+
+      <label>
+        <p>Orientação / Descrição do Problema</p>
+        <textarea
+          name="descricaodoProblemaouSolicitacao"
+          value={form.descricaodoProblemaouSolicitacao}
+          onChange={handleChange as any}
+          placeholder="Descreva o problema ou solicitação..."
+        />
+      </label>
+
+      <label>
+        <p>Diagnóstico</p>
+        <textarea
+          name="diagnostico"
+          value={form.diagnostico}
+          onChange={handleChange as any}
+          placeholder="Diagnóstico realizado pelo técnico..."
+        />
+      </label>
+
+      <label>
+        <p>Solução / Procedimento Realizado</p>
+        <textarea
+          name="solucao"
+          value={form.solucao}
+          onChange={handleChange as any}
+          placeholder="Descreva a solução aplicada..."
+        />
       </label>
 
       <div className={styles.buttonArea}>
