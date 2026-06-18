@@ -250,7 +250,6 @@ export default function Calendar({ initialToken, events }: CalendarProps) {
         pendingRef.current = p;
         setPending(p);
 
-        // Desativa drag enquanto modal está aberto
         scheduler.config.drag_move = false;
 
         return true;
