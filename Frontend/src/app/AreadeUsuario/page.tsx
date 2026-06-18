@@ -6,27 +6,30 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import { Button } from "./Button"; 
+import { Button } from "./Button";
+import { loginSchema } from "@/lib/schemas/loginSchema";
 
 export default function AreadeUsuario() {
   
   async function handleLogin(formData: FormData) {
     "use server";
 
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const raw = {
+      email: formData.get("email")?.toString() ?? "",
+      password: formData.get("password")?.toString() ?? "",
+    };
 
-    if (!email || !password || email.toString().trim() === "") {
+    const parsed = loginSchema.safeParse(raw);
+    if (!parsed.success) {
       return;
     }
 
+    const { email, password } = parsed.data;
+
     try {
-      const response = await api.post("/session", {
-        email,
-        password,
-      });
-      
-      if(!response.data.token){
+      const response = await api.post("/session", { email, password });
+
+      if (!response.data.token) {
         return;
       }
 
