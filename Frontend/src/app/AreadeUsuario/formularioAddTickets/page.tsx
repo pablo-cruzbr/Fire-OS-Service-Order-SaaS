@@ -134,7 +134,7 @@ export default function FormularioAddTickets() {
       {/* PAINEL ESQUERDO (ROXO) - Focado em Info do Usuário */}
       <div className={`${styles.panel} ${styles.leftPanel}`}>
         <div className={styles.content}>
-          <h3>Bem Vindo ao AlltiControl</h3>
+          <h3>Bem Vindo ao Fire OS</h3>
           <p>
             Gerencie suas solicitações de forma rápida <br /> 
             e integrada ao nosso sistema.
