@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Em_Produção-4E3182?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Usuários-68+-success?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Instituições-130+-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Status-Projeto_Pessoal-4E3182?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/OS_Processadas-47-success?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Uso_Real-2_meses-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" />
 </p>
 
@@ -34,24 +34,25 @@ https://github.com/user-attachments/assets/efd1a521-6f85-4665-85ff-24a6ef1e14bf
 
 ## 🎯 O Problema Real
 
-A [**Alltiservice**](https://alltiservice.com.br) é uma empresa de TI terceirizada com 4+ anos de mercado, prestando serviços para prefeituras, escolas e postos de saúde em Mogi das Cruzes/SP. Seus técnicos de campo perdiam horas por dia navegando por **5 a 6 telas diferentes** em sistemas legados para registrar uma única ordem de serviço — gastando mais tempo no software do que no hardware.
+Empresas de TI terceirizadas que atendem prefeituras, escolas e postos de saúde costumam depender de sistemas legados onde o técnico de campo precisa navegar por **5 a 6 telas diferentes** para registrar uma única ordem de serviço — gastando mais tempo no software do que no hardware.
 
-**O AlltiControl resolve isso** — construí o sistema internamente para a própria Alltiservice: gestão completa das ordens de serviço em **2 telas**, com app mobile para o técnico em campo e painel estratégico para o gestor. Atualmente em fase de implantação e testes dentro da empresa.
+**O AlltiControl resolve isso.** Identifiquei esse problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: app mobile para o técnico em campo e painel web estratégico para o gestor.
 
 ---
 
-## 📈 Impacto em Produção
+## 📈 Validação em Uso Real
+
+O sistema foi implantado em ambiente real de trabalho para validação, processando ordens de serviço de equipes técnicas atendendo instituições públicas.
 
 | Métrica | Antes (Sistema Legado) | Depois (AlltiControl) | Ganho |
 |---|---|---|---|
 | Telas por OS | 5–6 telas | **2 telas** | **−66% complexidade** |
 | Esforço de input | 100% manual/fragmentado | Fluxo otimizado | **−83% esforço** |
-| Escala | Local/limitada | Cloud-ready | **130+ unidades** |
 | Mobilidade | Zero | App nativo iOS/Android | **100% field-ready** |
 
-- **68 usuários** da Alltiservice cadastrados na plataforma  
-- **130+ instituições atendidas** pela Alltiservice (postos de saúde e escolas municipais)  
-- **100% das OSs** da equipe técnica da Alltiservice passando pelo sistema  
+- **47 ordens de serviço** processadas em **2 meses de uso real**
+- **44 OS concluídas com sucesso** através do fluxo otimizado
+- Validação direta com técnicos de campo e gestores em ambiente de trabalho real
 
 ---
 
@@ -244,9 +245,11 @@ npx expo start
 
 ## 🏁 Contexto de Desenvolvimento
 
-Desenvolvido paralelamente à atuação como **técnico de helpdesk N2 na [Alltiservice](https://alltiservice.com.br)**, o projeto foi validado com os próprios técnicos de campo em cada feature, apresentado à gestão com protótipo funcional de 3 módulos-chave e aprovado para uso interno — resultando em **promoção a Desenvolvedor Fullstack antes de completar 1 ano na empresa**.
+Desenvolvido solo, **fora do horário de trabalho**, paralelamente à atuação como técnico de helpdesk N2. Identifiquei o problema observando o dia a dia de campo, construí a solução do zero, e validei cada feature diretamente com técnicos e gestores em ambiente real de trabalho.
 
-Atualmente em fase de implantação e testes dentro da Alltiservice, gerenciando as ordens de serviço das equipes que atendem prefeituras, escolas e postos de saúde em Mogi das Cruzes/SP.
+O protótipo funcional foi apresentado com 3 módulos-chave e teve uso real validado — processando **47 ordens de serviço em 2 meses**, com **44 concluídas com sucesso**. Essa entrega resultou em **promoção a Desenvolvedor Fullstack antes de completar 1 ano na empresa**.
+
+Hoje mantenho este projeto como portfólio pessoal e continuo evoluindo a arquitetura e as funcionalidades de forma independente.
 
 ---
 
