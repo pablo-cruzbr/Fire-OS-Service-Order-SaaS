@@ -53,7 +53,6 @@ export interface OrdemdeServicoProps {
   user_id: string;
 
   nameTecnico?: string;
-  diagnostico?: string;
   solucao?: string;
   bannerassinatura?: string;
 
