@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git -C \"c:\\\\Projetos\\\\Allti-Control\\\\AlltiControl-App\" add src/pages/Signin/index.tsx)",
-      "Bash(git -C \"c:\\\\Projetos\\\\Allti-Control\\\\AlltiControl-App\" commit -m \"feat\\(signin\\): add password visibility toggle with eye icon\")"
-    ]
-  }
-}
