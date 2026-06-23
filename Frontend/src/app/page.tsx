@@ -1,6 +1,6 @@
 import Image from "next/image";
 import styles from './page.module.scss';
-import logoImg from "../../public/Logo10.svg";
+import logoImg from "../../public/Fire-os-fundo-branco.svg";
 import { cookies } from "next/headers";
 import { api } from "@/services/api";
 import { redirect } from "next/navigation";
