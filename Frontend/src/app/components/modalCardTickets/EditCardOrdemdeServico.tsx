@@ -27,7 +27,6 @@ type FormState = {
   tipodeOrdemdeServico_id: string;
   prioridade_id: string;
   tarefa_id: string;
-  diagnostico: string;
   solucao: string;
   descricaodoProblemaouSolicitacao: string;
 };
@@ -50,7 +49,6 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
     tipodeOrdemdeServico_id: "",
     prioridade_id: "",
     tarefa_id: "",
-    diagnostico: "",
     solucao: "",
     descricaodoProblemaouSolicitacao: "",
   });
@@ -135,7 +133,6 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
       tipodeOrdemdeServico_id: tipodeordemdeservicoId?.toString() ?? "",
       prioridade_id: prioridadeId?.toString() ?? "",
       tarefa_id: tarefaId?.toString() ?? "",
-      diagnostico: (ordemdeServico as any)?.diagnostico ?? "",
       solucao: (ordemdeServico as any)?.solucao ?? "",
       descricaodoProblemaouSolicitacao: (ordemdeServico as any)?.descricaodoProblemaouSolicitacao ?? "",
     });
@@ -213,7 +210,6 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
         tipodeOrdemdeServico_id: form.tipodeOrdemdeServico_id || null,
         prioridade_id: form.prioridade_id || null,
         tarefa_id: form.tarefa_id || null,
-        diagnostico: form.diagnostico || undefined,
         solucao: form.solucao || undefined,
         descricaodoProblemaouSolicitacao: form.descricaodoProblemaouSolicitacao || undefined,
       };
@@ -346,16 +342,6 @@ export default function EditCardOrdemdeServico({ ordemdeServico, onClose, onSave
           value={form.descricaodoProblemaouSolicitacao}
           onChange={handleChange as any}
           placeholder="Descreva o problema ou solicitação..."
-        />
-      </label>
-
-      <label>
-        <p>Diagnóstico</p>
-        <textarea
-          name="diagnostico"
-          value={form.diagnostico}
-          onChange={handleChange as any}
-          placeholder="Diagnóstico realizado pelo técnico..."
         />
       </label>
 
