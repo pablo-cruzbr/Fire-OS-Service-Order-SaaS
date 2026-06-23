@@ -131,7 +131,6 @@ export default function FormularioAddTickets() {
   <div className={styles.container}>
     <div className={styles.panelsContainer}>
       
-      {/* PAINEL ESQUERDO (ROXO) - Focado em Info do Usuário */}
       <div className={`${styles.panel} ${styles.leftPanel}`}>
         <div className={styles.content}>
           <h3>Bem Vindo ao Fire OS</h3>
