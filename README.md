@@ -1,6 +1,6 @@
-# Tech-OS — Service Order Management SaaS
+# Fire OS — Service Order Management SaaS
 
-![Tests](https://github.com/pablo-cruzbr/Tech-OS/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/pablo-cruzbr/Fire-OS/actions/workflows/test.yml/badge.svg)
 
 ### *"Engenharia focada na eficiência: Eliminando a burocracia na gestão de Serviços de Informática."*
 
@@ -28,7 +28,7 @@
 
 https://github.com/user-attachments/assets/efd1a521-6f85-4665-85ff-24a6ef1e14bf
 
-<img width="1280" height="800" alt="Tech-OS Dashboard" src="https://github.com/user-attachments/assets/d31a0cc7-cdcb-45d1-ba0e-5f8f706cc603" />
+<img width="1280" height="800" alt="Fire OS Dashboard" src="https://github.com/user-attachments/assets/d31a0cc7-cdcb-45d1-ba0e-5f8f706cc603" />
 
 ---
 
@@ -36,7 +36,7 @@ https://github.com/user-attachments/assets/efd1a521-6f85-4665-85ff-24a6ef1e14bf
 
 Empresas de TI terceirizadas que atendem prefeituras, escolas e postos de saúde costumam depender de sistemas legados onde o técnico de campo precisa navegar por **5 a 6 telas diferentes** para registrar uma única ordem de serviço — gastando mais tempo no software do que no hardware.
 
-**O Tech-OS resolve isso.** Identifiquei esse problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: app mobile para o técnico em campo e painel web estratégico para o gestor.
+**O Fire OS resolve isso.** Identifiquei esse problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: app mobile para o técnico em campo e painel web estratégico para o gestor.
 
 ---
 
@@ -44,7 +44,7 @@ Empresas de TI terceirizadas que atendem prefeituras, escolas e postos de saúde
 
 O sistema foi implantado em ambiente real de trabalho para validação, processando ordens de serviço de equipes técnicas atendendo instituições públicas.
 
-| Métrica | Antes (Sistema Legado) | Depois (Tech-OS) | Ganho |
+| Métrica | Antes (Sistema Legado) | Depois (Fire OS) | Ganho |
 |---|---|---|---|
 | Telas por OS | 5–6 telas | **2 telas** | **−66% complexidade** |
 | Esforço de input | 100% manual/fragmentado | Fluxo otimizado | **−83% esforço** |
@@ -58,7 +58,7 @@ O sistema foi implantado em ambiente real de trabalho para validação, processa
 
 ## 🏗️ Arquitetura do Sistema
 
-O Tech-OS opera como um **monorepo com 3 camadas integradas**:
+O Fire OS opera como um **monorepo com 3 camadas integradas**:
 
 ```mermaid
 graph TB
@@ -92,7 +92,7 @@ graph TB
 ## 📁 Estrutura do Projeto
 
 ```
-tech-os/                              # Monorepo
+fire-os/                              # Monorepo
 │
 ├── Frontend/                         # Next.js 14 — Painel Administrativo Web
 │   └── src/
@@ -123,7 +123,7 @@ tech-os/                              # Monorepo
 │       ├── Middleware/               # Autenticação JWT
 │       └── routes.ts                 # Registro centralizado de todas as rotas
 │
-└── Tech-OS-App/                      # React Native + Expo — App do Técnico
+└── FireOS-App/                      # React Native + Expo — App do Técnico
     └── src/
         ├── pages/
         │   ├── Dashboard/            # Lista de OS atribuídas ao técnico
@@ -224,7 +224,7 @@ npm run dev
 ### 3. App Mobile
 
 ```bash
-cd Tech-OS-App
+cd FireOS-App
 npm install
 
 # Configure a URL da API em src/services/api.ts
