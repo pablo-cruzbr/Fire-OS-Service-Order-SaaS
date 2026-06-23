@@ -15,7 +15,7 @@ import { FaCalendarDays } from "react-icons/fa6";
 import { FiUserPlus } from "react-icons/fi";
 import { LiaUserAstronautSolid } from "react-icons/lia";
 
-import logo from "../../../../public/Logo11.svg";
+import logo from "../../../../public/Fire-os-fundo-roxo.svg";
 import styles from "../sidebar/Sidebar.module.scss";
 
 type DropdownKeys = "tickets" | "controles" | "clientes" | "cadastros";
