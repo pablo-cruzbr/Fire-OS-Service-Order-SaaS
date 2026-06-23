@@ -38,7 +38,6 @@ export function ModalDetailOrderFormTecnico({
 }: ModalDetailOrderTecnicoProps) {
   const [nameTecnico, setNameTecnico] = useState('');
   const [assinante, setAssinante] = useState('');
-  const [diagnostico, setDiagnostico] = useState('');
   const [solucao, setSolucao] = useState('');
   const [signature, setSignature] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -95,7 +94,6 @@ useEffect(() => {
         `/ordemdeservico/update/${ordemId}`,
         {
           nameTecnico,
-          diagnostico,
           solucao,
           assinante,
           assinatura: signature,
@@ -145,14 +143,6 @@ useEffect(() => {
               placeholderStyle={{ color: '#999', fontSize: 14 }}
             />
 
-            <TextInput
-              placeholder="Diagnóstico"
-              style={[styles.input, styles.textArea]}
-              value={diagnostico}
-              onChangeText={setDiagnostico}
-              multiline
-            />
-            
             <TextInput
               placeholder="Solução"
               style={[styles.input, styles.textArea]}
