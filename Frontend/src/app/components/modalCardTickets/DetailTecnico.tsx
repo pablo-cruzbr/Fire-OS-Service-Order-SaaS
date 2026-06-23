@@ -143,12 +143,6 @@ const formatSecondsToHHMMSS = (secs?: number | null): string => {
     <strong>Solução Técnica:</strong> {ordemdeServico.solucao || "Sem Detalhes Técnicos"}
   </p>
 
-  {/* No seu FormularioTickets você não tem um campo 'diagnostico'. 
-      Se quiser usar esse campo, precisará adicionar um textarea no formulário. */}
-  <p>
-    <strong>Diagnóstico:</strong> {ordemdeServico.diagnostico || "Sem diagnóstico registrado"}
-  </p>
-
   <p>
     <strong>Técnico Responsável:</strong> {ordemdeServico.tecnico?.name || "Não atribuído"}
   </p>
