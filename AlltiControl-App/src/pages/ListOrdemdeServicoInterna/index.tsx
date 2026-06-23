@@ -29,7 +29,6 @@ export type OrdensDeServico = {
   nomedoContatoaserProcuradonoLocal: string;
   created_at: string;
   nameTecnico: string | null;
-  diagnostico: string | null;
   solucao: string | null;
   bannerassinatura: string | null;
   numeroOS: number;
@@ -385,14 +384,9 @@ export default function ListOrdemdeServicoInterna() {
               )}
 
               {item.instituicaoUnidade && (
-                <>
-                  <Text style={styles.cardSubtitle}>
-                    Diagnóstico - MOBILE: {item.diagnostico}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>
-                    Endereço: {item.instituicaoUnidade.endereco}
-                  </Text>
-                </>
+                <Text style={styles.cardSubtitle}>
+                  Endereço: {item.instituicaoUnidade.endereco}
+                </Text>
               )}
 
               <Text style={styles.cardItem}>
