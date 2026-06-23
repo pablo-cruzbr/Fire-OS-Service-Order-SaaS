@@ -30,7 +30,6 @@ export type OrdensDeServico = {
   nomedoContatoaserProcuradonoLocal: string;
   created_at: string;
   nameTecnico: string | null;
-  diagnostico: string | null;
   solucao: string | null;
   bannerassinatura: string | null;
   assinante: string | null;
