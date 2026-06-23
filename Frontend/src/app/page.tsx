@@ -27,7 +27,7 @@ export default async function Home({ searchParams }: PageProps) {
 
     const parsed = loginSchema.safeParse(raw);
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message || "Dados inválidos";
+      const msg = parsed.error.issues[0]?.message || "Dados inválidos";
       redirect(`/?error=${encodeURIComponent(msg)}`);
     }
 
