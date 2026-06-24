@@ -24,10 +24,6 @@
 
 ---
 
-## ▶ Demonstração em Vídeo
-
-https://github.com/user-attachments/assets/efd1a521-6f85-4665-85ff-24a6ef1e14bf
-
 ---
 
 ## 🎯 O Problema Real
