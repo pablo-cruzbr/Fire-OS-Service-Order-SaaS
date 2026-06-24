@@ -72,7 +72,7 @@ export default function Signin() {
       <View style={styles.circleTop} />
       <View style={styles.circleBottom} />
       <View style={styles.card}>
-        <Image style={styles.logo} source={require("../../assets/Logo9.png")} />
+        <Image style={styles.logo} source={require("../../assets/FireLogo2.png")} />
         <Text style={styles.title}>Faça seu Login</Text>
 
         <View style={styles.fieldWrapper}>
