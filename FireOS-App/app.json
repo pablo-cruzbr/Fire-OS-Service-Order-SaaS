@@ -16,9 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.pablocruz.fireos"
     },
-   "android": {
+    "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icone.png", 
+        "foregroundImage": "./assets/icone.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.pablocruz.fireos"
@@ -27,7 +27,7 @@
       "favicon": "./assets/icone.png"
     },
     "updates": {
-      "url": "https://u.expo.dev/af340b43-6e46-4e3a-9478-c78e9f104860"
+      "url": "https://u.expo.dev/1a038fe7-8aa2-4a0f-a05d-eb3e3a57de46"
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -36,11 +36,11 @@
       "expo-asset",
       "expo-font"
     ],
+    "owner": "pablo-cruz-br",
     "extra": {
       "eas": {
-        "projectId": "af340b43-6e46-4e3a-9478-c78e9f104860"
+        "projectId": "1a038fe7-8aa2-4a0f-a05d-eb3e3a57de46"
       }
-    },
-    "owner": "pablo-cruz-br"
+    }
   }
 }
