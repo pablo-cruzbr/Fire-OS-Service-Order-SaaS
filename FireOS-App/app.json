@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Allti-Control-App",
-    "slug": "Allti-Control-App",
+    "name": "Fire-OS-App",
+    "slug": "Fire-OS-App",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icone.png",
@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pablocruz.allticontrol"
+      "bundleIdentifier": "com.pablocruz.fireos"
     },
    "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icone.png", 
         "backgroundColor": "#ffffff"
       },
-      "package": "com.pablocruz.allticontrol"
+      "package": "com.pablocruz.fireos"
     },
     "web": {
       "favicon": "./assets/icone.png"
