@@ -46,7 +46,7 @@ async function validateToken(token: string): Promise<boolean> {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", 
-    "/AreadeUsuario/:path*"
-  ], 
+    "/dashboard/:path*",
+    "/AreadeUsuario/:path+"
+  ],
 };
