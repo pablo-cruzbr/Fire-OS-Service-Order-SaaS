@@ -79,7 +79,7 @@ export default function AreadeUsuario() {
 
             <div className={styles.userAreaContainer}>
               <p className={styles.text}>É um colaborador?</p>
-              <Link href="https://allti-control-frontend.vercel.app/" className={styles.userLink}>
+              <Link href="https://fire-os-frontend.vercel.app/" className={styles.userLink}>
                 Portal Administrativo
               </Link>
             </div>
