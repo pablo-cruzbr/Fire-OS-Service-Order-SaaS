@@ -9,6 +9,8 @@ interface ListRequest {
   tarefa_id?: string;
   status_id?: string;
   tipoOS_id?: string;
+  page?: number;
+  limit?: number;
 }
 
 class ListOrdemdeServicoService {
@@ -21,6 +23,8 @@ class ListOrdemdeServicoService {
     tarefa_id,
     status_id,
     tipoOS_id,
+    page,
+    limit,
   }: ListRequest) {
     
     const user = await prismaClient.user.findFirst({
