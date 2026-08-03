@@ -358,6 +358,56 @@
 }
 
 
+.pagination {
+  width: 100%;
+  max-width: 1200px;
+  margin: 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: "Poppins", sans-serif;
+
+  .pageArrow,
+  .pageNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1.5px solid #eef2f6;
+    background-color: #f8fafc;
+    color: #4E3182;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      border-color: #4E3182;
+      background-color: #f4f0ff;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  .pageNumber.pageActive {
+    background-color: #4E3182;
+    border-color: #4E3182;
+    color: #ffffff;
+  }
+
+  .pageDots {
+    color: #94a3b8;
+    padding: 0 4px;
+  }
+}
+
 // header.module.scss
 .headerContainer {
   display: flex;
