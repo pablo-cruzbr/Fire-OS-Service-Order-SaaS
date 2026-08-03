@@ -608,6 +608,8 @@ return value
         ))}
       </div>
 
+      <p className={styles.sortInfo}>Ordens mais recentes para mais antigas</p>
+
       {totalPages > 1 && renderPagination('top')}
 
       <div className={styles.listContainer}>
