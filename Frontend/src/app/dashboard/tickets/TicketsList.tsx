@@ -308,6 +308,21 @@ return value
     setCurrentPage(1);
   }, [selectedStatus, searchOS, selectedInstituicao, selectedCliente, selectedTipoOrdem, selectedPrioridade, selectedTarefa]);
 
+  const getPageNumbers = (): (number | 'dots')[] => {
+    const delta = 1;
+    const pages: (number | 'dots')[] = [];
+    for (let i = 1; i <= totalPages; i++) {
+      const isEdge = i === 1 || i === totalPages;
+      const isNearCurrent = i >= currentPage - delta && i <= currentPage + delta;
+      if (isEdge || isNearCurrent) {
+        pages.push(i);
+      } else if (pages[pages.length - 1] !== 'dots') {
+        pages.push('dots');
+      }
+    }
+    return pages;
+  };
+
   return (
     <section>
 
@@ -579,6 +594,42 @@ return value
           </div>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageArrow}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            aria-label="Página anterior"
+          >
+            <LuChevronLeft size={18} />
+          </button>
+
+          {getPageNumbers().map((page, idx) =>
+            page === 'dots' ? (
+              <span key={`dots-${idx}`} className={styles.pageDots}>…</span>
+            ) : (
+              <button
+                key={page}
+                className={`${styles.pageNumber} ${currentPage === page ? styles.pageActive : ''}`}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </button>
+            )
+          )}
+
+          <button
+            className={styles.pageArrow}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            aria-label="Próxima página"
+          >
+            <LuChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </section>
   );
 }
