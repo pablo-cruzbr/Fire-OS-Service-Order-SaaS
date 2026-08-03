@@ -608,6 +608,8 @@ return value
         ))}
       </div>
 
+      {totalPages > 1 && renderPagination('top')}
+
       <div className={styles.listContainer}>
         {paginatedControles.map((ticket) => (
           <div
