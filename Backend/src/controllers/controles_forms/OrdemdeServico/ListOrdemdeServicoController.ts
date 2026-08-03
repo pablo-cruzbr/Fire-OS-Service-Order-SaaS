@@ -9,23 +9,27 @@ class ListOrdemdeServicoController {
 
         const user_id = req.user_id as string;
 
-        const { 
-            startDate, 
-            endDate, 
-            cliente_id, 
+        const {
+            startDate,
+            endDate,
+            cliente_id,
             instituicao_id,
-            tarefa_id 
+            tarefa_id,
+            page,
+            limit
         } = req.query;
 
         const service = new ListOrdemdeServicoService();
 
-        const result = await service.execute({ 
+        const result = await service.execute({
             user_id,
             startDate: startDate as string,
             endDate: endDate as string,
             cliente_id: cliente_id as string,
             instituicao_id: instituicao_id as string,
-            tarefa_id: tarefa_id as string 
+            tarefa_id: tarefa_id as string,
+            page: page ? Number(page) : undefined,
+            limit: limit ? Number(limit) : undefined
         });
 
         return res.json(result);
