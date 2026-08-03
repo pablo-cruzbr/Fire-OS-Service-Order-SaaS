@@ -215,7 +215,10 @@ class ListOrdemdeServicoService {
       totalConcluida,
       totalPausada,
       totalTicket,
-      totalOrdemdeServico
+      totalOrdemdeServico,
+      page: currentPage,
+      limit: currentLimit,
+      totalPages: Math.ceil(total / currentLimit),
     };
   }
 }
