@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import styles from './ticketsLit.module.scss';
 import { FaRegTrashAlt } from "react-icons/fa";
 import { IoDocumentTextOutline } from "react-icons/io5";
-import { LuRefreshCcw } from "react-icons/lu";
+import { LuRefreshCcw, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { OrdemdeServicoResponseData, OrdemdeServicoProps } from '@/lib/getOrdemdeServico.type';
 import { getCookieClient } from '@/lib/cookieClient';
 import { api } from '@/services/api';
@@ -127,6 +127,10 @@ export default function TicketsList({ ticketsData }: Props) {
   const [selectedCliente, setSelectedCliente] = useState<string>("");
   const [selectedPrioridade, setSelectedPrioridade] = useState<string>("");
   const [selectedTarefa, setSelectedTarefa] = useState<string[]>([]);
+
+  // Paginação da lista de tickets
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   //Estados de Relatório
   const [startDate, setStartDate] = useState("");
@@ -292,6 +296,17 @@ return value
 
     return matchStatus && matchCategoryCard && matchOS && matchInstituicao && matchCliente && matchTipodeOrdemdeServico && matchPrioridade && matchTarefa;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredControles.length / itemsPerPage));
+  const paginatedControles = filteredControles.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Sempre que o filtro muda, a lista filtrada muda de tamanho, então volta pra página 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus, searchOS, selectedInstituicao, selectedCliente, selectedTipoOrdem, selectedPrioridade, selectedTarefa]);
 
   return (
     <section>
@@ -543,7 +558,7 @@ return value
       </div>
 
       <div className={styles.listContainer}>
-        {filteredControles.map((ticket) => (
+        {paginatedControles.map((ticket) => (
           <div
             key={ticket.id}
             onClick={() => handleDetailOrdemdeServico(ticket)}
