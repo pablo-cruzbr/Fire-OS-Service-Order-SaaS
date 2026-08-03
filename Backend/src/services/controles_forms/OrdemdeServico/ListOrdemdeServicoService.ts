@@ -94,12 +94,20 @@ class ListOrdemdeServicoService {
       whereCondition.tipodeOrdemdeServico_id = tipoOS_id;
     }
 
+    // 5. Paginação por offset (skip/take). Só é aplicada se "page" for informado,
+    // para não quebrar quem ainda consome a lista completa.
+    const isPaginated = !!page;
+    const currentPage = page && page > 0 ? page : 1;
+    const currentLimit = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * currentLimit;
+
     // Busca principal com os filtros acumulados
     const controles = await prismaClient.ordemdeServico.findMany({
       where: whereCondition,
       orderBy: {
         created_at: "desc",
       },
+      ...(isPaginated && { skip, take: currentLimit }),
       select: {
         id: true,
         numeroOS: true,
