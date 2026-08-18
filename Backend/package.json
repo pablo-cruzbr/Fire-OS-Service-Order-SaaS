@@ -10,7 +10,9 @@
     "vercel-build": "prisma generate && tsc",
     "migrate": "prisma migrate deploy",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "worker": "ts-node-dev src/queue/uploadWorker.ts",
+    "queue:demo": "ts-node src/queue/addSampleJob.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -29,6 +31,7 @@
     "@prisma/client": "^6.8.2",
     "ai": "^6.0.177",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^6.1.2",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -36,6 +39,7 @@
     "express": "4",
     "express-async-errors": "^3.1.1",
     "express-fileupload": "^1.5.2",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "prisma": "^6.7.0",
