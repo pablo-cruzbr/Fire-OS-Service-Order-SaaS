@@ -50,16 +50,118 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 ---
 
-## 1. Autorização (RBAC) — o item de maior alavancagem
+## 1. Autorização (RBAC) — o item de maior alavancagem ✅ implementado em 17/08/2026
 
 Isto é o achado mais valioso do projeto: você já escreveu a peça certa, ela só não está ligada.
 
-- [ ] Importar e aplicar `can([...roles])` (`src/Middleware/can.ts`) nas rotas de `routes.ts` — hoje ele existe, tem teste zero e **nenhuma rota o usa**. Resultado prático: qualquer usuário autenticado, seja `USER`, `TECNICO` ou `ADMIN`, acessa as mesmas +80 rotas.
-- [ ] Definir a matriz de permissão por recurso (ex.: só `ADMIN` remove cliente/instituição; só `ADMIN`/`TECNICO` fecha OS) antes de sair aplicando — isso é a parte de "system design" que pesa em entrevista de pleno, não o `if` em si.
-- [ ] Proteger `POST /users` (`routes.ts:127`) — hoje é uma rota pública, sem `isAuthenticated`. Qualquer pessoa na internet cria uma conta `USER` no seu banco de produção. Decida: deveria exigir `ADMIN`, ou existe um fluxo de auto-cadastro intencional? Documente a decisão.
-- [ ] Escrever testes para `can.ts` (autorizado passa, sem role bloqueia com 401, role errada bloqueia com 403) — é o middleware mais crítico do sistema e o único sem cobertura nenhuma.
+- [x] Importar e aplicar `can([...roles])` (`src/Middleware/can.ts`) nas rotas de `routes.ts` — hoje ele existe, tem teste zero e **nenhuma rota o usa**. Resultado prático: qualquer usuário autenticado, seja `USER`, `TECNICO` ou `ADMIN`, acessa as mesmas +80 rotas.
+- [x] Definir a matriz de permissão por recurso (ex.: só `ADMIN` remove cliente/instituição; só `ADMIN`/`TECNICO` fecha OS) antes de sair aplicando — isso é a parte de "system design" que pesa em entrevista de pleno, não o `if` em si.
+- [x] Proteger `POST /users` (`routes.ts:127`) — hoje é uma rota pública, sem `isAuthenticated`. Qualquer pessoa na internet cria uma conta `USER` no seu banco de produção. Decida: deveria exigir `ADMIN`, ou existe um fluxo de auto-cadastro intencional? Documente a decisão.
+- [x] Escrever testes para `can.ts` (autorizado passa, sem role bloqueia com 401, role errada bloqueia com 403) — é o middleware mais crítico do sistema e o único sem cobertura nenhuma.
 
 **Estudar:** autenticação vs. autorização como conceitos separados; RBAC vs. ABAC; por que "funciona no meu teste manual" não prova que a permissão está aplicada.
+
+**Por que os dois middlewares existem separados:**
+
+- `isAuthenticated` responde *"essa pessoa está logada?"* — lê o token e injeta `req.user_id`/`req.user_role`. Sem ele numa rota, **qualquer pessoa sem login nenhum** chama a rota. É o que falta hoje em `POST /users` (`routes.ts:127`).
+- `can([...roles])` responde uma pergunta diferente, que só faz sentido **depois** da primeira: *"está logada E tem a role certa pra isso?"* Sem ele (mesmo com `isAuthenticated` presente), **qualquer role logada** — inclusive um `USER` comum que se autocadastrou — chama `DELETE /deletecliente`, porque a rota só checou "está logado?", nunca "é admin?".
+
+São dois filtros em sequência, cada um barrando um tipo de invasor diferente — tirar qualquer um dos dois abre uma porta diferente.
+
+**Versão mais simples e mais pleno de aplicar isso:** hoje `isAuthenticated` é colado manualmente em cada uma das +80 linhas de `routes.ts` — frágil, fácil esquecer numa rota nova (foi o que aconteceu). A melhoria de nível pleno não é adicionar mais código, é **inverter a regra padrão**: em vez de "toda rota é pública, a não ser que eu lembre de proteger", vira "toda rota é privada por padrão, só as que eu listar explicitamente são públicas" (princípio de *fail-secure*).
+
+```ts
+// hoje: isAuthenticated repetido, fácil esquecer numa rota nova
+router.post('/users', new CreateUserController().handle)              // esqueceram
+router.get('/users/detail', isAuthenticated, ...)
+router.delete('/deletecliente', isAuthenticated, ...)
+```
+
+```ts
+// versão pleno: dois roteadores, autenticação aplicada UMA vez só
+const publicRouter = Router();
+const privateRouter = Router();
+
+publicRouter.post('/login', new AuthUserController().handle);
+// /users (cadastro) só fica aqui se for intencionalmente público — decisão do item acima
+
+privateRouter.use(isAuthenticated); // roda pra TUDO abaixo, sem precisar repetir
+privateRouter.get('/users/detail', new DetailUserController().handle);
+privateRouter.delete('/deletecliente', can(['ADMIN']), new RemoveClienteController().handle);
+// ...resto das rotas, sem repetir isAuthenticated em cada uma
+
+app.use(publicRouter);
+app.use(privateRouter);
+```
+
+Com isso, esquecer de proteger uma rota nova deixa de ser possível por padrão — ela só fica pública se for explicitamente colocada no `publicRouter`. `can()` continua só nas rotas que precisam de restrição além de "estar logado". Menos código repetido e mais seguro ao mesmo tempo.
+
+**Próximo nível (depois do `can.ts` básico estar ligado):** `can([...roles])` é RBAC puro — só olha a role, não o dono do recurso. Ferramentas como `@casl/ability` resolvem um degrau acima: permissão **condicional**, tipo "MEMBER pode dar update em Project, mas só se `ownerId === user.id`". Isso não é teórico pro Fire OS — `ListOrdemdeServicoService.ts:46-59` já faz isso na mão, filtrando `tecnico_id: user.tecnico_id` quando a role é `TECNICO` pra ele só ver as próprias OS. Se essa regra de "só o dono" se repetir em mais services, vale centralizar com algo como CASL em vez de copiar o `if` toda vez.
+
+- [x] Depois do RBAC básico funcionar, mapear onde mais no código existe uma regra de ownership escondida num `if` (grep por `tecnico_id`, `user_id` sendo comparado manualmente) — isso é o inventário antes de decidir se compensa migrar pra CASL.
+
+### O que foi implementado (RBAC básico + CASL) — 17/08/2026
+
+**1. `routes.ts` virou `publicRouter` + `privateRouter`**, exatamente como no exemplo de código acima. `privateRouter.use(isAuthenticated)` roda uma vez só; nenhuma rota nova precisa mais lembrar de colar `isAuthenticated` na mão.
+
+Fiquei público só o que é comprovadamente usado por página sem login — conferi no Frontend antes de decidir, não chutei:
+
+- `POST /users` e `POST /session` — cadastro e login.
+- `GET /listcliente`, `/listsetores`, `/listinstuicao` — usados pelas páginas `signup_instituicao` e `signup_empresa` (confirmei lendo o código dessas páginas: elas chamam essas rotas **sem** header de `Authorization`).
+- `GET /listtipodeinstituicaounidade`, `/listtipodechamado`, `/listtipodeordemdeservico` — listas de categoria sem PII, sem mutação.
+
+**2. Achei 4 rotas públicas por acidente, não por design, e fechei todas:**
+
+| Rota | Por que era um problema | Confirmação de que fechar não quebra nada |
+|---|---|---|
+| `GET /listusers` | Vazava nome + e-mail + role + instituição de **todo mundo** cadastrado, sem login | `Frontend/dashboard/usuarios/page.tsx` já manda token — só o backend não exigia |
+| `POST /foto`, `GET /foto/:id`, `DELETE /foto/:id` | Qualquer um subia/apagava foto de qualquer OS, sem login | `ViewCardFoto.tsx` já manda `Authorization: Bearer` em todas as chamadas |
+| `POST /categorycliente`, `POST /categoryintituicao` | Qualquer um criava Cliente/Instituição no banco, sem login | `formularioClientesPrivados/page.tsx` e `formularioClientesMunicipais/page.tsx` já mandam token |
+| `POST /ai/chat` | Chamada de IA (Groq) sem login — alguém podia gerar custo sem estar autenticado | Rota interna, sem uso público conhecido |
+
+**3. `POST /users` ficou público de propósito** — não é mais uma dúvida em aberto. Confirmei lendo `signup_instituicao/page.tsx` e `signup_empresa/page.tsx`: existe um fluxo real de autocadastro (uma instituição ou empresa se cadastra sozinha). Isso resolve o "decida" que tinha ficado pendente aqui.
+
+**4. `can(['ADMIN'])` aplicado nas ações que são inequivocamente admin-only:** `DELETE /deletecliente`, `/deletesetor`, `/deleteinstituicao`, `/removertecnico/:id`, e `GET /listusers`. **Não apliquei** `can()` nos outros deletes (`controledeassistenciatecnica`, `controledelaboratorio`, etc.) — não tenho contexto de negócio suficiente pra saber se um `TECNICO` pode ou não apagar esses registros, e prefiro te perguntar do que inventar uma regra. Fica como decisão em aberto.
+
+**5. O gap real de CASL: `PATCH /ordemdeservico/update/:id` não checava dono nenhum.** Antes desta mudança, um `TECNICO` autenticado conseguia editar a OS de **qualquer outro técnico**, só sabendo o ID — a única filtragem por `tecnico_id` que existia era em `ListOrdemdeServicoService.ts` (a listagem), não no update. Criei:
+
+- `src/permissions/ability.ts` — define, por role, o que cada um pode fazer com uma `OrdemdeServico`:
+
+```ts
+export function defineAbilityFor(user: UserForAbility): AppAbility {
+  const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
+
+  if (user.role === "ADMIN") {
+    can("manage", "all");             // admin pode tudo
+    return build();
+  }
+
+  if (user.role === "TECNICO") {
+    can("read", "OrdemdeServico");                                              // lê qualquer uma
+    can("update", "OrdemdeServico", { tecnico_id: user.tecnico_id ?? "__sem_tecnico__" }); // só edita a própria
+    return build();
+  }
+
+  can("read", "OrdemdeServico");      // USER só lê
+  return build();
+}
+```
+
+- `src/Middleware/authorizeOrdemdeServico.ts` — busca a OS no banco, monta a ability do usuário logado e barra com `403` se a condição não bater. Aplicado em `GET /ordemdeservico/:id` e `PATCH /ordemdeservico/update/:id`.
+
+**Antes:** `TECNICO` A editava a OS do `TECNICO` B sem erro nenhum.
+**Depois:** mesma tentativa retorna `403 { error: "Você não tem permissão para acessar esta ordem de serviço." }`. `ADMIN` continua podendo editar qualquer uma.
+
+**6. Testes novos (rodei `npm run test`, os 33 passaram):**
+- `src/Middleware/can.test.ts` (4 testes)
+- `src/permissions/ability.test.ts` (5 testes — cobre ADMIN/TECNICO dono/TECNICO não-dono/USER)
+- `src/Middleware/authorizeOrdemdeServico.test.ts` (4 testes, mockando o Prisma igual aos testes que já existiam no projeto)
+
+**7. Verificação manual:** subi o servidor local e testei com `curl` — `GET /listusers` sem token voltou `401` (antes seria `200` com todos os usuários); `GET /listcliente` sem token chegou até o controller normalmente (só falhou depois por causa do Postgres do Docker estar parado nesta sessão, não por causa de autenticação — comportamento esperado de rota pública).
+
+**Preenchendo o molde da narrativa (item 5, o mais forte pra entrevista):**
+
+> Encontrei que `PATCH /ordemdeservico/update/:id` não validava quem era o dono da ordem de serviço — só validava que o usuário estava logado. Problema real: um técnico mal-intencionado (ou só um bug no app mobile) podia alterar diagnóstico, solução ou status de uma OS atribuída a outro técnico, só sabendo o ID. Considerei validar isso com um `if (ordem.tecnico_id !== req.user_tecnico_id)` direto no service, mas essa mesma regra também faltava no endpoint de detalhe (`GET /ordemdeservico/:id`) — duplicar o `if` em dois lugares (e futuramente mais) ia divergir com o tempo. Optei por centralizar com CASL num middleware reutilizável (`authorizeOrdemdeServico`), aplicado nos dois endpoints. Troquei "duas verificações manuais que podem divergir" por "uma peça central que preciso lembrar de aplicar em rotas novas de OS" — trade-off aceitável, e documentado aqui pra não esquecer.
 
 ---
 
