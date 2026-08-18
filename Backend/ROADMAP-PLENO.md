@@ -317,7 +317,76 @@ return res.status(202).json({ message: "OS atualizada, mídia sendo processada."
 
 O worker (processo separado) escuta a fila, sobe pro Cloudinary com calma e atualiza o campo `bannerassinatura` depois.
 
-- [ ] Prototipar isso com BullMQ + Redis local (você já sabe usar, é reaproveitar conhecimento do Hone) só nesse endpoint de upload, como prova de conceito — não precisa reescrever o projeto inteiro.
+- [x] Prototipar isso com BullMQ + Redis local (você já sabe usar, é reaproveitar conhecimento do Hone) só nesse endpoint de upload, como prova de conceito — não precisa reescrever o projeto inteiro.
+
+### O que foi implementado (protótipo isolado) — 18/08/2026
+
+Pedi pra manter bem simples, então **isso ainda não está ligado ao `UpdateOrdemdeServicoService.ts` real** — é o mecanismo de fila isolado, testado sozinho, pra entender o processo antes de mexer no fluxo de produção. A ligação com a rota de verdade é o próximo passo, quando fizer sentido.
+
+**Peças novas, todas em `src/queue/`:**
+
+**1. `docker-compose.yml`** ganhou um segundo serviço, o Redis (a fila BullMQ precisa de um lugar pra guardar os jobs — é isso que o Redis faz aqui):
+
+```yaml
+fireos-redis:
+  image: redis:7-alpine
+  container_name: fireos_redis_container
+  ports:
+    - "6379:6379"
+```
+
+**2. `src/queue/uploadQueue.ts` — o lado de quem PEDE o trabalho** (o "produtor"). Só declara a fila e sabe adicionar recados nela — não sabe nem se importa quem vai processar:
+
+```ts
+import { Queue } from "bullmq";
+
+export const uploadQueue = new Queue("upload-imagem", {
+  connection: { url: process.env.REDIS_URL },
+});
+```
+
+**3. `src/queue/uploadWorker.ts` — o lado de quem FAZ o trabalho** (o "consumidor"). Roda como processo **separado** da API (`npm run worker`), fica escutando a fila e processa um job de cada vez, no tempo dele — sem travar nenhuma requisição HTTP:
+
+```ts
+const worker = new Worker(
+  "upload-imagem",
+  async (job) => {
+    const resultado = await cloudinary.uploader.upload(job.data.caminhoDoArquivo, {
+      folder: "exemplo-fila",
+    });
+    return resultado.secure_url;
+  },
+  { connection: { url: process.env.REDIS_URL } }
+);
+```
+
+**4. `src/queue/addSampleJob.ts` — simula o que a rota da API faria**: adiciona um job na fila e "responde" na hora, sem esperar o upload terminar.
+
+**Como rodar você mesmo:**
+
+```bash
+docker compose up -d fireos-redis    # sobe o Redis
+npm run worker                        # terminal 1 — deixa rodando, escutando a fila
+npm run queue:demo -- caminho/da/foto.png   # terminal 2 — dispara um job de verdade
+```
+
+**Testei ao vivo antes de te entregar** (não é só "deveria funcionar"). Rodei o worker, mandei um job com uma imagem de teste, e o log mostrou o fluxo completo acontecendo:
+
+```
+Job 1 adicionado na fila.
+Numa API de verdade, a resposta HTTP (202) já teria voltado pro cliente agora.
+[worker] peguei o job 1, subindo test-pixel.png pro Cloudinary...
+[worker] pronto! URL: https://res.cloudinary.com/dqq5gse9f/image/upload/.../hnyp8ailbimjtvocwzdn.png
+[worker] job 1 concluído.
+```
+
+E confirmei com `curl` que a URL retornada é real — `HTTP 200`, a imagem realmente está hospedada no Cloudinary. Isso prova as 3 partes funcionando juntas: Redis guardando o job, BullMQ entregando pro worker certo, Cloudinary recebendo o arquivo de verdade.
+
+**Preenchendo o molde da narrativa:**
+
+> Pra aprender fila/mensageria na prática, isolei o caso real do Fire OS (upload de mídia pro Cloudinary, que hoje trava a resposta HTTP) num protótipo pequeno, separado do fluxo de produção. Problema real: eu não tinha experiência nenhuma com BullMQ fora de um projeto (Hone) que já estava pronto quando entrei. Considerei já sair ligando direto no `UpdateOrdemdeServicoService.ts`, mas isso ia misturar "aprender o mecanismo" com "debugar upload multipart + Prisma + Cloudinary + fila, tudo de uma vez". Optei por isolar em 3 arquivos pequenos (`uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`) e testar ao vivo antes de considerar entendido. Troquei "aprender rápido, arriscando confundir conceito com bug de integração" por "aprender devagar, um mecanismo de cada vez" — trade-off certo pra quem tá começando nisso, mesmo custando não estar em produção ainda.
+
+- [ ] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `UpdateOrdemdeServicoService.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima.
 
 ### 2. Cache — no `ListOrdemdeServicoService.ts` e `ListTecnicoController.ts`
 
