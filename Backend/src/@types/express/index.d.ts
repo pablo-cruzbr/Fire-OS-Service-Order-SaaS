@@ -5,6 +5,7 @@ declare global{
         interface Request{
             user_id?: string,
             user_role: string;
+            user_tecnico_id?: string | null;
         }
     }
 }
