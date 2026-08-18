@@ -157,6 +157,7 @@ fire-os/                              # Monorepo
 ### ⚙️ Backend (Node.js + Express)
 - API REST com mais de 80 endpoints documentados em `routes.ts`
 - Autenticação JWT com middleware de proteção por rota
+- Autorização por role (RBAC) e por dono do recurso (CASL) nas rotas sensíveis — só `ADMIN` remove entidades críticas, técnico só edita a própria ordem de serviço
 - Criptografia de senhas com bcrypt
 - ORM Prisma com PostgreSQL — migrações versionadas
 - Exportação de relatórios via ExcelJS com estilização de planilha
@@ -261,6 +262,7 @@ Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquit
 
 ## 🔜 Próximos Passos (Roadmap Técnico - Rumo ao Nível Pleno)
 
+- [x] **Autorização (RBAC):** controle de acesso por role (ADMIN/TECNICO/USER) nas rotas críticas da API, e por dono do recurso (CASL) na Ordem de Serviço — técnico só edita a que está atribuída a ele
 - [ ] **Infraestrutura:** Dockerização do ambiente local (PostgreSQL isolado via containers com Docker Compose)
 - [ ] **Arquitetura (System Design):** Documentação e diagramas de fluxo das Ordens de Serviço (Next.js/Expo -> Node.js -> PostgreSQL)
 - [ ] **Validação & Segurança:** Validação de schema com Zod nas rotas da API
