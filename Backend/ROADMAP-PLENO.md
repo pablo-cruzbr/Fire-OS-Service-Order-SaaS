@@ -302,13 +302,13 @@ if ((req.files as any)?.file) {
 
 Isso é exatamente o cenário do seu PDF: o técnico em campo, com internet ruim, fica com o app travado esperando o Cloudinary responder antes de ver "OS atualizada". Se o Cloudinary demorar ou falhar, a OS pode nem ter sido salva ainda.
 
-**Versão Pleno (o padrão que você já usou no projeto Hone, com BullMQ + Redis):** salvar o registro rápido, devolver `202` pro app, e subir a imagem em background.
+**Versão Pleno (o mesmo padrão que o Hone usa — lá quem implementou essa parte com BullMQ + Redis foi um colega de equipe, não você; essa é sua primeira vez mexendo nisso):** salvar o registro rápido, devolver `202` pro app, e subir a imagem em background.
 
 ```ts
 // 1. Salva a OS sem a mídia, marca como "processando_midia"
 const ordem = await prismaClient.ordemdeServico.update({ where: { id }, data: updateData });
 
-// 2. Enfileira o upload (BullMQ, igual você fez no Hone)
+// 2. Enfileira o upload (BullMQ — o mesmo tipo de fila que o Hone usa)
 await filaDeMidia.add('upload-assinatura', { ordemId: id, tempFilePath: file.tempFilePath });
 
 // 3. Responde na hora — o app não fica esperando o Cloudinary
@@ -317,7 +317,15 @@ return res.status(202).json({ message: "OS atualizada, mídia sendo processada."
 
 O worker (processo separado) escuta a fila, sobe pro Cloudinary com calma e atualiza o campo `bannerassinatura` depois.
 
-- [x] Prototipar isso com BullMQ + Redis local (você já sabe usar, é reaproveitar conhecimento do Hone) só nesse endpoint de upload, como prova de conceito — não precisa reescrever o projeto inteiro.
+- [x] Prototipar isso com BullMQ + Redis local (primeira vez mexendo nisso de verdade — no Hone essa parte foi implementada por um colega de equipe, não por você) só nesse endpoint de upload, como prova de conceito — não precisa reescrever o projeto inteiro.
+
+### Redis e BullMQ, do zero — o que cada um é
+
+Antes do "como implementei", o "o que é cada peça", sem assumir que você já viu isso:
+
+- **Redis** é um banco de dados que guarda tudo em memória (RAM), não em disco — por isso é absurdamente rápido, e é usado como estrutura de dados compartilhada entre processos diferentes (a API e o worker, por exemplo). Sozinho, ele não sabe nada sobre "fila" ou "job" — é só uma peça de armazenamento genérica, tipo um dicionário gigante chave-valor.
+- **BullMQ** é uma biblioteca Node.js que usa o Redis por baixo dos panos pra implementar o conceito de **fila de jobs**: adicionar um "recado" (job) numa lista, e ter um ou mais "trabalhadores" (workers) tirando recados dessa lista e processando, um de cada vez (ou em paralelo, se configurado). O BullMQ é quem entende "job", "fila", "worker" — o Redis só guarda os dados que o BullMQ manda guardar.
+- Por isso os dois sempre aparecem juntos: **Redis é o armazenamento, BullMQ é a lógica de fila em cima dele.** Sem Redis rodando, o BullMQ não tem onde guardar nada — foi por isso que a primeira coisa que fizemos foi subir o container do Redis antes de qualquer código de fila funcionar.
 
 ### O que foi implementado (protótipo isolado) — 18/08/2026
 
@@ -384,7 +392,7 @@ E confirmei com `curl` que a URL retornada é real — `HTTP 200`, a imagem real
 
 **Preenchendo o molde da narrativa:**
 
-> Pra aprender fila/mensageria na prática, isolei o caso real do Fire OS (upload de mídia pro Cloudinary, que hoje trava a resposta HTTP) num protótipo pequeno, separado do fluxo de produção. Problema real: eu não tinha experiência nenhuma com BullMQ fora de um projeto (Hone) que já estava pronto quando entrei. Considerei já sair ligando direto no `UpdateOrdemdeServicoService.ts`, mas isso ia misturar "aprender o mecanismo" com "debugar upload multipart + Prisma + Cloudinary + fila, tudo de uma vez". Optei por isolar em 3 arquivos pequenos (`uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`) e testar ao vivo antes de considerar entendido. Troquei "aprender rápido, arriscando confundir conceito com bug de integração" por "aprender devagar, um mecanismo de cada vez" — trade-off certo pra quem tá começando nisso, mesmo custando não estar em produção ainda.
+> Pra aprender fila/mensageria na prática, isolei o caso real do Fire OS (upload de mídia pro Cloudinary, que hoje trava a resposta HTTP) num protótipo pequeno, separado do fluxo de produção. Problema real: eu nunca tinha mexido com BullMQ/Redis antes — no Hone (hackathon em equipe) essa parte foi implementada por um colega, então eu conhecia o conceito de longe, mas não tinha experiência prática nenhuma com o código. Considerei já sair ligando direto no `UpdateOrdemdeServicoService.ts`, mas isso ia misturar "aprender o mecanismo pela primeira vez" com "debugar upload multipart + Prisma + Cloudinary + fila, tudo de uma vez". Optei por isolar em 3 arquivos pequenos (`uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`) e testar ao vivo antes de considerar entendido. Troquei "aprender rápido, arriscando confundir conceito novo com bug de integração" por "aprender devagar, um mecanismo de cada vez" — trade-off certo pra quem tá começando do zero nisso, mesmo custando não estar em produção ainda.
 
 - [ ] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `UpdateOrdemdeServicoService.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima.
 
