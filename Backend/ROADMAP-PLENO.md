@@ -48,6 +48,23 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 **No Fire OS:** o `README.md` raiz já tem um diagrama mermaid mostrando as 3 camadas (Web dashboard Next.js, App mobile React Native, API Node.js) conversando por HTTPS/JSON com a API, que fala com Postgres e Cloudinary. Isso *é* um artefato de system design. O que falta é o próximo nível: conseguir responder "por que separar em 3 camadas em vez de o app mobile falar direto com o banco?" ou "o que quebra primeiro se 1000 técnicos usarem ao mesmo tempo?" (dica: provavelmente o `schema.prisma` monolítico e a ausência de índice em queries de listagem, antes de qualquer coisa relacionada a tráfego).
 
+### O nome do que a gente fez com a assinatura/fotos: diagrama de sequência + rastreamento de fluxo
+
+O item acima é a versão "arquitetura grande" de system design (as 3 camadas). Mas existe uma versão menor, que a gente aplicou de verdade quando fomos investigar o fluxo de assinatura/fotos no app mobile — e ela também é system design, só que em cima do código que já existe:
+
+- **Diagrama de sequência (sequence diagram):** artefato formal de UML que mostra uma ação específica (ex.: "técnico conclui a OS") passando por vários componentes, **na ordem em que acontece no tempo** — quem chama quem, o que espera o quê. As linhas do tempo "ANTES/DEPOIS" que fizemos no item 1 (fila) são exatamente isso, só em texto em vez de setas e caixinhas.
+- **Rastreamento de fluxo (code tracing):** o processo de seguir uma ação do usuário através de várias camadas/arquivos até o fim, lendo o código de verdade em vez de assumir — foi isso que a gente fez: botão "CONCLUIR OS" → `handleFinalizarEEnviar` → `uploadImages()` → `POST /foto` → `fotoController.handle` → Cloudinary → Prisma.
+
+### A diferença entre um Junior e um Pleno fazendo essa mesma investigação
+
+**Junior:** olha o nome de uma função (`enviarAssinatura`) ou o comentário de um componente, acha plausível que ela é chamada em algum lugar, e segue em frente escrevendo código ou documentação em cima dessa suposição — sem confirmar. O risco: a suposição vira "fato" na cabeça de todo mundo, e ninguém percebe que aquele pedaço nunca rodou de verdade.
+
+**Pleno:** trata toda suposição como hipótese a verificar, não como fato — segue a cadeia de chamadas real (quem importa quem, quem chama quem) até confirmar ou refutar. Quando encontra uma inconsistência (uma função que existe mas nunca é chamada, por exemplo), **documenta separadamente** o que é comportamento confirmado do que é suspeita/gap, em vez de misturar os dois.
+
+**Esse erro aconteceu de verdade nessa nossa sessão, comigo:** na primeira versão do item 1 (fila), eu descrevi o "cenário do PDF" apontando pro `UpdateOrdemdeServicoService.ts`, baseado num trecho de código que *parecia* plausível — tinha `cloudinary.uploader.upload` dentro de uma rota de update de OS, então assumi que era esse o caminho usado pelo app pra fechar uma OS. Só quando você pediu pra conferir com o `.tsx` real do app é que rastreei a cadeia completa (`index.tsx` → `SignatureModal` → `onSave`) e descobri que `enviarAssinatura()` **nunca é chamada** — o exemplo certo era outro (`fotoController.ts`), e a assinatura tinha um problema totalmente diferente do que eu tinha assumido. Ou seja: eu fiz o movimento de Junior primeiro (assumi porque parecia razoável), e só virou análise de Pleno depois que fui rastrear o fluxo real, arquivo por arquivo, em vez de confiar no que "fazia sentido".
+
+- [ ] Da próxima vez que for descrever um fluxo (de qualquer parte do sistema, não só esse), rastrear a cadeia real de chamadas antes de escrever qualquer coisa — mesmo quando a explicação óbvia parecer certa.
+
 ---
 
 ## 1. Autorização (RBAC) — o item de maior alavancagem ✅ implementado em 17/08/2026
