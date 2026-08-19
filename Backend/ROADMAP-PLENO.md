@@ -286,36 +286,96 @@ Não tudo — o Fire OS te dá base sólida pra maior parte do que uma entrevist
 
 Mesmo formato que você já tinha estudado sozinho pra fila/mensageria (comparando Junior vs. Pleno) — só que aqui, em vez do exemplo genérico de "oficina", uso código que já existe de verdade no seu repositório.
 
-### 1. Fila / Mensageria — no `UpdateOrdemdeServicoService.ts`
+### 1. Fila / Mensageria — no envio de assinatura e fotos do app mobile
 
-**O problema já existe no seu código, não é hipotético.** Quando o técnico fecha uma OS e envia a assinatura digital ou uma foto, o backend sobe o arquivo pro Cloudinary **dentro do mesmo request/response**, antes de responder pro app:
+**Correção:** o exemplo original apontava pro `UpdateOrdemdeServicoService.ts`, mas conferindo o app mobile (`FireOS-App/src/components/modalDetailOrder/index.tsx`) o fluxo real é outro. Segui o botão que o técnico realmente aperta pra fechar uma OS — ele faz **duas coisas antes de concluir**: coleta a assinatura do cliente e envia as fotos. Só que, seguindo o código com calma, essas duas coisas **não pesam igual**:
+
+**(a) Assinatura — coletada na tela, mas (achado importante) nunca chega a ser enviada por esse componente.** O técnico desenha no `SignatureModal`, confirma, e o `onSave` desse modal faz só isto:
 
 ```ts
-// src/services/controles_forms/OrdemdeServico/UpdateOrdemdeServicoService.ts:49-61 (hoje, Junior)
-if ((req.files as any)?.file) {
-  const file = (req.files as any).file as UploadedFile;
-  const result = await cloudinary.uploader.upload(file.tempFilePath, { folder: "ordens" });
-  bannerassinaturaUrl = result.secure_url;
+// index.tsx:774-777 (hoje)
+onSave={(sig) => {
+  setSignature(sig);       // só guarda no estado local, pra mostrar a prévia na tela
+  setShowSignatureModal(false);
+}}
+```
+
+Existe uma função `enviarAssinatura()` no mesmo arquivo (linha 191), que chamaria `PATCH /assinatura/:id`, mas **ela nunca é chamada em nenhum lugar** — não tem botão, nem `useEffect`, nada disparando ela. Ou seja: pelo que esse componente faz, a assinatura fica só visível na tela do técnico (prévia local), e não é persistida no backend a partir daqui. Isso é uma coisa a mais que vale confirmar com calma depois (bug real ou ela é salva por outro caminho que eu não vi) — mas não é o problema de fila, porque **sem chamada de rede não tem nada travando a tela**.
+
+**Achado extra, ainda sobre a assinatura, caso ela seja disparada por outro lugar:** o `saveAssinatura.ts` no backend lê `req.body.assinaturaBase64`, mas a única chamada que existiria mandaria `{ assinatura: base64 }` (nome de campo diferente) — então mesmo se alguém ligar `enviarAssinatura()` um dia, ela cairia sempre em `if (!assinaturaBase64) return res.status(400)`.
+
+**(b) Fotos — esse sim é o problema de fila real, confirmado.** O técnico tira foto ou seleciona várias da galeria (`takePhoto`/`pickImages`), elas ficam guardadas na tela, e só quando ele aperta "CONCLUIR OS" o app dispara `handleFinalizarEEnviar`, que chama `uploadImages()` — e essa função manda **uma foto de cada vez, em sequência**, esperando cada upload terminar antes de começar o próximo:
+
+```ts
+// index.tsx:287-308 (hoje, Junior)
+for (let i = 0; i < selectedImages.length; i++) {
+  // ...
+  await api.post(`/foto`, formData, { timeout: 30000 });  // espera ESSA terminar
+}                                                          // só aí começa a próxima
+```
+
+E no backend, `fotoController.handle` também sobe pro Cloudinary **dentro** do request, uma vez por foto:
+
+```ts
+// src/services/controles_forms/FotoOrdensTec/fotoController.ts:41-47 (hoje, Junior)
+for (const file of files) {
+  const uploadResult = await cloudinary.uploader.upload(file.tempFilePath, { folder: "ordens_servico" });
+  // ...só depois disso salva no banco e segue pro próximo arquivo
 }
-// ...só depois disso o Prisma salva no banco, e só depois disso o res.json() responde
 ```
 
-Isso é exatamente o cenário do seu PDF: o técnico em campo, com internet ruim, fica com o app travado esperando o Cloudinary responder antes de ver "OS atualizada". Se o Cloudinary demorar ou falhar, a OS pode nem ter sido salva ainda.
+Isso é exatamente o cenário do seu PDF: o técnico em campo, com internet ruim, fica com o app travado esperando o Cloudinary responder — só que **se ele mandou 5 fotos, isso se repete 5 vezes seguidas**, uma esperando a outra terminar, antes de ver "Operação concluída". Pra ver exatamente o que isso significa, olha a linha do tempo completa do que o técnico faz — assinatura (local, rápida) e depois fotos (rede, lenta) — **antes e depois** da fila:
 
-**Versão Pleno (o mesmo padrão que o Hone usa — lá quem implementou essa parte com BullMQ + Redis foi um colega de equipe, não você; essa é sua primeira vez mexendo nisso):** salvar o registro rápido, devolver `202` pro app, e subir a imagem em background.
+**ANTES (síncrono — o que o código faz hoje):**
+
+```
+0s      → técnico desenha a assinatura no SignatureModal e confirma
+0s      → assinatura fica só na tela (estado local) — NENHUMA
+          chamada de rede acontece aqui, então não trava nada
+0s      → técnico já tirou/selecionou 3 fotos e aperta "CONCLUIR OS"
+0s      → app começa o for de uploadImages(): manda a foto 1
+0s–3s   → tela TRAVADA esperando o Cloudinary aceitar a foto 1
+3s      → só então o app manda a foto 2 (o for só avança depois do await)
+3s–6s   → tela TRAVADA esperando a foto 2
+6s      → app manda a foto 3
+6s–9s   → tela TRAVADA esperando a foto 3
+9s      → SÓ ENTÃO roda handleCloseAndComplete() (troca o status — rápido)
+9s      → SÓ ENTÃO o app mostra "Operação concluída"
+```
+
+Com internet de campo ruim, cada uma dessas esperas pode passar muito de 3s, ou falhar no meio — e se a foto 2 falhar, a 3 nem é enviada, e o técnico não sabe quais das 3 realmente foram salvas.
+
+**DEPOIS (com fila — o que a versão Pleno faz):** a mesma ação, só invertendo quem espera o quê:
+
+```
+0s       → técnico aperta "CONCLUIR OS"
+0s       → app manda as 3 fotos de uma vez
+0–15ms   → backend só avisa a fila "tem 3 fotos pra subir" (rápido — é
+           escrever um recado no Redis, não é o upload de verdade)
+15ms     → backend responde 202 pro app — tela destrava quase na hora
+(em paralelo, sem o técnico esperar mais nada)
+           → o worker sobe as 3 fotos pro Cloudinary, uma de cada vez,
+           no tempo dele, e vai salvando cada uma assim que termina
+```
+
+Se o Cloudinary falhar agora, a foto que falhou fica pendente pra tentar de novo — as outras já enviadas não se perdem, e o técnico não fica esperando nem sabe que algo deu errado no meio.
+
+**Versão Pleno (o mesmo padrão que o Hone usa — lá quem implementou essa parte com BullMQ + Redis foi um colega de equipe, não você; essa é sua primeira vez mexendo nisso):** o `fotoController.handle` para de fazer upload ele mesmo, só enfileira um job por foto e responde na hora:
 
 ```ts
-// 1. Salva a OS sem a mídia, marca como "processando_midia"
-const ordem = await prismaClient.ordemdeServico.update({ where: { id }, data: updateData });
+// fotoController.handle — versão Pleno
+for (const file of files) {
+  await filaDeMidia.add('upload-foto', {
+    ordemdeServico_id,
+    tempFilePath: file.tempFilePath,
+  });
+}
 
-// 2. Enfileira o upload (BullMQ — o mesmo tipo de fila que o Hone usa)
-await filaDeMidia.add('upload-assinatura', { ordemId: id, tempFilePath: file.tempFilePath });
-
-// 3. Responde na hora — o app não fica esperando o Cloudinary
-return res.status(202).json({ message: "OS atualizada, mídia sendo processada.", ordem });
+// Responde 202 assim que enfileirou TODAS — não espera nenhum upload
+return res.status(202).json({ message: "Fotos recebidas, processando em segundo plano." });
 ```
 
-O worker (processo separado) escuta a fila, sobe pro Cloudinary com calma e atualiza o campo `bannerassinatura` depois.
+O worker (processo separado) escuta a fila, e pra cada job sobe a foto pro Cloudinary com calma e só então cria o registro `FotoOrdemServico` no banco.
 
 - [x] Prototipar isso com BullMQ + Redis local (primeira vez mexendo nisso de verdade — no Hone essa parte foi implementada por um colega de equipe, não por você) só nesse endpoint de upload, como prova de conceito — não precisa reescrever o projeto inteiro.
 
@@ -329,7 +389,7 @@ Antes do "como implementei", o "o que é cada peça", sem assumir que você já 
 
 ### O que foi implementado (protótipo isolado) — 18/08/2026
 
-Pedi pra manter bem simples, então **isso ainda não está ligado ao `UpdateOrdemdeServicoService.ts` real** — é o mecanismo de fila isolado, testado sozinho, pra entender o processo antes de mexer no fluxo de produção. A ligação com a rota de verdade é o próximo passo, quando fizer sentido.
+Pedi pra manter bem simples, então **isso ainda não está ligado ao `fotoController.ts`/`saveAssinatura.ts` reais** — é o mecanismo de fila isolado, testado sozinho, pra entender o processo antes de mexer no fluxo de produção. A ligação com as rotas de verdade é o próximo passo, quando fizer sentido.
 
 **Peças novas, todas em `src/queue/`:**
 
@@ -343,7 +403,7 @@ fireos-redis:
     - "6379:6379"
 ```
 
-**2. `src/queue/uploadQueue.ts` — o lado de quem PEDE o trabalho** (o "produtor"). Só declara a fila e sabe adicionar recados nela — não sabe nem se importa quem vai processar:
+**2. `src/queue/uploadQueue.ts` — o lado de quem PEDE o trabalho** (o "produtor"). Pensa nisso como uma **prateleira** dentro do Redis chamada `"upload-imagem"`: esse arquivo só sabe colocar coisa nela. Não sabe nem se importa quem vai tirar de lá, nem quando:
 
 ```ts
 import { Queue } from "bullmq";
@@ -353,7 +413,7 @@ export const uploadQueue = new Queue("upload-imagem", {
 });
 ```
 
-**3. `src/queue/uploadWorker.ts` — o lado de quem FAZ o trabalho** (o "consumidor"). Roda como processo **separado** da API (`npm run worker`), fica escutando a fila e processa um job de cada vez, no tempo dele — sem travar nenhuma requisição HTTP:
+**3. `src/queue/uploadWorker.ts` — o lado de quem FAZ o trabalho** (o "consumidor"). Roda como processo **separado** da API (`npm run worker`), e fica em loop olhando a **mesma prateleira** `"upload-imagem"`, esperando algo aparecer — sem travar nenhuma requisição HTTP, porque ele nem faz parte do fluxo HTTP:
 
 ```ts
 const worker = new Worker(
@@ -368,7 +428,19 @@ const worker = new Worker(
 );
 ```
 
+Repara que os dois arquivos usam a mesma string `"upload-imagem"` — **é literalmente a única coisa que os conecta.** Nenhum dos dois importa o outro, nenhum dos dois sabe que o outro existe. Eles só concordaram em usar o nome da mesma prateleira. Se um dos dois tivesse `"upload-imagem-2"`, os dois rodariam normalmente, sem erro nenhum, e nunca se encontrariam — o job ficaria parado na prateleira errada pra sempre.
+
 **4. `src/queue/addSampleJob.ts` — simula o que a rota da API faria**: adiciona um job na fila e "responde" na hora, sem esperar o upload terminar.
+
+**A ordem exata do que acontece, passo a passo** (são 2 programas rodando ao mesmo tempo, em terminais diferentes):
+
+1. `npm run worker` roda num terminal e **fica preso num loop**, só olhando a prateleira `"upload-imagem"`. Log: `Worker rodando, esperando jobs...`
+2. Em outro terminal, `npm run queue:demo` chama `uploadQueue.add(...)` — isso manda pro Redis: *"bota esse recado na prateleira upload-imagem"*. Log: `Job 1 adicionado na fila.`
+3. Esse segundo processo **termina e morre logo em seguida** (`process.exit(0)`) — já entregou o recado, não precisa esperar nada.
+4. O worker (que nunca parou de rodar) percebe que apareceu algo novo na prateleira e **puxa** esse job sozinho — ninguém avisou ele diretamente. Log: `[worker] peguei o job 1...`
+5. Só aí o worker roda o upload pro Cloudinary de verdade e loga a URL.
+
+A sacada: **quem adiciona o job (passo 2) e quem processa (passo 4) nunca se falam diretamente — os dois só falam com o Redis**, em momentos totalmente diferentes. É isso que deixa a API livre pra responder rápido no passo 2, sem esperar o passo 5 acontecer — exatamente o "antes/depois" que vimos lá em cima com o técnico de campo.
 
 **Como rodar você mesmo:**
 
@@ -394,7 +466,8 @@ E confirmei com `curl` que a URL retornada é real — `HTTP 200`, a imagem real
 
 > Pra aprender fila/mensageria na prática, isolei o caso real do Fire OS (upload de mídia pro Cloudinary, que hoje trava a resposta HTTP) num protótipo pequeno, separado do fluxo de produção. Problema real: eu nunca tinha mexido com BullMQ/Redis antes — no Hone (hackathon em equipe) essa parte foi implementada por um colega, então eu conhecia o conceito de longe, mas não tinha experiência prática nenhuma com o código. Considerei já sair ligando direto no `UpdateOrdemdeServicoService.ts`, mas isso ia misturar "aprender o mecanismo pela primeira vez" com "debugar upload multipart + Prisma + Cloudinary + fila, tudo de uma vez". Optei por isolar em 3 arquivos pequenos (`uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`) e testar ao vivo antes de considerar entendido. Troquei "aprender rápido, arriscando confundir conceito novo com bug de integração" por "aprender devagar, um mecanismo de cada vez" — trade-off certo pra quem tá começando do zero nisso, mesmo custando não estar em produção ainda.
 
-- [ ] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `UpdateOrdemdeServicoService.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima.
+- [ ] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `fotoController.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima.
+- [ ] Separado disso: decidir o que fazer com `saveAssinatura.ts`/`enviarAssinatura()` — hoje a assinatura desenhada não chega a ser salva por esse fluxo (nem entraria na fila, porque nem a chamada existe ainda). Vale essa investigação antes de pensar em fila pra ela.
 
 ### 2. Cache — no `ListOrdemdeServicoService.ts` e `ListTecnicoController.ts`
 
