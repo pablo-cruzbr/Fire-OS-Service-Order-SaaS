@@ -5,6 +5,8 @@ import {CreateUserController} from './controllers/user/CreateUserController'
 import { AuthUserController } from "./controllers/user/AuthUserController";
 import { DetailUserController } from "./controllers/user/DetailUserController";
 import { isAuthenticated } from "./Middleware/isAuthenticated";
+import { can } from "./Middleware/can";
+import { authorizeOrdemdeServico } from "./Middleware/authorizeOrdemdeServico";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -111,229 +113,257 @@ import { ListAtividadePadraoController } from "./controllers/status_categorias/A
 import { ExportOrdemdeServicoController } from "./controllers/controles_forms/OrdemdeServico/ExportOrdemdeServicoController";
 import { RelatorioSecretariaController } from "./controllers/controles_forms/OrdemdeServico/RelatorioSecretariaController";
 import { AIChatController } from "./api/ai/chat/route";
-const router = Router();
+
+// Dois roteadores: publicRouter não passa por isAuthenticated, privateRouter passa por TODOS.
+// Ver ROADMAP-PLENO.md, item 1, para o raciocínio completo por trás dessa divisão.
+const publicRouter = Router();
+const privateRouter = Router();
+
 //get,post, update, delete
 
 //const upload = multer(uploadConfig.upload("./tmp"));
 
 const upload = multer(uploadConfig.upload());
 
-// ROTA DE IA
+// ============================================================
+// PUBLIC ROUTER — sem isAuthenticated.
+// Só entra aqui rota comprovadamente usada por página pública
+// (cadastro/login) ou lookup de referência sem PII e sem escrita
+// de entidade de negócio.
+// ============================================================
+
+//1  - ROTAS DE LOGIN/CADASTRO DE USUÁRIO --
+// Cadastro público: usado pelas páginas signup_instituicao e signup_empresa do Frontend
+publicRouter.post('/users', new CreateUserController().handle)
+// Login
+publicRouter.post('/session', new AuthUserController().handle)
+
+// Listas usadas pelas telas de signup público, sem PII de usuário
+publicRouter.get('/listcliente', new ListClienteController().handle)
+publicRouter.get('/listsetores', new ListSetoresController().handle)
+publicRouter.get('/listinstuicao', new ListInstituicaoUnidadeController().handle)
+
+// Lookups de referência (nomes de categoria, sem PII, sem mutação)
+publicRouter.get('/listtipodeinstituicaounidade', new ListtipoInsituicaoUnidadeController().handle)
+publicRouter.get('/listtipodechamado', new ListtipodeChamadoController().handle)
+publicRouter.get('/listtipodeordemdeservico', new ListtipodeOrdemdeServicoController().handle)
+
+// ============================================================
+// PRIVATE ROUTER — isAuthenticated aplicado UMA vez aqui,
+// vale pra tudo que vem depois desta linha. Não precisa mais
+// repetir isAuthenticated rota por rota (era assim que a rota
+// de listusers, foto e ai/chat tinham ficado públicas por
+// esquecimento).
+// ============================================================
+privateRouter.use(isAuthenticated);
+
+// ROTA DE IA (custa dinheiro por chamada — não pode ficar pública)
 const aiChatController = new AIChatController();
-router.post("/ai/chat", aiChatController.handle);
+privateRouter.post("/ai/chat", aiChatController.handle);
 
-//1  - ROTAS DE LOGIN DE USUÁRIO --
-// 1.1 - Criar/Cadastrar um usuário
-router.post('/users', new CreateUserController().handle)
-
-//1.2 - Logar um usuário
-router.post('/session', new AuthUserController().handle)
-
-//1.4 - Listar Usuários Cadastrados no software
-//router.get('/listusers', isAuthenticated, new AuthUserController().handle)
-router.get('/listusers', new ListUserController().handle)
-router.get('/users/detail', isAuthenticated, new DetailUserController().handle)
-router.patch('/user/update/:id', isAuthenticated, new UpdateUserController().handle)
+// Listar todos os usuários — expõe nome/e-mail/role de todo mundo, só ADMIN
+privateRouter.get('/listusers', can(['ADMIN']), new ListUserController().handle)
+privateRouter.get('/users/detail', new DetailUserController().handle)
+privateRouter.patch('/user/update/:id', new UpdateUserController().handle)
 
 //---> CATEGORIAS <---
 
 //2 - CRIAR,LISTAR E DELETAR CATEGORIAS
-router.get('/liststatusprioridade', isAuthenticated, new ListStatusUrgenciaController().handle);
+privateRouter.get('/liststatusprioridade', new ListStatusUrgenciaController().handle);
 // 1 - Cliente
-router.post('/categorycliente', new CreateClienteController().handle)
-router.get('/listcliente', new ListClienteController().handle)
-router.delete('/deletecliente', isAuthenticated, new RemoveClienteController().handle)
-router.get('/cliente/detail', isAuthenticated, new DetailClienteController().handle)
+privateRouter.post('/categorycliente', new CreateClienteController().handle)
+privateRouter.delete('/deletecliente', can(['ADMIN']), new RemoveClienteController().handle)
+privateRouter.get('/cliente/detail', new DetailClienteController().handle)
 
 // 2 - Setor
-router.post('/categorysetor', isAuthenticated, new CreateSetorController().handle)
-router.get('/listsetores', new ListSetoresController().handle)
-router.delete('/deletesetor', isAuthenticated, new RemoveSetorController().handle)
+privateRouter.post('/categorysetor', new CreateSetorController().handle)
+privateRouter.delete('/deletesetor', can(['ADMIN']), new RemoveSetorController().handle)
 
 // - Informações Setor
-router.post('/informacoessetor', isAuthenticated, new CreateInformacoesSetorController().handle)
-router.get('/listinformacoessetor', isAuthenticated, new ListInformacaoesSetoresController().handle)
+privateRouter.post('/informacoessetor', new CreateInformacoesSetorController().handle)
+privateRouter.get('/listinformacoessetor', new ListInformacaoesSetoresController().handle)
 
 //3 - Instuituicao/Unidade
-router.post('/categoryintituicao', new CreateInstituicaoUnidadeController().handle)
-router.get('/listinstuicao', new ListInstituicaoUnidadeController().handle)
-router.delete('/deleteinstituicao', isAuthenticated, new RemoveInstituicaoUnidadeController().handle)
+privateRouter.post('/categoryintituicao', new CreateInstituicaoUnidadeController().handle)
+privateRouter.delete('/deleteinstituicao', can(['ADMIN']), new RemoveInstituicaoUnidadeController().handle)
 
 // tipodeInstituicaoUnidade
-router.post ('/tipodeinstituicaounidade', new CreatetipodeInstituicaoUnidadeController().handle)
-router.get ('/listtipodeinstituicaounidade', new ListtipoInsituicaoUnidadeController().handle)
+privateRouter.post('/tipodeinstituicaounidade', new CreatetipodeInstituicaoUnidadeController().handle)
 
 //4 - Tipo de Solicitação (Solicitação, Chamado Tecnico)
-router.post('/tipodechamado', isAuthenticated, new CreatetipodeChamadoController().handle)
-router.get('/listtipodechamado', new ListtipodeChamadoController().handle)
+privateRouter.post('/tipodechamado', new CreatetipodeChamadoController().handle)
 
 // 5 - Tecnico
-router.post('/tecnico', isAuthenticated, new CreateTecnicoController().handle)
-router.get('/listtecnico', isAuthenticated, new ListTecnicoController().handle)
-router.delete('/removertecnico/:id', isAuthenticated, new RemoveTecnicoController().handle)
+privateRouter.post('/tecnico', new CreateTecnicoController().handle)
+privateRouter.get('/listtecnico', new ListTecnicoController().handle)
+privateRouter.delete('/removertecnico/:id', can(['ADMIN']), new RemoveTecnicoController().handle)
 
 // 6 -  Equipamento
-router.post('/equipamento', isAuthenticated, new CreateEquipamentoController().handle)
-router.get('/listequipamento', isAuthenticated, new ListEquipamentoController().handle)
-router.delete('/deleteequipamento/:id', isAuthenticated, new RemoveEquipamentoController().handle)
+privateRouter.post('/equipamento', new CreateEquipamentoController().handle)
+privateRouter.get('/listequipamento', new ListEquipamentoController().handle)
+privateRouter.delete('/deleteequipamento/:id', new RemoveEquipamentoController().handle)
 
 
 // 7 - StatusOrdemdeServicoService
-router.post('/statusordemdeservico', isAuthenticated, new CreateStatusOrdemdeServicoController().handle)
-export {router}
-router.get('/liststatusordemdeservico', isAuthenticated, new ListStatusOrdemdeServicoController().handle)
-router.delete('/removestatusordemdeservico', isAuthenticated, new RemoveStatusOrdemServicoController().handle)
+privateRouter.post('/statusordemdeservico', new CreateStatusOrdemdeServicoController().handle)
+privateRouter.get('/liststatusordemdeservico', new ListStatusOrdemdeServicoController().handle)
+privateRouter.delete('/removestatusordemdeservico', new RemoveStatusOrdemServicoController().handle)
 
 // 8 - StatusMaquinasPendentesLab (Pendentes ORO, Substituta)
-router.post('/statusMaquinasPendentesLab', isAuthenticated, new CreatestatusMaquinasPendentesController().handle)
+privateRouter.post('/statusMaquinasPendentesLab', new CreatestatusMaquinasPendentesController().handle)
 
-router.get('/liststatusMaquinasPendentesLab', isAuthenticated, new ListMaquinasPendentesLabController().handle)
+privateRouter.get('/liststatusMaquinasPendentesLab', new ListMaquinasPendentesLabController().handle)
 
 // 9 - StatusMaquinasPendentesOro (DISPONIVEL, INSTALADA, AGUARDANDO RETIRADA, EM MANUTENÇÃO, RESERVADA, DESCARTADA)
-router.post('/statusMaquinasPendentesOro', isAuthenticated, new CreatestatusMaquinasPendentesOroController().handle)
-router.get('/liststatusMaquinasPendentesOro', isAuthenticated, new ListMaquinasPendentesOroController().handle);
+privateRouter.post('/statusMaquinasPendentesOro', new CreatestatusMaquinasPendentesOroController().handle)
+privateRouter.get('/liststatusMaquinasPendentesOro', new ListMaquinasPendentesOroController().handle);
 
 // 10 - StatusControllerdeMaquinasLaboratorio (AGUARDANDO CONSERTO, AGUARDANDO O.S DE LABORATORIO, AGUARDANDO DEVOLUÇÃO, CONCLUIDO)
-router.post('/statuscontrolledeLaboratorio', isAuthenticated, new CreatestatusControlledeLaboratorioController().hadle)
-router.get('/listcontrolledeLaboratorio', isAuthenticated, new ListstatusControlleLaboratioController().handle)
+privateRouter.post('/statuscontrolledeLaboratorio', new CreatestatusControlledeLaboratorioController().hadle)
+privateRouter.get('/listcontrolledeLaboratorio', new ListstatusControlleLaboratioController().handle)
 
 //12 - StatusCompras (AGUARDANDO, AGUARDANDO ENTREGA, COMPRA FINALIZADA)
-router.post('/statuscompras', isAuthenticated, new CreateStatusComprasController().handle)
-router.get('/liststatuscompras', isAuthenticated, new ListStatusComprasController().handle)
+privateRouter.post('/statuscompras', new CreateStatusComprasController().handle)
+privateRouter.get('/liststatuscompras', new ListStatusComprasController().handle)
 
 //13 - StatusReparo (AGUARDANDO REPARO, REPARO FINALIZADO)
 
-router.post('/statusreparo', isAuthenticated, new CreateStatusReparoController().handle)
-router.get('/liststatusreparo', isAuthenticated, new ListstatusReparoController().handle)
+privateRouter.post('/statusreparo', new CreateStatusReparoController().handle)
+privateRouter.get('/liststatusreparo', new ListstatusReparoController().handle)
 
 // - Atividade Padrao
-router.get('/listatividade', isAuthenticated, new ListAtividadePadraoController().handle)
+privateRouter.get('/listatividade', new ListAtividadePadraoController().handle)
 
 //14 - Urgência
-router.post('/statusurgencia', isAuthenticated, new CreateStatusUrgenciaController().handle)
-router.get('/liststatusurgencia', isAuthenticated, new ListStatusUrgenciaController().handle)
+privateRouter.post('/statusurgencia', new CreateStatusUrgenciaController().handle)
+privateRouter.get('/liststatusurgencia', new ListStatusUrgenciaController().handle)
 
 //---> FORMULARIOS <---
 
 //CONTROLE DE ASSISTENCIA TÉCNICA
-router.post('/controledeassistenciatecnica', isAuthenticated, new CreateControledeAssistenciaTecnicaController().handle)
-router.get('/listcontroledeassistenciatecnica', isAuthenticated, new ListControledeAssistenciaTecnicaController().handle);
-router.delete('/controledeassistenciatecnica/:id',isAuthenticated, new DeleteControledeAssistenciaTecnicaController().handle);
-router.get('/controledeassistenciatecnica/detail', isAuthenticated, new DetailAssistenciaTecnicaController().handle)
-router.patch('/assistenciatecnica/update/:id', isAuthenticated, new UpdateAssistenciaTecnicaController().handle)
+privateRouter.post('/controledeassistenciatecnica', new CreateControledeAssistenciaTecnicaController().handle)
+privateRouter.get('/listcontroledeassistenciatecnica', new ListControledeAssistenciaTecnicaController().handle);
+privateRouter.delete('/controledeassistenciatecnica/:id', new DeleteControledeAssistenciaTecnicaController().handle);
+privateRouter.get('/controledeassistenciatecnica/detail', new DetailAssistenciaTecnicaController().handle)
+privateRouter.patch('/assistenciatecnica/update/:id', new UpdateAssistenciaTecnicaController().handle)
 // CRIAR UPDATE - PACTH
 
 //CONTROLE DE LAUDO TÉCNICO
-router.post('/controledelaudotecnico', isAuthenticated, new CreateControledeLaudoTecnicoController().handle)
-router.get('/listcontroledelaudotecnico', isAuthenticated, new ListControledeLaudoTecnicoController().handle)
-router.delete('/deletecontroledelaudotecnico/:id',isAuthenticated, new DeleteControledeLaudoTecnicoController().handle);
-router.get('/controledelaudotecnico/detail', isAuthenticated, new DetailLaudoTenicoController().handle)
-router.patch('/laudotecnico/update/:id', isAuthenticated, new UpdateControllerdeLaudoTecnicoController().handle)
+privateRouter.post('/controledelaudotecnico', new CreateControledeLaudoTecnicoController().handle)
+privateRouter.get('/listcontroledelaudotecnico', new ListControledeLaudoTecnicoController().handle)
+privateRouter.delete('/deletecontroledelaudotecnico/:id', new DeleteControledeLaudoTecnicoController().handle);
+privateRouter.get('/controledelaudotecnico/detail', new DetailLaudoTenicoController().handle)
+privateRouter.patch('/laudotecnico/update/:id', new UpdateControllerdeLaudoTecnicoController().handle)
 //CRIAR UPDATE - PATCH
 
 //CONTROLE DE LABORATORIO
-router.post('/controledelaboratorio', isAuthenticated, new CreateControledeLaboratorioController().handle)
-router.get('/listcontroledelaboratorio', isAuthenticated, new ListControledeLaboratorioController().handle)
-router.delete('/deletecontroledelaboratorio/:id', isAuthenticated, new DeleteControledeLaboratorioController().handle)
-router.get('/controledelaboratorio/detail', isAuthenticated, new DetailControledeLaboratorioController().handle)
-router.patch('/controledelaboratorio/update/:id', isAuthenticated, new UpdateControledeLaboratorioController().handle)
+privateRouter.post('/controledelaboratorio', new CreateControledeLaboratorioController().handle)
+privateRouter.get('/listcontroledelaboratorio', new ListControledeLaboratorioController().handle)
+privateRouter.delete('/deletecontroledelaboratorio/:id', new DeleteControledeLaboratorioController().handle)
+privateRouter.get('/controledelaboratorio/detail', new DetailControledeLaboratorioController().handle)
+privateRouter.patch('/controledelaboratorio/update/:id', new UpdateControledeLaboratorioController().handle)
 //CRIAR UPDATE - PATCH
 
 //CONTROLE DE MAQUINAS PENDENTES LAB
-router.post('/controledemaquinaspendenteslab', isAuthenticated, new CreateControledeMaquinasPendentesLabController().handle)
-router.get('/listcontroledemaquinaspendenteslab', isAuthenticated, new ListControledeMaquinasPendentesLabController().handle)
-router.delete('/deletecontroledemaquinaspendenteslab/:id', isAuthenticated, new DeleteControledeMaquinasPendentesLabController().handle)
-router.get('/controledemaquinaspendenteslab/detail', isAuthenticated, new DetailMaquinasPendentesLabController().handle)
-router.patch('/controledemaquinaspendenteslab/update/:id', isAuthenticated, new UpdateControledeMaquinasPendentesLabController().handle)
+privateRouter.post('/controledemaquinaspendenteslab', new CreateControledeMaquinasPendentesLabController().handle)
+privateRouter.get('/listcontroledemaquinaspendenteslab', new ListControledeMaquinasPendentesLabController().handle)
+privateRouter.delete('/deletecontroledemaquinaspendenteslab/:id', new DeleteControledeMaquinasPendentesLabController().handle)
+privateRouter.get('/controledemaquinaspendenteslab/detail', new DetailMaquinasPendentesLabController().handle)
+privateRouter.patch('/controledemaquinaspendenteslab/update/:id', new UpdateControledeMaquinasPendentesLabController().handle)
 //CRIAR UPDATE - PACTH
 
 // CONTROLE DE MAQUINAS PENDENTES ORO
-router.post('/controledemaquinaspendentesoro', isAuthenticated, new CreateControledeMaquinasPendentesOroController().handle)
-router.get('/listcontroledemaquinaspendentesoro', isAuthenticated, new ListControledeMaquinasPendentesOroController().handle)
-router.delete('/deletecontroledemaquinaspendentesoro/:id', isAuthenticated, new DeleteControledeMaquinasPendentesOroController().handle)
-router.get('/controledemaquinaspendentesoro/detail', isAuthenticated, new DetailControledeMaquinasPendentesOroController().handle)
-router.patch('/controledemaquinaspendentesoro/update/:id', isAuthenticated, new UpdateControledeMaquinasPendentesOroController().handle)
+privateRouter.post('/controledemaquinaspendentesoro', new CreateControledeMaquinasPendentesOroController().handle)
+privateRouter.get('/listcontroledemaquinaspendentesoro', new ListControledeMaquinasPendentesOroController().handle)
+privateRouter.delete('/deletecontroledemaquinaspendentesoro/:id', new DeleteControledeMaquinasPendentesOroController().handle)
+privateRouter.get('/controledemaquinaspendentesoro/detail', new DetailControledeMaquinasPendentesOroController().handle)
+privateRouter.patch('/controledemaquinaspendentesoro/update/:id', new UpdateControledeMaquinasPendentesOroController().handle)
 // CRIAR UPDATE - PACTH
 
 //DOCUMENTAÇÃO TÉCNICA
-router.post('/documentacaotecnica', isAuthenticated, new CreateDocumentacaoTecnicaController().handle)
-router.get('/listdocumentacaotecnica',isAuthenticated, new ListDocumentacaoTecnicaController().handle)
-router.delete('/deletedocumentacaotecnica/:id', isAuthenticated, new DeleteDocumentacaoTecnicaController().handle)
-router.get('/controlededocumentacaotecnica/detail', isAuthenticated, new DetailDocumentacaoTecnicaController().handle)
-router.patch('/documentacaotecnica/update/:id', isAuthenticated, new UpdateDocumentacaoTecnicaController().handle)
+privateRouter.post('/documentacaotecnica', new CreateDocumentacaoTecnicaController().handle)
+privateRouter.get('/listdocumentacaotecnica', new ListDocumentacaoTecnicaController().handle)
+privateRouter.delete('/deletedocumentacaotecnica/:id', new DeleteDocumentacaoTecnicaController().handle)
+privateRouter.get('/controlededocumentacaotecnica/detail', new DetailDocumentacaoTecnicaController().handle)
+privateRouter.patch('/documentacaotecnica/update/:id', new UpdateDocumentacaoTecnicaController().handle)
 
 //SOLICITACAO DE COMPRAS
-router.post('/solicitacaodecompras', isAuthenticated, new CreateSolicitacaodeComprasController().handle)
-router.get('/listsolicitacaodecompras', isAuthenticated, new ListSolicitacaodeComprasController().handle)
-router.delete('/deletedesolicitacaodecompras/:id', isAuthenticated, new DeleteSolicitacaodeComprasController().handle)
-router.get('/compra/detail', isAuthenticated, new DetailComprasController().handle)
-router.patch('/compra/update/:id', isAuthenticated, new UpdateSolicitacaodeComprasController().handle)
+privateRouter.post('/solicitacaodecompras', new CreateSolicitacaodeComprasController().handle)
+privateRouter.get('/listsolicitacaodecompras', new ListSolicitacaodeComprasController().handle)
+privateRouter.delete('/deletedesolicitacaodecompras/:id', new DeleteSolicitacaodeComprasController().handle)
+privateRouter.get('/compra/detail', new DetailComprasController().handle)
+privateRouter.patch('/compra/update/:id', new UpdateSolicitacaodeComprasController().handle)
 
 // - CONTINUAR DEPOIS
 //ORDEM DE SERVIÇO
-router.post('/ordemdeservico', isAuthenticated, new CreateOrdemServicoController().handle)
-router.get('/listordemdeservico', isAuthenticated, new ListOrdemdeServicoController().handle)
-router.get('/ordemdeservico/:id', isAuthenticated, new GetOrdemdeServicoByIdController().handle)
+privateRouter.post('/ordemdeservico', new CreateOrdemServicoController().handle)
+privateRouter.get('/listordemdeservico', new ListOrdemdeServicoController().handle)
+privateRouter.get('/ordemdeservico/:id', authorizeOrdemdeServico('read'), new GetOrdemdeServicoByIdController().handle)
 
-router.patch(
+privateRouter.patch(
   '/ordemdeservico/update/:id',
-  isAuthenticated, upload.array('files'),
+  authorizeOrdemdeServico('update'),
+  upload.array('files'),
   new UpdateOrdemdeServicoService().handle.bind(new UpdateOrdemdeServicoService())
 );
 const fotoControllerInstance = new fotoController();
-router.get('/foto/:id', fotoControllerInstance.listByOrdem);
+privateRouter.get('/foto/:id', fotoControllerInstance.listByOrdem);
 //router.post('/foto', upload.array('files'),  new fotoController().handle)
-router.post('/foto', new fotoController().handle);
-router.delete('/foto/:id', new fotoController().delete);
+privateRouter.post('/foto', new fotoController().handle);
+privateRouter.delete('/foto/:id', new fotoController().delete);
 
 //STATUS ESTABILIZADORES
-router.post("/status/estabilizadores", isAuthenticated, new CreateStatusEstabilizadoresController().handle
-);
+privateRouter.post("/status/estabilizadores", new CreateStatusEstabilizadoresController().handle);
 
-router.get("/liststatus/estabilizadores", isAuthenticated, new ListStatusEstabilizadoresController().handle)
+privateRouter.get("/liststatus/estabilizadores", new ListStatusEstabilizadoresController().handle)
 
-router.post('/statustarefa', isAuthenticated, new CreateStatusTarefaController().handle)
-router.get("/liststatustarefa", isAuthenticated, new ListStatusTarefaController().handle)
+privateRouter.post('/statustarefa', new CreateStatusTarefaController().handle)
+privateRouter.get("/liststatustarefa", new ListStatusTarefaController().handle)
 
 //ESTABILIZADORES
-router.post("/equipamento/esbilizadores", isAuthenticated, new CreateEquipamentoEstabilizadorController().handle)
-router.get("/list/estabilizador", isAuthenticated, new ListEsquipamentoEstabilizadorController().handle)
+privateRouter.post("/equipamento/esbilizadores", new CreateEquipamentoEstabilizadorController().handle)
+privateRouter.get("/list/estabilizador", new ListEsquipamentoEstabilizadorController().handle)
 
 //CONTROLE DE ESTABILIZADORES
-router.post("/controledeestabilizadores", isAuthenticated, new CreateControledeEstabilizadoresController().handle)
-router.get("/listcontroledeestabilizadores", isAuthenticated, new ListControledeEstabilizadoresController().handle)
-router.patch("/update/controledeestabilizadores/:id", isAuthenticated, new UpdateControledeEstabilizadoresController().handle)
+privateRouter.post("/controledeestabilizadores", new CreateControledeEstabilizadoresController().handle)
+privateRouter.get("/listcontroledeestabilizadores", new ListControledeEstabilizadoresController().handle)
+privateRouter.patch("/update/controledeestabilizadores/:id", new UpdateControledeEstabilizadoresController().handle)
 
 //ORDEM DE SERVIÇO POR STATUS
-router.get('/statusordemdeServico/ordens', isAuthenticated, new ListByStatusTicketsController().handle)
-router.get('/tecnicosordemdeServico/ordens', isAuthenticated, new ListByTecnicosTicketsController().handle)
+privateRouter.get('/statusordemdeServico/ordens', new ListByStatusTicketsController().handle)
+privateRouter.get('/tecnicosordemdeServico/ordens', new ListByTecnicosTicketsController().handle)
 
 //EVENTOS
-router.get("/events", isAuthenticated , getEventsController);
-router.post("/events", isAuthenticated , createEventController);
-router.put("/events", isAuthenticated , updateEventController);
-router.delete("/events/:id", isAuthenticated , deleteEventController);
+privateRouter.get("/events", getEventsController);
+privateRouter.post("/events", createEventController);
+privateRouter.put("/events", updateEventController);
+privateRouter.delete("/events/:id", deleteEventController);
 
 // --- Controle de Tempo (Corrigido para usar a instância timeController) ---
 const timeController = new TimeOrdemdeServicoController();
 // --- Controle de Tempo (Corrigido para usar a instância timeController) ---
-router.patch("/ordemdeservico/iniciar/:id", isAuthenticated, (req, res) => timeController.iniciar(req, res));
-router.patch("/ordemdeservico/concluir/:id", isAuthenticated, (req, res) => timeController.concluir(req, res));
-router.patch("/ordemdeservico/pausar/:id", isAuthenticated, (req, res) => timeController.pausar(req, res));
-router.patch("/ordemdeservico/retomar/:id", isAuthenticated, (req, res) => timeController.retomar(req, res));
-router.patch("/ordemdeservico/atualizar-tempo/:id", isAuthenticated, (req, res) => timeController.atualizarTempo(req, res));
-router.get("/ordemdeservico/tempo/:id", isAuthenticated, (req, res) => timeController.lerTempo(req, res));
+privateRouter.patch("/ordemdeservico/iniciar/:id", (req, res) => timeController.iniciar(req, res));
+privateRouter.patch("/ordemdeservico/concluir/:id", (req, res) => timeController.concluir(req, res));
+privateRouter.patch("/ordemdeservico/pausar/:id", (req, res) => timeController.pausar(req, res));
+privateRouter.patch("/ordemdeservico/retomar/:id", (req, res) => timeController.retomar(req, res));
+privateRouter.patch("/ordemdeservico/atualizar-tempo/:id", (req, res) => timeController.atualizarTempo(req, res));
+privateRouter.get("/ordemdeservico/tempo/:id", (req, res) => timeController.lerTempo(req, res));
 
 // ASSINATURA
-router.patch("/assinatura/:id", isAuthenticated, AssinaturaController.atualizar);
+privateRouter.patch("/assinatura/:id", AssinaturaController.atualizar);
 
 // GET → buscar assinatura
-router.get("/assinatura/:ordemId", isAuthenticated, AssinaturaController.buscar);
+privateRouter.get("/assinatura/:ordemId", AssinaturaController.buscar);
 
 //TipodeOrdemdeServico
-router.post("/tipodeordemdeservico", isAuthenticated, new CreatetipodeOrdemdeServicoController().handle)
-router.get('/listtipodeordemdeservico', new ListtipodeOrdemdeServicoController().handle)
+privateRouter.post("/tipodeordemdeservico", new CreatetipodeOrdemdeServicoController().handle)
 
 //Excel
-router.get('/ordens/exportar', isAuthenticated, (req, res) => new ExportOrdemdeServicoController().handle(req, res));
-router.get('/ordens/relatorio-secretaria', isAuthenticated, (req, res) => new RelatorioSecretariaController().handle(req, res));
+privateRouter.get('/ordens/exportar', (req, res) => new ExportOrdemdeServicoController().handle(req, res));
+privateRouter.get('/ordens/relatorio-secretaria', (req, res) => new RelatorioSecretariaController().handle(req, res));
+
+const router = Router();
+router.use(publicRouter);
+router.use(privateRouter);
+
+export {router}

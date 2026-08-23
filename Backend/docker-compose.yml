@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  fireos-db:
+    image: postgres:15-alpine
+    container_name: fireos_postgres_container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: fireos_password_123
+      POSTGRES_DB: fireos_saas
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  fireos-redis:
+    image: redis:7-alpine
+    container_name: fireos_redis_container
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

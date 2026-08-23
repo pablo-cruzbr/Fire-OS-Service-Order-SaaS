@@ -3,7 +3,8 @@ import { verify } from "jsonwebtoken";
 
 interface Payload {
   sub: string;
-  role: string; 
+  role: string;
+  tecnico_id?: string | null;
 }
 
 export function isAuthenticated(
@@ -24,7 +25,7 @@ export function isAuthenticated(
   try {
     // 3. Valida o Token e extrai o Payload
     // Nota: Verifique se no seu .env está JWT_SECREATE ou JWT_SECRET
-    const { sub, role } = verify(
+    const { sub, role, tecnico_id } = verify(
       token,
       process.env.JWT_SECREATE as string
     ) as Payload;
@@ -32,6 +33,7 @@ export function isAuthenticated(
     // 4. Injeta os dados na requisição (ficha do usuário)
     req.user_id = sub;
     req.user_role = role;
+    req.user_tecnico_id = tecnico_id;
 
     return next();
   } catch (err) {
