@@ -11,16 +11,18 @@ cloudinary.config({
 // O worker roda separado da API (processo próprio, veja o script "worker"
 // no package.json). Ele fica escutando a fila 'upload-imagem' e processa
 // um job por vez, no tempo dele — sem travar nenhuma requisição HTTP.
+const agora = () => new Date().toLocaleTimeString();
+
 const worker = new Worker(
   "upload-imagem",
   async (job) => {
-    console.log(`[worker] peguei o job ${job.id}, subindo ${job.data.caminhoDoArquivo} pro Cloudinary...`);
+    console.log(`[${agora()}] [worker] peguei o job ${job.id}, subindo ${job.data.caminhoDoArquivo} pro Cloudinary...`);
 
     const resultado = await cloudinary.uploader.upload(job.data.caminhoDoArquivo, {
       folder: "exemplo-fila",
     });
 
-    console.log(`[worker] pronto! URL: ${resultado.secure_url}`);
+    console.log(`[${agora()}] [worker] pronto! URL: ${resultado.secure_url}`);
     return resultado.secure_url;
   },
   { connection: { url: process.env.REDIS_URL } }
