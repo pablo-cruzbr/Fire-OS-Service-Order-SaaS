@@ -486,6 +486,8 @@ E confirmei com `curl` que a URL retornada é real — `HTTP 200`, a imagem real
 - [ ] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `fotoController.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima.
 - [ ] Separado disso: decidir o que fazer com `saveAssinatura.ts`/`enviarAssinatura()` — hoje a assinatura desenhada não chega a ser salva por esse fluxo (nem entraria na fila, porque nem a chamada existe ainda). Vale essa investigação antes de pensar em fila pra ela.
 
+**Atualização (24/08):** adicionei um painel visual (Bull Board, `src/queue/dashboard.ts`, `npm run queue:dashboard`) pra ver os jobs em tempo real em vez de só ler log de terminal, e testei enfileirando 4 imagens de uma vez (`addSampleJob.ts` agora aceita vários arquivos). Explicação completa de tudo isso — incluindo o teste ao vivo com os logs reais e um glossário rápido dos termos (queue, job, worker, producer, consumer, concurrency) — está num arquivo separado: **`GUIA-FILA-BULLMQ.md`**, pra não deixar esse item aqui gigante.
+
 ### 2. Cache — no `ListOrdemdeServicoService.ts` e `ListTecnicoController.ts`
 
 **O problema:** `ListOrdemdeServicoService.ts:189-207` faz **9 idas ao banco em paralelo** toda vez que a tela de OS carrega — 1 `findMany` + 8 `count()` (total, abertas, em andamento, pausadas, concluídas, etc.). Isso roda de novo a cada F5, mesmo que nenhuma OS tenha mudado de status nos últimos segundos. O mesmo vale pra `ListTecnicoController.ts` — a lista de técnicos muda raramente (você não cadastra um técnico novo toda hora), mas é buscada do zero em toda chamada.
