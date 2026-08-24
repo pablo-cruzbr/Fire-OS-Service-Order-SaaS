@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "worker": "ts-node-dev src/queue/uploadWorker.ts",
-    "queue:demo": "ts-node src/queue/addSampleJob.ts"
+    "queue:demo": "ts-node src/queue/addSampleJob.ts",
+    "queue:dashboard": "ts-node-dev src/queue/dashboard.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -27,6 +28,8 @@
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.39",
+    "@bull-board/api": "^9.4.0",
+    "@bull-board/express": "^9.4.0",
     "@casl/ability": "^7.0.1",
     "@prisma/client": "^6.8.2",
     "ai": "^6.0.177",
