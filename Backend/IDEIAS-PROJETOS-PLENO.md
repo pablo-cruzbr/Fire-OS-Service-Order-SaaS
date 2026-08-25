@@ -116,7 +116,7 @@ Cada fase é um commit set separado e documentado — não precisa decidir isso 
 
 > *Pare de ler vaga por vaga. Deixa a IA dizer quais valem seu tempo.*
 
-**Ganhou documento próprio: [`PROJETO-CRIVO.md`](./PROJETO-CRIVO.md)** — nome fictício "Crivo", com a spec completa (conceito técnico, como fica pleno, escopo, custo, referência visual do usefleming.com), mais conteúdo novo que não cabia aqui: uma tabela comparando decisão Junior vs. Pleno em cada parte do projeto, estimativa de tempo dia a dia, e o que estudar/revisar antes de começar. Copy de landing page fictícia em `design-references/crivo-landing-copy.txt`.
+**Ganhou documento próprio: [`PROJETO-CRIVO.md`](./PROJETO-CRIVO.md)** — nome fictício "Crivo", com a spec completa (conceito técnico, como fica pleno, escopo, custo, referência visual do usefleming.com), mais conteúdo novo que não cabia aqui: uma tabela comparando decisão Junior vs. Pleno em cada parte do projeto, estimativa de tempo dia a dia, e o que estudar/revisar antes de começar. Copy de landing page fictícia em `design-references/crivo-landing-copy.md`.
 
 Resumo rápido: você salva seu perfil, cola descrições de vaga (uma ou várias de uma vez), cada uma vira um job de fila, e a IA devolve um score de compatibilidade estruturado (0-100, o que bate, o que falta) — em vez de texto solto pra você interpretar.
 
