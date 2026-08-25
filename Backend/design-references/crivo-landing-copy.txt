@@ -1,0 +1,106 @@
+CRIVO
+Copy de landing page — nome fictício pro Projeto 1B (Match de Vaga em Lote)
+Estilo de referência: usefleming.com (badge > headline com destaque > subtítulo > CTA; cards de feature; passos numerados)
+
+============================================================
+HERO
+============================================================
+
+[badge]  SEU FILTRO PRA VAGA PLENO
+
+Pare de aplicar no escuro.
+Saiba o que falta antes de perder tempo.
+
+Cole a vaga, cole seu perfil. Em segundos, um veredito: o que bate,
+o que falta, se vale a pena aplicar.
+
+[botão primário]   Avaliar minha primeira vaga →
+[link secundário]  Como funciona ↓
+
+
+============================================================
+FEATURES (4 cards, mesma grade do Fleming)
+============================================================
+
+⚡ Score Instantâneo
+De 0 a 100, sem achismo. Você sabe o número antes de decidir.
+
+📦 Processamento em Lote
+Cole 10 vagas de uma vez. Volte quando o crivo terminar.
+
+🎯 Gaps Reais
+Não é "talvez sirva". É a lista exata do que falta pro seu perfil.
+
+🔒 Seu Perfil, Suas Regras
+Você decide o que conta como "atende" — o Crivo só compara.
+
+
+============================================================
+BLOCO DE TEXTO ("THE LONG GAME" do Fleming, aqui vira "O PROBLEMA REAL")
+============================================================
+
+O PROBLEMA REAL
+
+Toda vaga pede "3 a 5 anos de experiência" e um parágrafo de requisitos
+em português técnico impossível de decifrar em 30 segundos. Você lê,
+relê, e ainda não sabe se vale aplicar — ou pior, aplica em vagas que
+nunca bateram com seu perfil, e ignora as que bateriam.
+
+O Crivo troca a leitura manual por um veredito. Ele não decide por
+você — só devolve o dado que faltava pra você decidir rápido.
+
+
+============================================================
+COMO FUNCIONA (3 passos numerados, mesmo padrão do Fleming)
+============================================================
+
+COMO FUNCIONA
+De vaga solta a veredito claro
+
+01  Cole sua vaga
+    Descrição inteira, direto do LinkedIn, Gupy ou site da empresa.
+
+02  A IA compara
+    Seu perfil salvo entra na fila e é avaliado com calma, um por vez.
+
+03  Receba o veredito
+    Score, requisitos atendidos, requisitos faltando. Decida em segundos.
+
+
+============================================================
+SEÇÃO DE UTILIDADE ("Utility First" do Fleming)
+============================================================
+
+FEITO PRA DECIDIR, NÃO PRA LER
+
+Avalie em Lote
+Cole quantas vagas quiser de uma vez. O Crivo processa cada uma
+sozinho, na fila, sem travar sua tela.
+  → Começar lote
+
+Veja os Gaps
+Cada avaliação vem com a lista exata do que falta — vira seu
+próximo tópico de estudo, não só um "não deu".
+  → Ver requisitos
+
+Priorize com Dados
+Ordene suas vagas salvas por score. Aplique primeiro nas que
+realmente valem seu tempo.
+  → Priorizar lista
+
+
+============================================================
+CTA FINAL
+============================================================
+
+Sua próxima vaga pleno começa com um crivo.
+
+[botão primário]  Avaliar agora →
+
+
+============================================================
+RODAPÉ (versão enxuta — não precisa das 4 colunas institucionais do Fleming)
+============================================================
+
+Crivo — feito por você, pra você decidir mais rápido.
+Código aberto no GitHub · MIT License
