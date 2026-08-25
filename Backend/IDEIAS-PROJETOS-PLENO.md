@@ -124,6 +124,66 @@ Resumo rápido: você salva seu perfil, cola descrições de vaga (uma ou vária
 
 ---
 
+## Projeto 1C: Bússola de Stack — a IA aponta o que estudar E o que construir
+
+> *A dúvida que você teve agora mesmo, automatizada.*
+
+### A piada não intencional aqui
+
+Você pediu essa ideia rindo, mas repara: é literalmente **a dúvida que você teve agora** ("me dá outro projeto que cubra meus gaps") — só que em vez de perguntar pra mim numa conversa, o app faz isso sozinho, pra qualquer vaga que você colar. Extensão direta do Crivo, então reaproveita boa parte do que já foi desenhado ali.
+
+### O que é, em uma frase
+
+Extensão do Crivo (Projeto 1B): depois de comparar seu perfil com a vaga e achar os requisitos que faltam (isso o Crivo já faz), esse projeto dá **mais um passo**: analisa se a vaga é majoritariamente backend, frontend, fullstack ou IA, e sugere 1 a 3 ideias de projeto pequenas e específicas — pra fechar exatamente os gaps daquela vaga, considerando sua stack atual.
+
+### O conceito novo que esse projeto ensina — encadeamento de chamadas de IA (prompt chaining)
+
+No Crivo, é **uma** chamada de IA: perfil + vaga entram, veredito estruturado sai. Aqui são **duas chamadas em sequência**, onde a saída da primeira vira a entrada da segunda — isso se chama **prompt chaining** (ou pipeline de IA): em vez de tentar fazer a IA responder tudo de uma vez com um prompt gigante e confuso, você quebra o raciocínio em etapas menores, cada uma com um objetivo claro (é o mesmo princípio de dividir uma função grande em funções pequenas, aplicado a prompts).
+
+```ts
+// Passo 1 — igual ao Crivo: acha o gap entre perfil e vaga
+const { object: gap } = await generateObject({
+  model: groq("llama-3.3-70b-versatile"),
+  schema: matchSchema, // o mesmo schema do Crivo
+  prompt: `Compare o perfil e a vaga:\n\nPerfil: ${perfil}\n\nVaga: ${vaga}`,
+});
+
+// Passo 2 — NOVO: usa a SAÍDA do passo 1 como ENTRADA do próximo
+const sugestoesSchema = z.object({
+  areaDominante: z.enum(["backend", "frontend", "fullstack", "ia", "dados", "outro"]),
+  sugestoesDeProjeto: z.array(z.object({
+    nome: z.string(),
+    justificativa: z.string(),
+    stackFocada: z.array(z.string()),
+    tempoEstimado: z.string(),
+  })).max(3),
+});
+
+const { object: sugestoes } = await generateObject({
+  model: groq("llama-3.3-70b-versatile"),
+  schema: sugestoesSchema,
+  prompt: `Com base nesses requisitos faltando: ${gap.requisitosFaltando.join(", ")},
+sugira até 3 ideias de projeto pequenas e específicas pra fechar esse gap.`,
+});
+```
+
+### Como fica pleno
+
+- **Prompt chaining**: cada chamada de IA tem uma responsabilidade só — separar "avaliar compatibilidade" de "sugerir projeto" deixa cada prompt mais simples de acertar (e mais fácil de testar cada etapa isoladamente)
+- **BullMQ**: as duas chamadas (passo 1 e passo 2) rodam dentro do mesmo job do worker, uma depois da outra — não precisa de fila nova, reaproveita a estrutura do Crivo
+- **Zod**: dois schemas diferentes agora, um pra cada etapa — reforça o hábito de desenhar o formato de dado certo pra cada responsabilidade, em vez de um schema gigante genérico
+- **Testes**: mockar as duas chamadas separadamente — inclusive testar o que acontece se a segunda chamada falhar mas a primeira já tiver terminado (o gap analysis não devia se perder)
+
+### Conceitos/keywords que esse projeto cobre
+
+`IA / LLM (Groq)` · `prompt chaining (pipeline de IA)` · `saída estruturada complexa` · `BullMQ` · `Zod` · `testes unitários`
+
+### Escopo
+
+Não é um app novo do zero — é uma extensão do Crivo, então o escopo real é só o passo 2 (schema novo + segunda chamada de IA + exibir as sugestões no card já existente). 3-5 dias, depois do Crivo já estar rodando.
+
+---
+
 ## Projeto 2: Validador de Ingressos com QR Code (check-in de evento)
 
 > *500 pessoas na porta ao mesmo tempo, e sua API nem pisca.*
@@ -229,6 +289,7 @@ O mais "conceitual" dos quatro — vale reservar 2-3 semanas, testar bastante o 
 | Transações (ACID) | Sistema de reserva |
 | IA / LLM (Groq) | Extrator de Texto com IA, Match de Vaga (1B) |
 | IA com saída estruturada complexa (schema aninhado) | Match de Vaga (1B) |
+| Prompt chaining (pipeline de IA) | Bússola de Stack (1C) |
 | Zod (validação) | Extrator de Texto com IA, Match de Vaga (1B) |
 | Testes unitários (Vitest) | todos |
 | Docker / CI | todos |
