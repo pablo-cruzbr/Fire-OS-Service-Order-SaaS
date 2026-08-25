@@ -2,7 +2,7 @@
 
 > *Pare de ler vaga por vaga. Deixa a IA dizer quais valem seu tempo.*
 
-Documento dedicado ao Projeto 1B do `IDEIAS-PROJETOS-PLENO.md` — nome fictício **Crivo** (referência de copy em `design-references/crivo-landing-copy.txt`, referência visual em `design-references/`, baseada no [usefleming.com](https://usefleming.com/)).
+Documento dedicado ao Projeto 1B do `IDEIAS-PROJETOS-PLENO.md` — nome fictício **Crivo** (referência de copy em `design-references/crivo-landing-copy.md`, referência visual em `design-references/`, baseada no [usefleming.com](https://usefleming.com/)).
 
 ---
 
@@ -105,10 +105,41 @@ Essa tabela em si é material de entrevista: "eu sei apontar a diferença entre 
 
 ---
 
-## Escopo, custo e referência visual
+## Escopo
 
-Detalhes completos (tabela de custo checada na documentação da Groq, e a análise do print do usefleming.com) estão no `IDEIAS-PROJETOS-PLENO.md`, seção "Projeto 1B" — não duplicados aqui pra não haver duas versões divergindo com o tempo. Resumo:
+1 tela de perfil + 1 tela de lista de vagas avaliadas, 1 worker. 1-2 semanas.
 
-- **Escopo:** 1 tela de perfil + 1 tela de lista de vagas avaliadas, 1 worker
-- **Custo:** $0 pra construir e usar localmente (Groq tem plano free, Redis/Postgres rodam via Docker de graça)
-- **Frontend:** paleta escura + acento teal + cards com borda fina, inspirado no usefleming.com — sem copiar a estrutura de landing page, só o estilo visual
+## Custo — quanto isso vai custar de verdade
+
+Conferi a documentação da Groq antes de responder isso, pra não chutar número (esse tipo de dado muda com frequência, vale sempre reconferir no seu próprio painel antes de assumir):
+
+| Peça | Custo |
+|---|---|
+| Groq (IA) | Tem plano free — a doc não deixou claro os limites exatos nem se `llama-3.3-70b-versatile` está nele; confira em `console.groq.com` com a chave que o Fire OS já usa, não precisa criar conta nova |
+| Redis | Grátis, rodando local via Docker (igual o `fireos-redis` que já criamos) |
+| Postgres | Grátis, rodando local via Docker |
+| BullMQ, Prisma, Zod | Open source, sem custo |
+
+**Pra construir, testar e usar você mesmo: $0.** Onde poderia aparecer custo: (1) estourar o limite gratuito da Groq processando um lote grande de vagas rápido demais — normalmente só bloqueia a próxima chamada por um tempo, não cobra sem você ativar um plano pago; ou (2) decidir deixar o app no ar 24h pra outras pessoas usarem (deploy em Vercel/Railway) — aí entra hospedagem, que tem free tier mas com limite de uso.
+
+## Frontend — referência visual
+
+Você mandou um print do [usefleming.com](https://usefleming.com/) (salvar em `design-references/`, veja o README daquela pasta). Uma ressalva honesta antes da análise: estruturalmente o site **não é "simples"** — é uma landing page de marketing completa, com header fixo, hero, 4 blocos de seção (features, "how it works", roadmap institucional, comunidade) e rodapé em várias colunas. O que bate com "simples e rápido" é o **estilo visual de cada componente** (poucas cores, bordas finas, bastante espaço em branco), não a quantidade de telas — e é isso que vale aproveitar, sem copiar a estrutura de landing page inteira (o Crivo é uma ferramenta de uso pessoal, não precisa de seção de roadmap institucional nem comunidade).
+
+**Paleta:**
+- Fundo quase preto, com leve tom petróleo/azul escuro (não é preto puro)
+- Cor de destaque: **teal/ciano vibrante** — usada com moderação, só em: palavra de destaque no título, ícones, botão principal, badges
+- Texto: branco nos títulos, cinza-claro/médio no corpo — nunca preto puro em fundo escuro
+
+**Componentes que valem reaproveitar no app:**
+- **Badge/pill pequeno** acima de título de seção — texto uppercase pequeno dentro de uma cápsula com borda fina (ex.: usar isso pra indicar o status "ANALISANDO..." ou "CONCLUÍDO" de um job na fila)
+- **Cards com borda fina translúcida** (efeito "glass" sutil) — ícone no topo, título em negrito, descrição curta em cinza — perfeito pro card de cada vaga avaliada (ícone de status, empresa, score, lista de requisitos)
+- **Botão CTA**: fundo teal sólido, cantos arredondados, contraste alto — usar só num botão principal por tela (ex.: "Avaliar vagas"), não espalhar a cor em vários botões
+- **Números grandes em destaque** (a seção de estatísticas do site) — aplicável ao score de compatibilidade (0-100) exibido bem grande no card de cada vaga
+
+**O que NÃO trazer** (isso é estrutura de marketing, não de ferramenta):
+- Seções de "roadmap do produto", "comunidade", múltiplos blocos de texto institucional, footer de 4 colunas — o Crivo não precisa disso, é tela de uso, não site de vendas
+
+**Como fica, combinando com a diretriz "bem simples e rápido":**
+- 1 tela de perfil + 1 tela de lista de vagas — poucas telas, herdando a paleta escura/teal e o estilo de card do Fleming
+- Cada vaga processada aparece como um card (estilo Fleming: borda fina, ícone de status, score grande) assim que o job termina na fila — incremental, não uma tela de loading única
