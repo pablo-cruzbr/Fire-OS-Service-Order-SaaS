@@ -54,6 +54,24 @@ const { object } = await generateObject({
 
 ---
 
+## Isso é muito diferente do Hone (AI Mock Interview)?
+
+Pergunta justa, porque os dois são "IA + busca de emprego". Resposta honesta: **no tema, não muito — na engenharia por trás, sim, e é isso que importa pra portfólio.**
+
+| | Hone (feito com os colegas) | Crivo |
+|---|---|---|
+| **O que a IA faz** | Conversa — gera pergunta, escuta resposta, dá feedback, num vai-e-vem de várias etapas | Julga uma vez só — compara dois textos, devolve um veredito. Sem diálogo, sem estado de conversa |
+| **Padrão de IA por trás** | Agente conversacional com estado (LangGraph, memória da conversa, streaming de resposta em tempo real) | Classificador em lote (uma chamada de `generateObject`, sem memória entre chamadas) |
+| **O que dispara o processamento** | Sessão ao vivo — o usuário está esperando na tela, interagindo em tempo real | Processamento assíncrono — cola 10 vagas e sai, a fila processa sem ninguém esperando |
+| **Ênfase de arquitetura** | Orquestração de conversa (LangChain/LangGraph), parsing de currículo em PDF, streaming | Fila/processamento em lote (BullMQ), validação de saída estruturada (Zod) |
+| **O que você pessoalmente construiu** | Frontend & Integração — o backend de IA foi o Guilherme e o Vinicius | Tudo — incluindo exatamente a parte (backend + orquestração de IA) que não foi sua no Hone |
+
+A linha mais importante da tabela é a última. Tematicamente os dois apps "usam IA pra ajudar na carreira" — mas o Crivo não é "fazer o Hone de novo", é **construir sozinho a categoria de problema de backend que só vi meus colegas resolverem**: em vez de conversa em tempo real, é processamento em lote; em vez de orquestrar diálogo, é validar saída estruturada; em vez de streaming, é fila. São habilidades de backend genuinamente diferentes, só que aplicadas no mesmo tema geral de "carreira" porque é o que faz sentido pra mim agora.
+
+Se alguém perguntar em entrevista "por que dois projetos de IA pra emprego?", a resposta pronta é essa tabela: temas parecidos, arquiteturas de IA completamente diferentes, e no Crivo quem construiu a parte de backend fui eu, do início ao fim.
+
+---
+
 ## Como esse projeto mostra a virada de júnior pra pleno
 
 Não é a tecnologia sozinha que prova isso — é a decisão por trás de cada peça. Comparando as duas versões possíveis do mesmo projeto:
