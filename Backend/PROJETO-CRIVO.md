@@ -70,6 +70,8 @@ A linha mais importante da tabela é a última. Tematicamente os dois apps "usam
 
 Se alguém perguntar em entrevista "por que dois projetos de IA pra emprego?", a resposta pronta é essa tabela: temas parecidos, arquiteturas de IA completamente diferentes, e no Crivo quem construiu a parte de backend fui eu, do início ao fim.
 
+**Esclarecimento importante:** a técnica de "forçar a IA a devolver JSON validado por um schema" (o `generateObject` + `matchSchema` do exemplo de código acima) **não é exclusiva do Crivo** — é bem provável que o Hone use algo conceitualmente parecido na feature de "geração automática de feedback e itens de revisão" (o próprio LangChain tem um `withStructuredOutput()` com o mesmo objetivo). A diferença real não está em "quem usa saída estruturada", está em **onde ela mora**: no Hone, se existir, é uma etapa pequena dentro de um pipeline de conversa bem maior orquestrado pelo LangGraph — o produto ali é o diálogo. No Crivo, não tem pipeline de conversa nenhum por trás: essa chamada estruturada **é o produto inteiro**, sem estado, sem streaming, rodando sozinha dentro de um worker de fila.
+
 ---
 
 ## Como esse projeto mostra a virada de júnior pra pleno
@@ -127,6 +129,30 @@ Essa tabela em si é material de entrevista: "eu sei apontar a diferença entre 
 
 1 tela de perfil + 1 tela de lista de vagas avaliadas, 1 worker. 1-2 semanas.
 
+## Ajustes de escopo depois do cruzamento com vaga Pleno real (25/08/2026)
+
+Você colou um panorama real de requisitos de vaga Pleno Fullstack (SP) — análise completa cruzada com o portfólio inteiro está no `IDEIAS-PROJETOS-PLENO.md`, seção "Cruzamento com requisitos reais de vaga Pleno Fullstack (SP)". Quatro gaps reais dá pra fechar **sem virar projeto novo**, só ajustando como o Crivo é construído:
+
+- [ ] **Estilização com Tailwind CSS** em vez de CSS/SCSS puro — a vaga pede nominalmente Tailwind/Styled Components/Shadcn, e o Fire OS usa SCSS Modules (não é o que está sendo pedido)
+- [ ] **Testes de frontend com Testing Library** nas 2 telas do Crivo — hoje todo teste do portfólio é backend (Vitest); esse é o primeiro teste de frontend de verdade
+- [ ] **Sentry + log estruturado básico** no backend do Crivo — algumas horas de trabalho, fecha um gap de observabilidade que hoje é zero em qualquer lugar (Fire OS só tem `console.log`)
+- [ ] **Cache-aside de verdade no perfil do usuário** — Redis já está no projeto pra fila, mas ainda não é usado como cache. O perfil é lido toda vez que uma vaga é avaliada e escrito raramente (só quando você edita suas skills) — candidato clássico de cache-aside, com invalidação no update. Código de exemplo na seção "Minhas Dúvidas" do `IDEIAS-PROJETOS-PLENO.md`.
+
+Isso não muda o escopo principal (1 tela de perfil + 1 de lista, 1 worker) nem o prazo — são decisões de **como** construir, não **o quê**, então cabem nas mesmas 1-2 semanas.
+
+### Quanto % desses requisitos o Crivo cobre sozinho, hoje
+
+**Contagem, não achismo:** peguei os 21 itens tecnicamente avaliáveis do panorama que você colou (exclui "inglês técnico", que não dá pra medir por código) e marquei quais o **Crivo sozinho** — sem contar o Fire OS ou os outros projetos do portfólio — cobre, já considerando os 4 ajustes acima aplicados:
+
+**Cobertos pelo Crivo (15 de 21 ≈ 71%):** TypeScript avançado, Express, REST, Prisma, Next.js, estilização moderna (com o ajuste do Tailwind), PostgreSQL, **Redis como cache** (com o ajuste do cache de perfil), testes backend, testes frontend (com o ajuste da Testing Library), Docker, CI/CD, mensageria (BullMQ), observabilidade (com o ajuste do Sentry).
+
+**Não cobertos só pelo Crivo:** NestJS, GraphQL, Git Flow/code review em equipe, cloud real (AWS/GCP/Azure), microsserviços/serverless — esse último não é resolvido pelo Neon (serverless de banco é coisa diferente de serverless de aplicação; ver "Minhas Dúvidas" no `IDEIAS-PROJETOS-PLENO.md` pra detalhe). SOLID/Design Patterns fica de fora da contagem — depende de quanto você documentar as decisões, não é binário (exemplos concretos também estão em "Minhas Dúvidas").
+
+**Três ressalvas importantes, pra não tratar esse número como verdade absoluta:**
+1. **Nem todo item pesa igual.** NestJS sozinho, se a vaga insiste nele, pode pesar mais que 3 itens marcados como ✅ juntos — isso aqui é uma contagem simples de itens, não uma média ponderada por importância real pro recrutador.
+2. **É só o Crivo isolado.** Somado ao Fire OS (que já cobre RBAC/CASL, TypeScript, Prisma, Postgres, Docker, CI, Next.js) e à sua parte real no Hone (Tailwind/shadcn no frontend), o cálculo do **portfólio inteiro** está no `IDEIAS-PROJETOS-PLENO.md` — hoje ~57%, projetado ~71% depois do Crivo pronto com os 4 ajustes.
+3. **Isso não substitui o ATS/o recrutador de verdade.** É um termômetro rápido pra decidir prioridade, não uma nota final — o cruzamento fica mais preciso a cada vaga real nova que você colar aqui.
+
 ## Custo — quanto isso vai custar de verdade
 
 Conferi a documentação da Groq antes de responder isso, pra não chutar número (esse tipo de dado muda com frequência, vale sempre reconferir no seu próprio painel antes de assumir):
@@ -161,3 +187,23 @@ Você mandou um print do [usefleming.com](https://usefleming.com/) (salvar em `d
 **Como fica, combinando com a diretriz "bem simples e rápido":**
 - 1 tela de perfil + 1 tela de lista de vagas — poucas telas, herdando a paleta escura/teal e o estilo de card do Fleming
 - Cada vaga processada aparece como um card (estilo Fleming: borda fina, ícone de status, score grande) assim que o job termina na fila — incremental, não uma tela de loading única
+
+---
+
+## Veredito: mesmo com a sobreposição com o Hone, isso atende como projeto pra vaga pleno?
+
+**Sim, atende — com ressalvas honestas, não como "sim" cego.**
+
+**Por que atende, olhando seu caso especificamente:**
+- Fecha gaps concretos que hoje **não existem em nenhum outro lugar do seu portfólio**: fila usada de forma central (não só protótipo isolado), Zod validando de verdade (item 2 do `ROADMAP-PLENO.md`, em aberto desde o início), rate limiting, e saída estruturada de IA
+- Você constrói **sozinho, do início ao fim** — diferente do Hone, onde seu papel foi frontend/integração. É a primeira peça do seu portfólio onde fila + IA + validação são 100% seus
+- Escopo pequeno (1-2 semanas) cabe real no seu prazo de 3 meses, sem competir por tempo com aplicar pra vaga e estudar
+- Já tem a narrativa de entrevista pronta (a tabela de comparação com o Hone, o esclarecimento sobre saída estruturada) — isso sozinho já vale mais que o código, é o que faz um projeto pequeno parecer intencional em vez de "mais um CRUD com IA"
+
+**As ressalvas que valem manter em mente, pra não vender demais:**
+- O Crivo **complementa** o Fire OS, não substitui — o Fire OS continua sendo a prova de "sistema real, usado de verdade, 47 OS processadas"; o Crivo prova fundamentos de backend específicos que o Fire OS ainda não cobre
+- Nem toda vaga pleno Node/TS pede IA/LLM — se as vagas que você mirar não mencionarem isso, o Crivo pesa menos que um projeto batendo direto nas keywords delas (é por isso que ainda vale colar requisitos de vaga reais aqui quando tiver, como você já tinha planejado)
+- É um app de usuário único — RBAC de propósito não entra; se alguém perguntar "cadê autorização aqui", a resposta certa é "não fazia sentido pro escopo", não silêncio
+- Essa validação ainda é baseada em raciocínio geral sobre o mercado, não em vaga real cruzada — o veredito definitivo mesmo só fecha quando você colar requisitos de vaga pleno de verdade pra comparar
+
+**Resumindo:** vale construir, mas como uma peça de um portfólio maior (Fire OS + Crivo, e talvez mais um dos Projetos 2/3/4), não como aposta única.
