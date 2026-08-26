@@ -299,6 +299,150 @@ O mais "conceitual" dos quatro — vale reservar 2-3 semanas, testar bastante o 
 
 ---
 
+## Cruzamento com requisitos reais de vaga Pleno Fullstack (SP) — 25/08/2026
+
+Você colou um panorama de requisitos reais de mercado (Node + React + TS, perfil Pleno, São Paulo). Cruzando item por item com tudo que já existe (Fire OS) e tudo que está planejado (esse portfólio):
+
+### Core Tech Stack
+
+| Requisito | Status | Onde |
+|---|---|---|
+| TypeScript avançado | ✅ Coberto | Fire OS (backend e frontend inteiros em TS) + o frontend do Hone (sua parte real lá) |
+| Backend: NestJS | ❌ **Gap real** | Nenhum lugar — Fire OS e todos os projetos planejados usam Express puro |
+| Backend: Express/Fastify | ✅ Coberto | Fire OS, e todos os projetos do portfólio |
+| APIs RESTful | ✅ Coberto | Fire OS (+80 endpoints) |
+| GraphQL | ❌ Não coberto | Baixa prioridade — a vaga aceita REST **ou** GraphQL, você já tem REST forte |
+| ORM (Prisma) | ✅ Coberto | Fire OS e todos os projetos planejados |
+| React/Next.js (SSR/SSG, App Router) | ✅ Coberto | Fire OS Frontend (Next.js 14, App Router) + Hone (Next.js 16, React 19 — sua parte real lá) |
+| Gerenciamento de estado (Zustand/Redux/Context) | ✅ Coberto | Fire OS usa Context API — a vaga aceita explicitamente essa opção, não só Zustand/Redux |
+| Estilização moderna (Tailwind/Styled Components/Shadcn) | ✅ Coberto | Não pelo Fire OS (usa SCSS Modules) — mas pelo **Hone**: o frontend usa Tailwind CSS v4 + shadcn/ui, e essa parte (frontend) foi de fato construída por você lá, diferente do backend |
+| PostgreSQL | ✅ Coberto | Fire OS |
+| Redis (cache) | ⚠️ Parcial → planejado ✅ | Hoje só prototipado pra fila. Dá pra virar cache-aside de verdade **dentro do próprio Crivo**, cacheando o perfil do usuário (ver "Minhas Dúvidas" abaixo) — não precisa esperar o Projeto 2 |
+| Testes unitários/integração (backend) | ✅ Coberto | Fire OS (Vitest), reforçado em todos os projetos planejados |
+| Testes de frontend (Testing Library/Cypress) | ❌ **Gap real** | Nenhum lugar — todo teste até agora foi backend |
+
+### Engenharia de Software & Práticas
+
+| Requisito | Status | Onde |
+|---|---|---|
+| SOLID / Clean Code / Design Patterns | ❌ **Gap real** | Aplicado intuitivamente em partes do Fire OS, mas nunca documentado ou nomeado conscientemente em lugar nenhum |
+| Git Flow / PR detalhada / code review de pares | ❌ **Gap estrutural** | Já documentado no `ROADMAP-PLENO.md` — projeto solo não treina isso, é o tipo de gap que só fecha trabalhando com outra pessoa |
+| Docker | ✅ Coberto | Fire OS |
+| CI/CD (GitHub Actions) | ✅ Coberto | Fire OS |
+| Cloud real (AWS/GCP/Azure — S3, Lambda, ECS) | ❌ **Gap real** | Fire OS usa Vercel + Cloudinary — funciona, mas não é a mesma coisa que mexer com S3/Lambda/ECS de verdade |
+
+### Diferenciais
+
+| Requisito | Status | Onde |
+|---|---|---|
+| Mensageria (RabbitMQ/Kafka/BullMQ) | ✅ Coberto | Protótipo testado ao vivo, planejado como peça central no Crivo |
+| Microsserviços / Serverless | ❌ Não coberto | Fire OS é monólito; nenhum projeto planejado cobre isso — baixa prioridade dado o tempo disponível |
+| Observabilidade (OpenTelemetry/Datadog/Sentry/logs estruturados) | ❌ **Gap real** | Zero cobertura — hoje é só `console.log` espalhado |
+| Inglês técnico | — | Não avaliável por código, fora do escopo desse documento |
+
+### Cobertura do portfólio inteiro (Fire OS + Hone + Crivo) — não só um projeto isolado
+
+Mesma contagem de antes (21 itens tecnicamente avaliáveis, excluindo "inglês"), mas agora somando **tudo que é seu de verdade** — nas 3 peças, contando só o que você pessoalmente construiu em cada uma (no Hone, isso significa só a parte de frontend/integração, não o backend dos colegas):
+
+**Hoje, com o que já está construído e rodando (Fire OS + sua parte real do Hone):**
+
+✅ Cobertos (12 de 21): TypeScript, Express, REST, Prisma, React/Next.js, gerenciamento de estado, **estilização moderna** (via Hone — Tailwind + shadcn), PostgreSQL, testes backend, Docker, CI/CD, mensageria (BullMQ, protótipo testado ao vivo).
+
+⚠️ Parcial (1): SOLID/Clean Code — aplicado, não documentado conscientemente.
+
+❌ Não cobertos (8): NestJS, GraphQL, Redis como cache (só como fila hoje), testes de frontend, Git Flow/code review em equipe, cloud real (AWS), microsserviços/serverless, observabilidade.
+
+**→ 12 de 21 ≈ 57% hoje.**
+
+**Projetado, depois do Crivo pronto (com os ajustes já planejados — Tailwind reforçado, Testing Library, Sentry):**
+
+Some **testes de frontend** e **observabilidade**, que passam de ❌ pra ✅.
+
+**→ 14 de 21 ≈ 67%**, com alta confiança (já está desenhado em detalhe no `PROJETO-CRIVO.md`, não é especulação).
+
+**Atualização: descobrimos que "Redis como cache" não precisa esperar o Projeto 2** — dá pra adicionar cache-aside de verdade dentro do próprio Crivo (cacheando o perfil do usuário, ver "Minhas Dúvidas" abaixo). Com esse 4º ajuste:
+
+**→ 15 de 21 ≈ 71%, só com o Crivo** — sem precisar do Projeto 2 pra isso especificamente (o Projeto 2 continua valendo por outros motivos: rate limiting, TTL, geração de identificador).
+
+O que continua de fora mesmo nesse cenário otimista: NestJS, GraphQL, Git Flow/code review em equipe, cloud real, microsserviços. São os gaps que exigem uma decisão maior (trocar de framework, trabalhar com outra pessoa, mexer em AWS de verdade) — não dá pra fechar só ajustando escopo de projeto pequeno.
+
+**As mesmas ressalvas de antes, valendo aqui em dobro:** isso é contagem simples de itens, não pesada por importância real; é uma régua rápida pra decidir prioridade, não substitui um recrutador ou ATS de verdade; e só fica realmente preciso quando cruzado com o texto de uma vaga específica, não um panorama geral de mercado.
+
+### O que fazer com isso, dado o tempo que resta
+
+Os gaps reais que mais pesam (NestJS, testes de frontend, estilização moderna, observabilidade, cloud) não cabem como projetos novos do zero — o jeito eficiente é **embutir cada um numa decisão de projeto que você já vai construir mesmo**, em vez de somar mais itens à lista:
+
+- [ ] **NestJS**: o gap mais citado como "altamente requisitado" — em vez de migrar o Fire OS (não vale o risco/tempo), construa o **próximo** projeto do portfólio depois do Crivo (Projeto 2, 3 ou 4) em NestJS em vez de Express. Escolha deliberada, não acidente.
+- [ ] **Estilização moderna + testes de frontend**: no Crivo, troque CSS/SCSS por **Tailwind** desde o início, e adicione alguns testes com **Testing Library** nas 2 telas — dá pra embutir isso no escopo do Crivo sem virar projeto novo
+- [ ] **Observabilidade**: adicionar **Sentry** (tem free tier) + logs estruturados básicos no Crivo — algumas horas de trabalho, fecha um gap que hoje é zero em qualquer lugar
+- [ ] **Cloud real**: se for fazer deploy de algum projeto, escolher **AWS** pra pelo menos uma peça (ex.: S3 pra armazenar algo, em vez de Cloudinary) em vez de só Vercel — não precisa ser tudo na AWS, só uma peça real
+- [ ] **SOLID/Design Patterns**: mais barato de resolver — ao documentar decisões (o "molde de narrativa" que você já usa), nomear explicitamente qual princípio SOLID ou padrão de projeto está por trás de cada escolha, em vez de aplicar sem nomear
+- [ ] **Code review em equipe**: continua sendo o único gap que nenhum projeto solo fecha — vale considerar pedir revisão de alguém (comunidade, ex-colega) num desses PRs, mesmo que informal
+
+**Gaps que ficam de fora, de propósito, dado o tempo:** GraphQL e microsserviços/serverless — são "diferenciais", não obrigatórios, e o retorno por hora investida é menor que os itens acima.
+
+---
+
+## Minhas Dúvidas
+
+Log de perguntas que fui fazendo enquanto cruzava o portfólio com a vaga real — pra não perder o que já foi respondido.
+
+### Redis como cache — dá pra usar mais em algum lugar? No Crivo também, ou no Hone?
+
+**No Hone: não conta, mesmo que exista lá.** Se a parte de cache existir no backend do Hone, ela foi construída pelo Guilherme/Vinicius, não por você (seu papel lá foi frontend/integração) — vale o mesmo princípio de sempre: só conta o que você constrói de fato.
+
+**No Crivo: sim, dá pra usar de verdade, e nem precisa esperar o Projeto 2.** O candidato mais natural é cachear o **perfil do usuário** — ele é lido toda vez que uma vaga é avaliada (o worker busca o perfil pra montar o prompt de comparação), e escrito raramente (só quando você edita suas skills). É o exemplo clássico de cache-aside: muita leitura, pouca escrita.
+
+```ts
+async function getPerfil(userId: string) {
+  const cacheKey = `perfil:${userId}`;
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  const perfil = await prisma.perfil.findUnique({ where: { userId } });
+  await redis.set(cacheKey, JSON.stringify(perfil), "EX", 3600); // expira em 1h
+  return perfil;
+}
+
+async function updatePerfil(userId: string, data: PerfilInput) {
+  const perfil = await prisma.perfil.update({ where: { userId }, data });
+  await redis.del(`perfil:${userId}`); // invalida o cache no momento da escrita
+  return perfil;
+}
+```
+
+- [ ] Adicionar isso como 4º ajuste de escopo no Crivo (já documentado no `PROJETO-CRIVO.md`)
+
+### Exemplos de SOLID/Design Patterns — no Fire OS e no Crivo
+
+**No Fire OS, já existe isso, só nunca foi nomeado:**
+
+- **Single Responsibility Principle**: `can.ts` só decide permissão por role, `authorizeOrdemdeServico.ts` só decide permissão por dono da OS — nenhum dos dois faz mais nada além disso, nem validação, nem lógica de negócio.
+- **Open/Closed Principle**: `can(['ADMIN'])` é aberto pra extensão sem modificar o código — dá pra proteger uma rota nova com `can(['ADMIN', 'TECNICO'])` sem tocar em `can.ts`.
+- **Dependency Inversion (leve)**: `authorizeOrdemdeServico` depende da abstração `ability.can(...)` (vinda de `defineAbilityFor`), não de um `if (role === 'ADMIN')` direto — trocar quem pode fazer o quê é mudar só a função que define a ability, o middleware nunca muda.
+- **Violação honesta, boa de citar em entrevista**: `routes.ts` viola SRP no nível de arquivo — um arquivo só registrando +80 rotas de todos os domínios do sistema junto. Reconhecer isso ("eu sei que viola SRP, dividiria por módulo se fosse continuar crescendo") vale mais numa entrevista do que fingir que não existe.
+
+**No Crivo, ainda não construído, mas já dá pra apontar onde vai aparecer:**
+
+- **Single Responsibility**: no pipeline de duas etapas do Bússola de Stack (1C), a função que avalia compatibilidade (passo 1) e a que sugere projetos (passo 2) são separadas — cada uma com seu schema e seu prompt, nenhuma faz o trabalho da outra.
+- **Separação de camadas (persistência vs. IA vs. fila)**: a função que chama a Groq, a que salva no Postgres e a que enfileira o job ficam em arquivos/funções diferentes — o handler da rota só orquestra, não faz nenhum dos três trabalhos ele mesmo.
+
+### Neon (Postgres serverless) conta como microsserviços/serverless?
+
+**Não sozinho — são duas coisas diferentes que têm a palavra "serverless" em comum:**
+
+- **Serverless de banco (o que o Neon é):** você não gerencia o servidor do banco — ele escala e "dorme" sozinho. Isso é sobre **como o banco é hospedado**.
+- **Serverless de aplicação (o que a vaga pede):** seu **código** roda como função sob demanda (AWS Lambda, Vercel Functions) em vez de um processo Express de longa duração ligado o tempo todo.
+- **Microsserviços:** sua aplicação dividida em múltiplos serviços independentes, com deploy próprio, comunicando por rede — o oposto de um monólito como o Fire OS.
+
+Usar Neon prova a primeira coisa, não as outras duas.
+
+**Mas você não está em zero:** o padrão fila + worker que você já testou ao vivo (API e Worker rodando como **dois processos separados**, comunicando só via Redis) já é um passo real nessa direção — não é microsserviço completo (ainda é o mesmo repositório e o mesmo deploy), mas é a mesma ideia arquitetural por trás: responsabilidades separadas, comunicando por uma peça de infraestrutura em vez de chamada direta de função.
+
+- [ ] Passo concreto pra chegar mais perto de verdade, se quiser: no Crivo, dar deploy do **worker como um serviço separado** (ex.: Railway, rodando isolado da API) em vez de rodar os dois juntos localmente — aí sim vira, na prática, dois serviços com deploy independente, não só dois processos na sua máquina.
+
+---
+
 ## Qual construir nos próximos 3 meses — recomendação de 1 a 2 projetos
 
 Você ainda vai gastar boa parte desses 3 meses aplicando pra vaga, se preparando pra entrevista e terminando itens do `ROADMAP-PLENO.md` (Zod nas rotas do Fire OS, mais testes, etc.) — então a pergunta certa não é "qual é o melhor projeto", é **qual cobre mais gap novo por semana de esforço, com risco baixo de não terminar**.
