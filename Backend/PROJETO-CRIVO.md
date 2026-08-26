@@ -12,7 +12,13 @@ As 3 ideias anteriores (entrevistador, follow-up, tutor de código) eram todas d
 
 ## O que é, em uma frase
 
-Você salva seu perfil (skills, nível, tecnologias) uma vez, e depois vai colando descrições de vaga — uma de cada vez, ou várias seguidas. Cada vaga colada vira um job numa fila. A IA compara cada uma com seu perfil e devolve um **score de compatibilidade estruturado**: 0 a 100, o que bate, o que falta, e uma recomendação curta (vale a pena aplicar ou não é prioridade agora). No fim, uma lista ordenada por score — você olha só as vagas que realmente valem seu tempo.
+Você salva seu perfil (skills, nível, tecnologias) uma vez, e depois vai colando descrições de vaga — uma de cada vez, ou várias seguidas. Cada vaga colada vira um job numa fila. A IA compara cada uma com seu perfil e devolve um **score de compatibilidade estruturado**: 0 a 100, o que bate, o que falta, e uma recomendação curta. Mas o resultado não para numa lista estática — cada vaga avaliada vira um **card num board estilo Kanban** (Radar → Avaliando → Aplicado → Entrevista → Oferta/Recusado), que você arrasta conforme o processo real anda. A IA só faz a triagem de entrada; o acompanhamento é seu.
+
+## Evolução do conceito — fugindo do mecanismo genérico
+
+Depois de mostrar o Crivo pro meu amigo (que trabalha fora), ele apontou o mesmo problema que eu já suspeitava: "cola texto, IA compara, devolve nota" é o mecanismo central de produtos que já existem no mercado (tipo Jobscan, Teal) — mesmo com fila e cache por trás, o **coração da ideia** não é novo, só a engenharia é.
+
+A correção não foi trocar de projeto — foi parar de tratar a IA como o produto inteiro. A IA vira **uma peça de triagem** dentro de uma ferramenta maior de acompanhamento (o board Kanban), que é o que realmente falta no seu dia a dia hoje: um jeito de ver, num olhar só, em que estágio está cada vaga que você já avaliou. O diferencial não é "minha IA é melhor que a do concorrente" — é "meu sistema processa em lote, guarda o histórico organizado por estágio, e ainda faz a triagem inicial sozinho", que é uma combinação de mecanismos (fila + IA + estado de pipeline) mais rica do que qualquer um dos três isolado.
 
 ## O conceito técnico central — IA em lote, via fila, com saída estruturada mais complexa
 
@@ -34,10 +40,15 @@ const matchSchema = z.object({
 
 // Isso roda dentro do WORKER, um job por vaga — não na hora do request,
 // igual já fizemos no protótipo de fila com o Cloudinary (GUIA-FILA-BULLMQ.md).
+// O card nasce sempre na coluna "radar" — o usuário move o resto na mão.
 const { object } = await generateObject({
   model: groq("llama-3.3-70b-versatile"),
   schema: matchSchema,
   prompt: `Compare o perfil e a vaga, avalie compatibilidade:\n\nPerfil: ${perfil}\n\nVaga: ${vaga}`,
+});
+
+await prisma.vaga.create({
+  data: { ...object, status: "radar" }, // radar | avaliando | aplicado | entrevista | oferta | recusado
 });
 ```
 
@@ -46,11 +57,12 @@ const { object } = await generateObject({
 - **BullMQ**, aqui de forma central (não opcional): cola 10 vagas de uma vez, 10 jobs entram na fila, o worker processa uma avaliação de IA por vez — você não fica esperando as 10 chamadas de IA travando a tela
 - **Zod** valida um schema mais rico que o do Extrator (com `enum` e `array` aninhados), e ainda serve de rede de segurança contra a IA "alucinar" um formato torto
 - **Rate limit de verdade**: cada avaliação é uma chamada à API da Groq com limite de uso — limite de quantas vagas por dia, pra não estourar a cota gratuita processando um lote gigante de uma vez
-- **Testes**: mockar `generateObject` devolvendo scores diferentes, e testar que a lista final fica ordenada certo — um teste que já mistura lógica de negócio com IA mockada
+- **Máquina de estados simples no Kanban**: `status` é um `enum` com transições esperadas (`radar → avaliando → aplicado → entrevista → oferta/recusado`) — dá pra validar no backend que um card não pula de "radar" direto pra "oferta", por exemplo, em vez de aceitar qualquer string
+- **Testes**: mockar `generateObject` devolvendo scores diferentes, testar a ordenação por score, e testar as transições de status válidas/inválidas do Kanban
 
 ## Conceitos/keywords que esse projeto cobre
 
-`IA / LLM (Groq)` · `saída estruturada complexa (schema aninhado)` · `BullMQ (processamento em lote)` · `Zod` · `rate limiting` · `testes unitários`
+`IA / LLM (Groq)` · `saída estruturada complexa (schema aninhado)` · `BullMQ (processamento em lote)` · `Zod` · `rate limiting` · `testes unitários` · `máquina de estados (status/Kanban)`
 
 ---
 
@@ -127,7 +139,7 @@ Essa tabela em si é material de entrevista: "eu sei apontar a diferença entre 
 
 ## Escopo
 
-1 tela de perfil + 1 tela de lista de vagas avaliadas, 1 worker. 1-2 semanas.
+1 tela de perfil + 1 board Kanban (arrastar card entre colunas de status) + 1 worker. 1.5-2.5 semanas — o board com drag-and-drop (ex.: biblioteca `@dnd-kit`) soma uns 2-3 dias ao escopo original de lista simples, mas é o que tira o projeto do "mecanismo genérico".
 
 ## Ajustes de escopo depois do cruzamento com vaga Pleno real (25/08/2026)
 
