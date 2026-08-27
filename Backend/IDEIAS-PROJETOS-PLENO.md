@@ -214,6 +214,16 @@ Na abertura do evento, 500 pessoas chegam nos primeiros 10 minutos, todas queren
 
 ---
 
+## Projeto 2B: Encurtador de URL — versão sênior
+
+> *O mesmo projeto clássico de entrevista, construído com as decisões que separam quem sabe codar de quem sabe arquitetar.*
+
+**Ganhou documento próprio: [`PROJETO-ENCURTADOR.md`](./PROJETO-ENCURTADOR.md)** — revive a ideia original de encurtador de URL (trocada por "Validador de Ingressos" mais acima), agora com profundidade sênior: as mesmas camadas de cache-aside e fila, mais duas coisas que nenhum outro projeto do portfólio cobre — **resiliência/fallback** (o que fazer quando o próprio Redis cai) e **deploy real em AWS Lambda** (fecha os gaps de "cloud real" e "serverless" de uma vez). Inclui uma régua de 3 níveis (Junior/Pleno/Sênior) pra mesma feature.
+
+`Redis (cache-aside)` · `resiliência / fallback` · `BullMQ` · `AWS Lambda` · `arquitetura serverless` · `observabilidade` · `SOLID` · `testes unitários`
+
+---
+
 ## Projeto 3: Enquete ao vivo (tipo Mentimeter/Slido, só que na unha)
 
 > *5 mil votos ao mesmo tempo, zero perdido, zero duplicado.*
@@ -329,14 +339,14 @@ Você colou um panorama de requisitos reais de mercado (Node + React + TS, perfi
 | Git Flow / PR detalhada / code review de pares | ❌ **Gap estrutural** | Já documentado no `ROADMAP-PLENO.md` — projeto solo não treina isso, é o tipo de gap que só fecha trabalhando com outra pessoa |
 | Docker | ✅ Coberto | Fire OS |
 | CI/CD (GitHub Actions) | ✅ Coberto | Fire OS |
-| Cloud real (AWS/GCP/Azure — S3, Lambda, ECS) | ❌ **Gap real** | Fire OS usa Vercel + Cloudinary — funciona, mas não é a mesma coisa que mexer com S3/Lambda/ECS de verdade |
+| Cloud real (AWS/GCP/Azure — S3, Lambda, ECS) | ⚠️ Parcial → planejado ✅ | Fire OS usa Vercel + Cloudinary. Caminho pra fechar: **Projeto 2B** (`PROJETO-ENCURTADOR.md`), deploy real em AWS Lambda + API Gateway |
 
 ### Diferenciais
 
 | Requisito | Status | Onde |
 |---|---|---|
 | Mensageria (RabbitMQ/Kafka/BullMQ) | ✅ Coberto | Protótipo testado ao vivo, planejado como peça central no Crivo |
-| Microsserviços / Serverless | ❌ Não coberto | Fire OS é monólito; nenhum projeto planejado cobre isso — baixa prioridade dado o tempo disponível |
+| Microsserviços / Serverless | ⚠️ Parcial → planejado ✅ | Fire OS é monólito. Serverless (não microsserviço completo) fica coberto pelo **Projeto 2B** — deploy da função em AWS Lambda é arquitetura serverless de aplicação de verdade, diferente do Neon (que é só serverless de banco, ver "Minhas Dúvidas") |
 | Observabilidade (OpenTelemetry/Datadog/Sentry/logs estruturados) | ❌ **Gap real** | Zero cobertura — hoje é só `console.log` espalhado |
 | Inglês técnico | — | Não avaliável por código, fora do escopo desse documento |
 
