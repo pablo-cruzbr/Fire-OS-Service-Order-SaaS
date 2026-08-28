@@ -174,13 +174,52 @@ sugira até 3 ideias de projeto pequenas e específicas pra fechar esse gap.`,
 - **Zod**: dois schemas diferentes agora, um pra cada etapa — reforça o hábito de desenhar o formato de dado certo pra cada responsabilidade, em vez de um schema gigante genérico
 - **Testes**: mockar as duas chamadas separadamente — inclusive testar o que acontece se a segunda chamada falhar mas a primeira já tiver terminado (o gap analysis não devia se perder)
 
+### Fase 2 (inspirada no Oi Celine): de vaga colada pra repositório do GitHub, e de lista plana pra árvore
+
+Você viu o produto de um amigo (**Oi Celine**, uma companheira de estudos com IA) e reparou num padrão que vale demais: em vez de só responder pergunta, ela **desenha o que você entendeu** (mapa mental) e guia a revisão pelo que ainda falta dominar. A ideia aqui é a mesma, aplicada a **repositórios**, não a anotações de aula.
+
+**O que muda:** em vez de só colar uma vaga, você cola um **link de repositório público do GitHub**. A IA:
+1. Busca a estrutura do repo (API pública do GitHub, sem precisar de autenticação pra repo público) — pastas, `package.json`, README
+2. Analisa **por que** cada peça arquitetural existe (não só "tem Express", mas "por que tem fila, o que ela resolve ali") — é o mesmo exercício de rastreamento de fluxo que já treinamos no `ROADMAP-PLENO.md` (item "System Design"), automatizado
+3. Desenha isso como **mapa mental** (não lista) — usando `mermaid`, a mesma sintaxe que você já vê renderizada no GitHub e nos meus documentos
+4. A partir do mapa, propõe uma **árvore de projetos** — cada nó do mapa vira um ou mais galhos de "projeto pra ir mais fundo nisso"
+
+**Plano visual — exemplo usando o próprio Fire OS como repo de entrada:**
+
+```mermaid
+mindmap
+  root((Fire OS))
+    RBAC / CASL
+      Dominado — já implementado
+    Fila BullMQ
+      Ideia: Validador de Ingressos QR
+      Ideia: Encurtador de URL sênior
+    Cache Redis
+      Ainda não construído
+      Ideia: Cache-aside no perfil do Crivo
+    Frontend Next.js
+      Ideia: reforçar com Testing Library
+    Observabilidade
+      Gap real — zero cobertura
+      Ideia: Sentry no Encurtador
+```
+
+Repara que isso é literalmente uma versão automática do que a gente já fez à mão nesse portfólio inteiro: achar o `can.ts` não ligado, identificar o gap de cache, sugerir o Encurtador pra fechar AWS/observabilidade — só que a IA faz isso sozinha, pra **qualquer** repositório, não só o seu.
+
+**Por que isso é maior escopo que o resto do portfólio, dito com honestidade:**
+- Buscar e interpretar estrutura de repositório é mais complexo que só ler um texto colado — precisa decidir o que mandar pra IA (não dá pra jogar o repo inteiro no prompt) e isso é, em si, uma decisão de engenharia
+- Gerar `mermaid` válido via IA precisa de validação (Zod valida o *schema* dos nós/galhos antes de virar sintaxe mermaid, não o mermaid final direto — a IA gera dados estruturados, o código monta a sintaxe)
+- Isso é **fase 2**, depois do MVP simples (vaga → gap → sugestões) estar rodando — não é o ponto de partida
+
 ### Conceitos/keywords que esse projeto cobre
 
-`IA / LLM (Groq)` · `prompt chaining (pipeline de IA)` · `saída estruturada complexa` · `BullMQ` · `Zod` · `testes unitários`
+`IA / LLM (Groq)` · `prompt chaining (pipeline de IA)` · `saída estruturada complexa` · `BullMQ` · `Zod` · `testes unitários` · `API do GitHub` · `geração de diagrama (mermaid)`
 
 ### Escopo
 
-Não é um app novo do zero — é uma extensão do Crivo, então o escopo real é só o passo 2 (schema novo + segunda chamada de IA + exibir as sugestões no card já existente). 3-5 dias, depois do Crivo já estar rodando.
+**Fase 1** (MVP, extensão simples do Crivo): não é um app novo do zero — só o passo 2 (schema novo + segunda chamada de IA + exibir as sugestões no card já existente). 3-5 dias, depois do Crivo já estar rodando.
+
+**Fase 2** (inspirada na Celine, mapa mental + repo do GitHub): mais ambiciosa, conte mais 1-1.5 semana — só vale a pena depois que a Fase 1 e o resto do portfólio prioritário (Crivo, Encurtador) estiverem prontos e documentados.
 
 ---
 
