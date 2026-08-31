@@ -1,4 +1,7 @@
 import prismaClient from "../../../prisma";
+import redisClient from "../../../redis";
+
+const TOTALS_CACHE_TTL_SECONDS = 30;
 
 interface ListRequest {
   user_id: string;
@@ -186,15 +189,42 @@ class ListOrdemdeServicoService {
       },
     });
 
+    const totals = await this.getTotais(whereCondition);
+
+    return {
+      controles,
+      ...totals,
+      page: currentPage,
+      limit: currentLimit,
+      totalPages: Math.ceil(totals.total / currentLimit),
+    };
+  }
+
+  // Cache-aside: olha a "gaveta" (Redis) primeiro; só recalcula os 8 counts
+  // no banco se não achar nada lá, ou se o Redis estiver fora do ar.
+  // TTL de 30s é aceitável aqui porque um contador de status levemente
+  // desatualizado não tem custo real pro usuário — não é um saldo bancário.
+  private async getTotais(whereCondition: any) {
+    const cacheKey = `os:totais:${JSON.stringify(whereCondition)}`;
+
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      console.error("Redis indisponível, seguindo sem cache:", error);
+    }
+
     const [
-      total, 
+      total,
       totalAberta,
-      totalEmDeslocamento, 
-      totalEmAndamento, 
-      totalPausada, 
-      totalConcluida, 
-      totalTicket, 
-      totalOrdemdeServico
+      totalEmDeslocamento,
+      totalEmAndamento,
+      totalPausada,
+      totalConcluida,
+      totalTicket,
+      totalOrdemdeServico,
     ] = await Promise.all([
       prismaClient.ordemdeServico.count({ where: whereCondition }),
       prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "ABERTA" } } }),
@@ -206,8 +236,7 @@ class ListOrdemdeServicoService {
       prismaClient.ordemdeServico.count({ where: { ...whereCondition, tipodeOrdemdeServico: { name: "ORDEM DE SERVICO" } } }),
     ]);
 
-    return {
-      controles,
+    const totais = {
       total,
       totalAberta,
       totalEmDeslocamento,
@@ -216,10 +245,15 @@ class ListOrdemdeServicoService {
       totalPausada,
       totalTicket,
       totalOrdemdeServico,
-      page: currentPage,
-      limit: currentLimit,
-      totalPages: Math.ceil(total / currentLimit),
     };
+
+    try {
+      await redisClient.set(cacheKey, JSON.stringify(totais), "EX", TOTALS_CACHE_TTL_SECONDS);
+    } catch (error) {
+      console.error("Redis indisponível, não deu pra salvar o cache:", error);
+    }
+
+    return totais;
   }
 }
 
