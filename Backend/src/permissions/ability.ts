@@ -11,7 +11,7 @@ interface UserForAbility {
 }
 
 // Regras de autorização por role, centralizadas aqui em vez de espalhadas
-// em `if` por service. Ver ROADMAP-PLENO.md, item 1 ("Próximo nível"),
+// em `if` por service. Ver estudos-pleno/ROADMAP-PLENO.md, item 1 ("Próximo nível"),
 // pro raciocínio: can.ts decide "pode chamar a rota", isso aqui decide
 // "pode agir NESSE recurso específico".
 export function defineAbilityFor(user: UserForAbility): AppAbility {

@@ -5,7 +5,7 @@ import { defineAbilityFor } from "../permissions/ability";
 
 // Autoriza leitura/edição de UMA ordem de serviço específica, considerando
 // quem é o dono (tecnico_id) — não só a role. Usa CASL em cima do RBAC
-// básico do can.ts. Ver ROADMAP-PLENO.md, item 1.
+// básico do can.ts. Ver estudos-pleno/ROADMAP-PLENO.md, item 1.
 export function authorizeOrdemdeServico(action: "read" | "update") {
   return async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;

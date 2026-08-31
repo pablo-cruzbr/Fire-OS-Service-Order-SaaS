@@ -115,7 +115,7 @@ import { RelatorioSecretariaController } from "./controllers/controles_forms/Ord
 import { AIChatController } from "./api/ai/chat/route";
 
 // Dois roteadores: publicRouter não passa por isAuthenticated, privateRouter passa por TODOS.
-// Ver ROADMAP-PLENO.md, item 1, para o raciocínio completo por trás dessa divisão.
+// Ver estudos-pleno/ROADMAP-PLENO.md, item 1, para o raciocínio completo por trás dessa divisão.
 const publicRouter = Router();
 const privateRouter = Router();
 
