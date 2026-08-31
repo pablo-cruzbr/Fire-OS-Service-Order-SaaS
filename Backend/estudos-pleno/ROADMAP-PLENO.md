@@ -539,21 +539,53 @@ const [total, totalAberta, totalEmDeslocamento, ...] = await Promise.all([
 ]);
 ```
 
-**Versão Pleno (cache-aside com Redis):**
+A regra de quando cachear: dado que é lido **muito mais** do que é escrito (lista de técnicos, contagem de status) é candidato. Dado que muda a cada request (o resultado de um cálculo com input do usuário mudando toda hora) não é.
+
+### O conceito, explicado sem pressa: o que É cache
+
+Cache não é mágica — é só "guardar a resposta pronta". Na primeira vez que alguém pede os totais de OS, você faz a pergunta cara pro banco (os 8 `count()`), guarda a resposta numa **gaveta rápida** (o Redis — um banco que vive na RAM, não no disco, por isso é absurdamente mais rápido que o Postgres), e nas próximas vezes você olha a gaveta primeiro. Só volta a perguntar pro banco quando a gaveta expira.
+
+Esse padrão específico — "o código olha a gaveta, se não tiver ele calcula e guarda" — se chama **cache-aside**: quem gerencia o cache é o próprio código da aplicação, do lado de fora do banco, não algo escondido dentro dele.
+
+**A decisão que separa júnior de pleno aqui não é "como usar Redis" — é "quanto tempo o dado pode ficar velho" (TTL, *time to live*).** Usei 30 segundos. Por quê 30s e não 5 minutos, nem 0? Porque um contador de "quantas OS estão abertas" tolera estar levemente desatualizado — ninguém percebe se o número demorar 20s pra refletir uma mudança de status. **Isso não valeria pra saldo de conta bancária** — ali você não pode servir um número "quase certo". Escolher o TTL é sempre essa pergunta: o que quebra se esse dado estiver errado por N segundos?
+
+### O que foi implementado — 31/08/2026
 
 ```ts
-const cacheKey = `os:totais:${JSON.stringify(whereCondition)}`;
-const cached = await redis.get(cacheKey);
-if (cached) return JSON.parse(cached);
+// hoje (Junior): sempre bate no banco, 8 queries, mesmo se nada mudou nos últimos segundos
+const [total, totalAberta, totalEmDeslocamento, ...] = await Promise.all([
+  prismaClient.ordemdeServico.count({ where: whereCondition }),
+  prismaClient.ordemdeServico.count({ where: { ...whereCondition, statusOrdemdeServico: { name: "ABERTA" } } }),
+  // ...mais 6 counts iguais
+]);
+```
 
-const totais = await calcularTotais(whereCondition); // os 8 counts de hoje
-await redis.set(cacheKey, JSON.stringify(totais), 'EX', 30); // expira em 30s
+```ts
+// Pleno: olha o Redis primeiro (cache-aside), só bate no banco se não achar (miss)
+const cacheKey = `os:totais:${JSON.stringify(whereCondition)}`;
+
+try {
+  const cached = await redisClient.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+} catch (error) {
+  console.error("Redis indisponível, seguindo sem cache:", error); // ver abaixo
+}
+
+const totais = await calcularOitoCounts(whereCondition); // os 8 counts de sempre
+await redisClient.set(cacheKey, JSON.stringify(totais), "EX", 30); // expira em 30s
 return totais;
 ```
 
-A regra de quando cachear: dado que é lido **muito mais** do que é escrito (lista de técnicos, contagem de status) é candidato. Dado que muda a cada request (o resultado de um cálculo com input do usuário mudando toda hora) não é.
+Arquivos: `src/redis/index.ts` (cliente Redis único, reaproveitando o `REDIS_URL` que já existia pro BullMQ) e `src/services/controles_forms/OrdemdeServico/ListOrdemdeServicoService.ts`, que ganhou um método privado `getTotais()` isolando essa lógica do resto do `execute()`.
 
-- [ ] Não precisa Redis de verdade pra aprender o padrão — dá pra simular com um `Map` em memória com TTL primeiro, só pra sentir o cache-aside funcionando, antes de subir a infraestrutura.
+**Detalhe que não estava no pseudocódigo original: o `try/catch` em volta do Redis.** Se o Redis cair, a rota inteira não pode cair junto — ela só perde o benefício da velocidade e volta a calcular direto no banco, como fazia antes de existir cache. Isso é o mesmo princípio de **fallback/resiliência** já documentado no item 3 (Redis não pode virar um ponto único de falha pra uma funcionalidade que nem depende dele pra existir). Tem um teste dedicado provando esse caminho (`ListOrdemdeServicoService.test.ts`, "segue funcionando (fallback) mesmo se o Redis estiver fora do ar").
+
+**Resultado:** 50 testes passando (3 novos, cobrindo cache miss, cache hit, e o fallback), `tsc --noEmit` limpo. Só cacheei os 8 `count()` — a lista (`controles`) continua sempre fresca do banco, porque cada combinação de filtro/página é quase sempre diferente, então cachear a lista teria taxa de acerto (*hit rate*) baixa, sem valer o esforço.
+
+**Pendência real:** `ListTecnicoController.ts` (mesmo problema, lista que muda raramente) ainda não recebeu esse tratamento — próximo candidato óbvio quando fizer sentido. A ideia de otimizar o SQL com `GROUP BY` antes de cachear (colapsar os 8 `count()` num único query agrupado) segue só como ideia — não fiz porque os 8 `count()` filtram por relação (`statusOrdemdeServico.name`), e o `groupBy` do Prisma só agrupa por coluna própria do model, não por campo de uma relação — faria sentido com SQL bruto (`$queryRaw`), mas o ganho fica pequeno depois que o cache já resolve o problema de carga real (a query só roda a cada 30s, não a cada request).
+
+- [x] Cache-aside com Redis implementado no `ListOrdemdeServicoService.ts` (totais de status).
+- [ ] Replicar em `ListTecnicoController.ts`.
 
 ### 3. Escala horizontal — por que o JWT do Fire OS já ajuda, mas o Postgres vira o gargalo
 
