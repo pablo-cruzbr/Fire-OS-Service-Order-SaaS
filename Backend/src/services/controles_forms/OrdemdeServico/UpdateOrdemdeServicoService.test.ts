@@ -18,12 +18,10 @@ vi.mock('cloudinary', () => ({
 }))
 
 import prismaClient from '../../../prisma'
-import { UpdateOrdemdeServicoService } from './UpdateOrdemdeServicoService'
+import { UpdateOrdemdeServicoService, UpdateOrdemdeServicoController } from './UpdateOrdemdeServicoService'
 
-// Helpers para criar req/res mock
 function makeRes() {
   const res: any = {}
-  res.status = vi.fn(() => res)
   res.json = vi.fn(() => res)
   return res
 }
@@ -51,32 +49,19 @@ describe('UpdateOrdemdeServicoService', () => {
     vi.clearAllMocks()
   })
 
-  it('deve retornar 400 quando o ID da OS não é informado', async () => {
-    const req = makeReq({ params: { id: undefined } })
-    const res = makeRes()
-
-    const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
-
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'ID da ordem é obrigatório.' })
-    expect(prismaClient.ordemdeServico.update).not.toHaveBeenCalled()
-  })
+  // Validação de "id obrigatório" e de erro do banco viraram responsabilidade
+  // do middleware `validate()` (idParamSchema) e do errorHandler global,
+  // respectivamente — cobertos em validate.test.ts e errorHandler.test.ts.
 
   it('deve atualizar campos de texto (diagnóstico, solução, técnico)', async () => {
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({
-      body: {
-        nameTecnico: 'Carlos Silva',
-        diagnostico: 'Placa mãe queimada',
-        solucao: 'Substituição da placa',
-      },
-    })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', {
+      nameTecnico: 'Carlos Silva',
+      diagnostico: 'Placa mãe queimada',
+      solucao: 'Substituição da placa',
+    })
 
     expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -88,19 +73,13 @@ describe('UpdateOrdemdeServicoService', () => {
         }),
       })
     )
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Ordem de Serviço updated com sucesso.' })
-    )
   })
 
   it('deve conectar técnico quando tecnico_id é informado', async () => {
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({ body: { tecnico_id: 'tecnico-uuid-456' } })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', { tecnico_id: 'tecnico-uuid-456' })
 
     expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -114,11 +93,8 @@ describe('UpdateOrdemdeServicoService', () => {
   it('deve conectar status quando statusOrdemdeServico_id é informado', async () => {
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({ body: { statusOrdemdeServico_id: 'status-uuid-789' } })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', { statusOrdemdeServico_id: 'status-uuid-789' })
 
     expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -132,17 +108,12 @@ describe('UpdateOrdemdeServicoService', () => {
   it('deve converter startedAt e endedAt para Date', async () => {
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({
-      body: {
-        startedAt: '2026-05-30T08:00:00.000Z',
-        endedAt: '2026-05-30T10:30:00.000Z',
-        duracao: 150,
-      },
-    })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', {
+      startedAt: '2026-05-30T08:00:00.000Z',
+      endedAt: '2026-05-30T10:30:00.000Z',
+      duracao: 150,
+    })
 
     const chamada = vi.mocked(prismaClient.ordemdeServico.update).mock.calls[0][0]
     expect(chamada.data.startedAt).toBeInstanceOf(Date)
@@ -154,13 +125,8 @@ describe('UpdateOrdemdeServicoService', () => {
     const { v2: cloudinary } = await import('cloudinary')
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({
-      body: { assinatura: 'data:image/png;base64,iVBORw0KGgoAAAANS=' },
-    })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', { assinatura: 'data:image/png;base64,iVBORw0KGgoAAAANS=' })
 
     expect(cloudinary.uploader.upload).toHaveBeenCalled()
     expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
@@ -172,16 +138,13 @@ describe('UpdateOrdemdeServicoService', () => {
     )
   })
 
-  it('deve criar atividades quando atividades_ids é informado', async () => {
+  it('deve criar atividades quando atividades_ids é um JSON válido', async () => {
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({
-      body: { atividades_ids: JSON.stringify(['ativ-uuid-1', 'ativ-uuid-2']) },
-    })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', {
+      atividades_ids: JSON.stringify(['ativ-uuid-1', 'ativ-uuid-2']),
+    })
 
     expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -197,34 +160,52 @@ describe('UpdateOrdemdeServicoService', () => {
     )
   })
 
-  it('deve retornar 400 quando o banco lança um erro', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockRejectedValue(
-      new Error('Registro não encontrado no banco')
-    )
-
-    const req = makeReq({ body: { diagnostico: 'Teste' } })
-    const res = makeRes()
-
+  it('lança ValidationError quando atividades_ids não é um JSON válido', async () => {
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
 
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'Registro não encontrado no banco' })
+    await expect(
+      service.execute('os-uuid-123', { atividades_ids: '{invalido' })
+    ).rejects.toThrow('atividades_ids precisa ser um JSON válido.')
+    expect(prismaClient.ordemdeServico.update).not.toHaveBeenCalled()
   })
 
-  it('não deve chamar o banco quando nenhum campo é enviado', async () => {
+  it('não deve chamar o banco com campos extras quando nenhum campo é enviado', async () => {
     vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const req = makeReq({ body: {} })
-    const res = makeRes()
-
     const service = new UpdateOrdemdeServicoService()
-    await service.handle(req, res)
+    await service.execute('os-uuid-123', {})
 
     expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: {},
-      })
+      expect.objectContaining({ data: {} })
     )
+  })
+
+  it('propaga o erro do banco sem tratar (fica pro errorHandler global)', async () => {
+    const erroDoBanco = new Error('Registro não encontrado no banco')
+    vi.mocked(prismaClient.ordemdeServico.update).mockRejectedValue(erroDoBanco)
+
+    const service = new UpdateOrdemdeServicoService()
+
+    await expect(service.execute('os-uuid-123', { diagnostico: 'Teste' })).rejects.toThrow(erroDoBanco)
+  })
+})
+
+describe('UpdateOrdemdeServicoController', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('devolve a ordem atualizada envolta na mensagem de sucesso', async () => {
+    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+
+    const controller = new UpdateOrdemdeServicoController()
+    const res = makeRes()
+
+    await controller.handle(makeReq({ body: { diagnostico: 'Placa queimada' } }), res)
+
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Ordem de Serviço updated com sucesso.',
+      ordem: ordemAtualizadaFalsa,
+    })
   })
 })

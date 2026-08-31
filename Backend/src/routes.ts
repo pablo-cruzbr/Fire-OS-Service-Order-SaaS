@@ -7,6 +7,8 @@ import { DetailUserController } from "./controllers/user/DetailUserController";
 import { isAuthenticated } from "./Middleware/isAuthenticated";
 import { can } from "./Middleware/can";
 import { authorizeOrdemdeServico } from "./Middleware/authorizeOrdemdeServico";
+import { validate } from "./Middleware/validate";
+import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema } from "./schemas/ordemdeServico.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -81,7 +83,7 @@ import { UpdateControledeMaquinasPendentesLabController } from "./controllers/co
 import { UpdateControledeMaquinasPendentesOroController } from "./controllers/controles_forms/ControledeMaquinasPendentesOro/UpdateControledeMaquinasPendentesOroController";
 import { ListOrdemdeServicoController } from "./controllers/controles_forms/OrdemdeServico/ListOrdemdeServicoController";
 import { ListtipodeChamadoController } from "./controllers/status_categorias/tipodeChamado/ListtipodeChamadoController";
-import { UpdateOrdemdeServicoService } from "./services/controles_forms/OrdemdeServico/UpdateOrdemdeServicoService";
+import { UpdateOrdemdeServicoController } from "./services/controles_forms/OrdemdeServico/UpdateOrdemdeServicoService";
 import { getEventsController, createEventController, updateEventController, deleteEventController } from "../src/controllers/Eventos/EventosControllers";
 import multer from 'multer';
 
@@ -296,15 +298,26 @@ privateRouter.patch('/compra/update/:id', new UpdateSolicitacaodeComprasControll
 
 // - CONTINUAR DEPOIS
 //ORDEM DE SERVIÇO
-privateRouter.post('/ordemdeservico', new CreateOrdemServicoController().handle)
+privateRouter.post(
+  '/ordemdeservico',
+  validate(createOrdemdeServicoSchema),
+  new CreateOrdemServicoController().handle
+)
 privateRouter.get('/listordemdeservico', new ListOrdemdeServicoController().handle)
-privateRouter.get('/ordemdeservico/:id', authorizeOrdemdeServico('read'), new GetOrdemdeServicoByIdController().handle)
+privateRouter.get(
+  '/ordemdeservico/:id',
+  validate(idParamSchema, 'params'),
+  authorizeOrdemdeServico('read'),
+  new GetOrdemdeServicoByIdController().handle
+)
 
 privateRouter.patch(
   '/ordemdeservico/update/:id',
+  validate(idParamSchema, 'params'),
   authorizeOrdemdeServico('update'),
   upload.array('files'),
-  new UpdateOrdemdeServicoService().handle.bind(new UpdateOrdemdeServicoService())
+  validate(updateOrdemdeServicoSchema),
+  new UpdateOrdemdeServicoController().handle
 );
 const fotoControllerInstance = new fotoController();
 privateRouter.get('/foto/:id', fotoControllerInstance.listByOrdem);
