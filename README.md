@@ -265,18 +265,10 @@ Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquit
 - [x] **Autorização (RBAC):** controle de acesso por role (ADMIN/TECNICO/USER) nas rotas críticas da API, e por dono do recurso (CASL) na Ordem de Serviço — técnico só edita a que está atribuída a ele
 - [ ] **Infraestrutura:** Dockerização do ambiente local (PostgreSQL isolado via containers com Docker Compose)
 - [ ] **Arquitetura (System Design):** Documentação e diagramas de fluxo das Ordens de Serviço (Next.js/Expo -> Node.js -> PostgreSQL)
-- [ ] **Validação & Segurança:** Validação de schema com Zod nas rotas da API
+- [x] **Validação & Segurança:** Validação de schema com Zod (piloto: criação/atualização de Ordem de Serviço) e middleware global de tratamento de erro, padronizando toda resposta de erro da API — rollout pros demais módulos em andamento
 - [ ] **Qualidade de Código:** Testes automatizados com Jest (backend) e Playwright (web)
 - [ ] **Automação (CI/CD):** Pipeline com GitHub Actions para rodar testes automatizados a cada commit
 - [ ] **Features Avançadas:** Notificações push no app mobile (Expo Notifications) e transcrição de áudio para documentação técnica (Expo Speech)
-
-
-## 🔜 Próximos Passos
-
-- [ ] Notificações push no app mobile (Expo Notifications)
-- [ ] Transcrição de áudio para documentação técnica (Expo Speech)
-- [ ] Validação de schema com Zod nas rotas da API
-- [ ] Testes automatizados com Jest (backend) e Playwright (web)
 
 ---
 
