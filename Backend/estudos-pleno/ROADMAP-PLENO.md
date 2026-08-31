@@ -186,11 +186,49 @@ export function defineAbilityFor(user: UserForAbility): AppAbility {
 
 O README já lista isso como pendência — confirmei que hoje nenhum controller valida `req.body`, é `const {x,y,z} = req.body` direto (ex. `CreateUserController.ts:6`).
 
-- [ ] Escolher 3 rotas de escrita de risco maior (`/users`, criação de OS, upload) e escrever schema Zod para cada uma antes de espalhar para as +80 rotas.
-- [ ] Middleware central de erro que captura `ZodError` e devolve 400 com mensagem de campo — hoje um payload malformado provavelmente estoura como 500 genérico.
+- [x] Escolher 1 rota de escrita de risco maior e escrever schema Zod pra ela, como piloto do padrão antes de espalhar pelas +100 rotas restantes — ver abaixo.
+- [x] Middleware central de erro que captura `ZodError` e devolve 422 com mensagem de campo — hoje um payload malformado estourava como 500 genérico.
+- [ ] Espalhar o mesmo padrão (`schema` + `validate()`) pros outros módulos (`user`, `cliente`, `setor`, `equipamento`...), um de cada vez.
 - [ ] Validar variáveis de ambiente no boot (`JWT_SECREATE`, `DATABASE_URL`, `CLOUDINARY_*`) com um schema Zod — o erro do Prisma que você teve hoje ("did not initialize") é sintoma da mesma classe de problema: falha de config descoberta em runtime, não no start.
 
 **Estudar:** validação na borda do sistema (input do usuário) vs. dentro do domínio; parse-don't-validate.
+
+### O que foi implementado (Zod + middleware global de erro, piloto) — 31/08/2026
+
+Antes de sair aplicando Zod nas +100 rotas, escolhi 1 fluxo como prova de conceito: **criação de Ordem de Serviço**. E o motivo de ter sido justamente esse é ele mesmo um achado — o arquivo que eu tinha aberto no IDE (`services/controles_forms/OrdemdeServico/CreateOrdemdeServicoService.ts`) é **código morto**: só é referenciado pelo próprio teste, nenhuma rota usa ele. Quem roda de verdade em produção é `controllers/controles_forms/OrdemdeServico/CreateOrdemdeServicoController.ts` — que tinha os mesmos dois problemas, só que sem ninguém ter notado porque o arquivo errado é que "parecia" o principal.
+
+**1. Bug real encontrado e corrigido — colisão de `numeroOS`.** O schema tem `numeroOS Int? @unique` (`prisma/schema.prisma:202`), mas o código gerava o número assim:
+
+```ts
+const numeroOS = Math.floor(10000 + Math.random() * 90000); // 80.000 valores possíveis, sem checar duplicata
+```
+
+Sem tratamento, isso quebra sozinho com volume (paradoxo do aniversário, nem precisa de concorrência) — o Prisma lança `P2002` e o `catch` genérico devolvia "Erro interno do servidor" pro técnico, sem tentar de novo. Corrigido com retry: se colidir, gera outro número e tenta de novo (até 5 tentativas) — ver `CreateOrdemdeServicoController.ts`, função `execute`.
+
+**2. Middleware de validação genérico** (`src/Middleware/validate.ts`): recebe um schema Zod, valida `req.body` (ou `params`/`query`), e ou substitui o body pelo dado já parseado ou lança `ValidationError` — não precisa mais de `if (!name || ...)` manual em cada controller.
+
+**3. Middleware global de erro** (`src/Middleware/errorHandler.ts`), plugado uma vez em `server.ts` (`app.use(errorHandler)`), substituindo o handler antigo que tratava qualquer `Error` como 400. Agora distingue:
+- `ZodError` / `ValidationError` → 422 com a lista de campos inválidos
+- `NotFoundError` → 404, `ConflictError` → 409 (classes em `src/errors/AppError.ts`)
+- Erros conhecidos do Prisma: `P2002` (unique) → 409, `P2025` (not found) → 404, `P2003` (FK inválida) → 400
+- Qualquer outra coisa → 500 genérico, logado no servidor mas sem vazar detalhe pro cliente
+
+Isso elimina o `try/catch` repetitivo — o controller não captura mais nada, só deixa o erro subir (via `express-async-errors`, que já estava instalado) e o middleware central decide o status/formato da resposta.
+
+**Resultado:** `CreateOrdemdeServicoController.ts` caiu de "destructuring manual + try/catch genérico + numeroOS por sorte" pra "schema Zod na rota + service com retry + zero try/catch". 44 testes passando (11 novos: `validate.test.ts`, `errorHandler.test.ts`, `CreateOrdemdeServicoController.test.ts`), `tsc --noEmit` limpo. Removido o arquivo morto (`services/.../CreateOrdemdeServicoService.ts` + seu teste) — 39 testes depois da remoção, tudo verde.
+
+### Segundo passo do piloto: fechar o par Create + Update — 31/08/2026
+
+Antes de sair pra outro módulo, apliquei o mesmo tratamento no fluxo de **atualização** de Ordem de Serviço (`UpdateOrdemdeServicoService.ts`), pra não deixar o par pela metade. Esse arquivo era um caso ainda pior do que o Create: uma classe chamada "Service" que na verdade era um Controller — recebia `req`/`res` direto, fazia upload pro Cloudinary, montava o `updateData` campo a campo, e tinha `try/catch` devolvendo status na mão.
+
+- **Separei Controller de Service de verdade**: `UpdateOrdemdeServicoService.execute(id, body, file)` agora só recebe dado e devolve o registro atualizado — nada de `req`/`res` dentro dele. `UpdateOrdemdeServicoController.handle` é a camada fina que fala com o Express.
+- **Zod nos dois pontos de entrada da rota**: `idParamSchema` valida o `:id` da URL (novo — reaproveitado também na rota `GET /ordemdeservico/:id`, que também usava um `id` sem checagem nenhuma antes de cair no `authorizeOrdemdeServico`), e `updateOrdemdeServicoSchema` valida o body, incluindo `duracao` com `z.coerce.number()` (antes era `Number(body.duracao)` manual).
+- **Tirei o guard manual `if (!id) return res.status(400)...`** — isso virou trabalho do `validate(idParamSchema, 'params')` na rota, antes até do middleware de autorização.
+- **Um bug pequeno de tratamento de erro que achei nesse arquivo**: o parse de `atividades_ids` (uma string JSON) tinha um `try/catch` que só dava `console.error` e seguia em frente silenciosamente se o JSON viesse malformado — ou seja, o cliente pensava que as atividades foram salvas e elas simplesmente não eram, sem nenhum aviso. Troquei por um `throw new ValidationError(...)` explícito — agora um JSON malformado vira 422 de verdade, não um silêncio enganoso.
+
+**Resultado:** 47 testes passando (mais 3 líquidos: teste dedicado dos schemas `ordemdeServico.schema.test.ts`, e o teste de update ganhou um caso a mais cobrindo o `ValidationError` do `atividades_ids`), `tsc --noEmit` limpo. Não consegui validar o boot real do servidor nesse ambiente de sandbox (a Prisma/env não sobe aqui), então a verificação ficou em tipo + testes — mesma régua que usei no piloto do Create.
+
+**Próximo módulo a receber esse mesmo tratamento:** decidir com calma, indo módulo por módulo (ver checklist logo acima) — o par Create+Update de OrdemdeServico está fechado.
 
 ---
 
