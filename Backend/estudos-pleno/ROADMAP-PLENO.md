@@ -230,6 +230,46 @@ Antes de sair pra outro módulo, apliquei o mesmo tratamento no fluxo de **atual
 
 **Próximo módulo a receber esse mesmo tratamento:** decidir com calma, indo módulo por módulo (ver checklist logo acima) — o par Create+Update de OrdemdeServico está fechado.
 
+### Terceiro passo: Repository pattern — 31/08/2026
+
+**O conceito, do zero: o que é um Repository, e por que ele existe.** Até agora, o Service chamava `prismaClient.ordemdeServico.create(...)` diretamente — a lógica de negócio (que campos validar, o retry do `numeroOS`) e o código de acesso ao banco moravam no mesmo lugar. Um **Repository** é uma camada fininha só pra isso: "salvar" e "buscar" dados, escondendo o Prisma atrás de métodos com nome de negócio (`create`, `update`), pra ninguém mais no projeto precisar saber que existe um Prisma ali dentro. Se um dia o projeto trocasse Prisma por outro ORM, só o Repository mudaria — o Service continuaria igual.
+
+**A razão prática de fazer isso agora, não só teoria:** testar. Antes, testar o Service exigia mockar o módulo inteiro do Prisma (`vi.mock('../../../prisma', ...)`) — o teste "sabia" que existia um banco por trás, mesmo sendo teste de lógica de negócio. Com o Repository, o teste passa um **repository falso** (um objeto com `create`/`update` fake) direto pro Service — o teste não importa nada do Prisma, só testa "dado esse input, o Service chama `repository.update` com esses dados". Isso é injeção de dependência: o Service recebe o repository de fora (no construtor), em vez de criar/importar um por conta própria.
+
+```ts
+// antes (Junior): Service conhece o Prisma diretamente
+class CreateOrdemServicoService {
+  async execute(data) {
+    return prismaClient.ordemdeServico.create({ data: {...}, include: {...} });
+  }
+}
+
+// teste correspondente: precisa mockar o módulo inteiro do Prisma
+vi.mock('../../../prisma', () => ({ default: { ordemdeServico: { create: vi.fn() } } }))
+```
+
+```ts
+// depois (Pleno): Service só conhece um "algo que sabe criar OS"
+class CreateOrdemServicoService {
+  constructor(private repository = ordemdeServicoRepository) {}
+
+  async execute(data) {
+    return this.repository.create({...}); // não sabe que é Prisma lá dentro
+  }
+}
+
+// teste correspondente: repository fake, sem tocar no Prisma
+const repository = { create: vi.fn(), update: vi.fn() }
+const service = new CreateOrdemServicoService(repository)
+```
+
+**Implementado:** `src/repositories/OrdemdeServicoRepository.ts` — uma classe com `create()` e `update()`, cada um já com o `include` certo pra cada operação. `CreateOrdemServicoService` e `UpdateOrdemdeServicoService` agora recebem o repository via construtor (com um valor padrão, pra quem instancia sem passar nada — como o `routes.ts` faz — continuar funcionando igual). Os Controllers também passaram a receber o Service via construtor, pelo mesmo motivo.
+
+**Resultado:** 52 testes passando (2 novos, testando o Repository isolado — esse sim mocka o Prisma, porque é literalmente o trabalho dele). `tsc --noEmit` limpo.
+
+- [x] Repository pattern implementado pra Create + Update de OrdemdeServico.
+- [ ] Replicar pros outros módulos conforme o rollout de Zod for avançando (decidido: junto, não separado — cada módulo novo já nasce com Controller fino + Service + Repository).
+
 ---
 
 ## 3. Testes automatizados (Vitest)
@@ -257,14 +297,22 @@ Você já não está começando do zero — existem 4 arquivos de teste (`AuthUs
 
 ## 5. Docker
 
-Você já tem o Postgres isolado em container — falta a metade que costuma pesar em entrevista: a própria API containerizada.
+Você já tinha o Postgres e o Redis isolados em container — faltava a metade que costuma pesar em entrevista: a própria API containerizada.
 
-- [ ] Dockerfile multi-stage para a API (`Backend/`): stage de build (`npm ci` + `tsc`) e stage de runtime enxuto copiando só o `dist/` + `node_modules` de produção.
-- [ ] Expandir `docker-compose.yml` para subir `api` + `db` juntos, com `depends_on` e um healthcheck no Postgres antes da API subir.
-- [ ] `.dockerignore` (falta hoje) — sem ele o build copia `node_modules` e `.env` para dentro da imagem.
-- [ ] Versionar o `docker-compose.yml` — hoje ele está **untracked** no git (rodei `git status` e confirmei). Sem isso, "dockerizei o projeto" não aparece pra ninguém que clonar o repo.
+### O conceito: por que multi-stage build
 
-**Estudar:** diferença entre imagem e container, por que multi-stage build existe, volumes nomeados vs. bind mount.
+Um `Dockerfile` de um stage só instalaria **tudo** (TypeScript, ts-node-dev, os tipos, o `vitest`) dentro da imagem final que vai rodar em produção — pesado, e com ferramentas que ninguém precisa depois que o código já foi compilado. **Multi-stage build** resolve isso com dois estágios dentro do mesmo arquivo: um estágio "build" (tem tudo, compila o TypeScript pra JavaScript) e um estágio "runtime" final (só copia o resultado — a pasta `dist/` — e instala só as dependências de produção). A imagem final não carrega nada do que só serviu pra construir; ela só tem o produto pronto. É a mesma ideia de separar "a obra" de "a casa acabada".
+
+- [x] `Dockerfile` multi-stage para a API (`Backend/Dockerfile`): stage de build (`npm ci` + `prisma generate` + `tsc`) e stage de runtime enxuto (`npm ci --omit=dev` + `prisma generate` de novo, só que agora sem devDependencies + `COPY --from=build` do `dist/`).
+- [x] `docker-compose.yml` expandido com o serviço `fireos-api`, com `depends_on` do banco e do Redis, e `DATABASE_URL`/`REDIS_URL` apontando pro nome do serviço (`fireos-db`, `fireos-redis`) em vez de `localhost` — dentro da rede do Compose, os containers se enxergam pelo nome do serviço, não por endereço de máquina.
+- [x] `.dockerignore` criado — sem ele o build copiaria `node_modules`, `.env` e até os `.test.ts` pra dentro da imagem.
+- [x] `docker-compose.yml` já estava versionado no git (checei de novo — a observação antiga de que estava "untracked" não procede mais).
+
+**Honestidade sobre o teste:** escrevi e validei a sintaxe com `docker compose config` (rodou limpo), mas **não consegui buildar a imagem de verdade** neste ambiente — o Docker Desktop não estava com o daemon ativo aqui. Precisa rodar `docker compose up --build` na sua máquina pra confirmar que builda e sobe de ponta a ponta.
+
+**Achado de segurança, não relacionado ao Docker em si:** rodando `docker compose config` pra validar a sintaxe, percebi que o `.env.local` **não estava no `.gitignore`** (só `.env` estava) — corrigido agora. Chequei `git log --all --full-history -- .env.local`: nunca foi commitado, então não há segredo vazado no histórico — só fechei a brecha antes que alguém rodasse `git add -A` sem reparar.
+
+**Estudar:** diferença entre imagem e container, por que multi-stage build existe, volumes nomeados vs. bind mount, por que containers na mesma rede do Compose se enxergam pelo nome do serviço.
 
 ---
 
@@ -311,8 +359,8 @@ Log de perguntas que vou fazendo enquanto aplico o roadmap — pra não perder o
 
 Vale, e é uma das coisas de maior retorno pra entrevista de pleno. Ninguém espera que o Fire OS tenha o tráfego da Amazon — o que se avalia é se você consegue **explicar o porquê** das decisões de arquitetura que já existem (por que 3 camadas separadas: app mobile, painel web, API; por que Postgres e não outro banco; por que JWT em vez de sessão) e **imaginar** o que quebraria primeiro se o uso crescesse 10x (ex.: o `schema.prisma` tem mais de 500 linhas num arquivo só — isso vira gargalo de manutenção antes de virar gargalo de performance). Documentar isso não é fingir que o projeto é grande, é treinar o raciocínio que a entrevista de pleno cobra.
 
-- [ ] Desenhar um diagrama (pode ser o mermaid que já existe no `README.md` raiz, expandido) mostrando o fluxo de uma Ordem de Serviço ponta a ponta: app mobile → API → Postgres → Cloudinary.
-- [ ] Escrever 3 frases prontas sobre "o que eu mudaria se o Fire OS tivesse 1000 técnicos usando ao mesmo tempo" — isso é a pergunta clássica de system design em entrevista.
+- [x] Desenhar um diagrama (pode ser o mermaid que já existe no `README.md` raiz, expandido) mostrando o fluxo de uma Ordem de Serviço ponta a ponta: app mobile → API → Postgres → Cloudinary. **Feito em 04/09** — ver `ARQUITETURA-ANTES-DEPOIS.md` (diagramas de visão geral, camadas internas antes/depois, e 2 sequence diagrams: request completo com RBAC/CASL/Zod, e o fluxo de cache).
+- [x] Escrever 3 frases prontas sobre "o que eu mudaria se o Fire OS tivesse 1000 técnicos usando ao mesmo tempo" — isso é a pergunta clássica de system design em entrevista. **Feito em 04/09** — ver `ARQUITETURA-ANTES-DEPOIS.md`, seção 6 (Postgres como gargalo real, cache stampede no próprio cache-aside implementado, e upload síncrono de fotos).
 
 ### Os 6 termos do checklist que ainda sinto que preciso estudar a fundo
 
@@ -585,7 +633,9 @@ Arquivos: `src/redis/index.ts` (cliente Redis único, reaproveitando o `REDIS_UR
 **Pendência real:** `ListTecnicoController.ts` (mesmo problema, lista que muda raramente) ainda não recebeu esse tratamento — próximo candidato óbvio quando fizer sentido. A ideia de otimizar o SQL com `GROUP BY` antes de cachear (colapsar os 8 `count()` num único query agrupado) segue só como ideia — não fiz porque os 8 `count()` filtram por relação (`statusOrdemdeServico.name`), e o `groupBy` do Prisma só agrupa por coluna própria do model, não por campo de uma relação — faria sentido com SQL bruto (`$queryRaw`), mas o ganho fica pequeno depois que o cache já resolve o problema de carga real (a query só roda a cada 30s, não a cada request).
 
 - [x] Cache-aside com Redis implementado no `ListOrdemdeServicoService.ts` (totais de status).
-- [ ] Replicar em `ListTecnicoController.ts`.
+- [x] Replicado em `ListTecnicoService.ts` — ver "Atualização (04/09)" logo abaixo.
+
+**Atualização (04/09):** aprofundei o "por que não fiz o GROUP BY" — a resposta certa não é "o ganho é pequeno", é que cache e agregação condicional (`COUNT(*) FILTER (WHERE ...)`) resolvem problemas diferentes: cache reduz *frequência* (roda a cada 30s em vez de a cada request), agregação condicional reduz *custo por execução* (1 round-trip em vez de 8) — e existem dois cenários de borda onde só o cache não basta: cache stampede (TTL expira com várias requisições simultâneas, todas dão miss junto) e Redis fora do ar (o fallback volta a pagar os 8 round-trips inteiros). Explicação completa, com o comparativo lado a lado e glossário, está num arquivo separado: **`GUIA-CACHE-REDIS.md`**.
 
 ### 3. Escala horizontal — por que o JWT do Fire OS já ajuda, mas o Postgres vira o gargalo
 
