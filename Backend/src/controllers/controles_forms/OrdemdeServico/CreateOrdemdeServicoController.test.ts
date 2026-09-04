@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Prisma } from '@prisma/client'
+import { CreateOrdemServicoController, CreateOrdemServicoService } from './CreateOrdemdeServicoController'
+import { OrdemdeServicoRepository } from '../../../repositories/OrdemdeServicoRepository'
 
-vi.mock('../../../prisma', () => ({
-  default: {
-    ordemdeServico: {
-      create: vi.fn(),
-    },
-  },
-}))
-
-import prismaClient from '../../../prisma'
-import { CreateOrdemServicoController } from './CreateOrdemdeServicoController'
+// Sem mockar o módulo do Prisma: o Service recebe um repository fake,
+// então o teste não sabe (nem precisa saber) que existe um banco por trás.
+function makeFakeRepository() {
+  return {
+    create: vi.fn(),
+    update: vi.fn(),
+  } as unknown as OrdemdeServicoRepository
+}
 
 function makeRes() {
   const res: any = {}
@@ -46,39 +46,42 @@ describe('CreateOrdemServicoController', () => {
   })
 
   it('cria a ordem de serviço na primeira tentativa quando não há colisão', async () => {
-    vi.mocked(prismaClient.ordemdeServico.create).mockResolvedValueOnce(ordemCriadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.create).mockResolvedValueOnce(ordemCriadaFalsa as any)
 
-    const controller = new CreateOrdemServicoController()
+    const controller = new CreateOrdemServicoController(new CreateOrdemServicoService(repository))
     const res = makeRes()
 
     await controller.handle(makeReq(dadosValidos), res)
 
-    expect(prismaClient.ordemdeServico.create).toHaveBeenCalledOnce()
+    expect(repository.create).toHaveBeenCalledOnce()
     expect(res.json).toHaveBeenCalledWith(ordemCriadaFalsa)
   })
 
   it('gera outro numeroOS e tenta de novo quando colide com um já existente', async () => {
-    vi.mocked(prismaClient.ordemdeServico.create)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.create)
       .mockRejectedValueOnce(p2002NumeroOS())
       .mockResolvedValueOnce(ordemCriadaFalsa as any)
 
-    const controller = new CreateOrdemServicoController()
+    const controller = new CreateOrdemServicoController(new CreateOrdemServicoService(repository))
     const res = makeRes()
 
     await controller.handle(makeReq(dadosValidos), res)
 
-    expect(prismaClient.ordemdeServico.create).toHaveBeenCalledTimes(2)
+    expect(repository.create).toHaveBeenCalledTimes(2)
     expect(res.json).toHaveBeenCalledWith(ordemCriadaFalsa)
   })
 
   it('propaga o erro sem tentar de novo quando a falha não é colisão de numeroOS', async () => {
+    const repository = makeFakeRepository()
     const outroErro = new Error('conexão com o banco caiu')
-    vi.mocked(prismaClient.ordemdeServico.create).mockRejectedValueOnce(outroErro)
+    vi.mocked(repository.create).mockRejectedValueOnce(outroErro)
 
-    const controller = new CreateOrdemServicoController()
+    const controller = new CreateOrdemServicoController(new CreateOrdemServicoService(repository))
     const res = makeRes()
 
     await expect(controller.handle(makeReq(dadosValidos), res)).rejects.toThrow(outroErro)
-    expect(prismaClient.ordemdeServico.create).toHaveBeenCalledOnce()
+    expect(repository.create).toHaveBeenCalledOnce()
   })
 })

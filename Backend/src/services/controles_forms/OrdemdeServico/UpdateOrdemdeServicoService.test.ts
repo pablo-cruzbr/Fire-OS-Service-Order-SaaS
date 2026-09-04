@@ -1,13 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../../prisma', () => ({
-  default: {
-    ordemdeServico: {
-      update: vi.fn(),
-    },
-  },
-}))
-
 vi.mock('cloudinary', () => ({
   v2: {
     config: vi.fn(),
@@ -17,8 +9,17 @@ vi.mock('cloudinary', () => ({
   },
 }))
 
-import prismaClient from '../../../prisma'
 import { UpdateOrdemdeServicoService, UpdateOrdemdeServicoController } from './UpdateOrdemdeServicoService'
+import { OrdemdeServicoRepository } from '../../../repositories/OrdemdeServicoRepository'
+
+// Repository fake em vez de mockar o módulo do Prisma: o Service não sabe
+// que existe um banco por trás, só sabe que tem algo com um método update().
+function makeFakeRepository() {
+  return {
+    create: vi.fn(),
+    update: vi.fn(),
+  } as unknown as OrdemdeServicoRepository
+}
 
 function makeRes() {
   const res: any = {}
@@ -54,137 +55,132 @@ describe('UpdateOrdemdeServicoService', () => {
   // respectivamente — cobertos em validate.test.ts e errorHandler.test.ts.
 
   it('deve atualizar campos de texto (diagnóstico, solução, técnico)', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', {
       nameTecnico: 'Carlos Silva',
       diagnostico: 'Placa mãe queimada',
       solucao: 'Substituição da placa',
     })
 
-    expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
+    expect(repository.update).toHaveBeenCalledWith(
+      'os-uuid-123',
       expect.objectContaining({
-        where: { id: 'os-uuid-123' },
-        data: expect.objectContaining({
-          nameTecnico: 'Carlos Silva',
-          diagnostico: 'Placa mãe queimada',
-          solucao: 'Substituição da placa',
-        }),
+        nameTecnico: 'Carlos Silva',
+        diagnostico: 'Placa mãe queimada',
+        solucao: 'Substituição da placa',
       })
     )
   })
 
   it('deve conectar técnico quando tecnico_id é informado', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', { tecnico_id: 'tecnico-uuid-456' })
 
-    expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          tecnico: { connect: { id: 'tecnico-uuid-456' } },
-        }),
-      })
+    expect(repository.update).toHaveBeenCalledWith(
+      'os-uuid-123',
+      expect.objectContaining({ tecnico: { connect: { id: 'tecnico-uuid-456' } } })
     )
   })
 
   it('deve conectar status quando statusOrdemdeServico_id é informado', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', { statusOrdemdeServico_id: 'status-uuid-789' })
 
-    expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          statusOrdemdeServico: { connect: { id: 'status-uuid-789' } },
-        }),
-      })
+    expect(repository.update).toHaveBeenCalledWith(
+      'os-uuid-123',
+      expect.objectContaining({ statusOrdemdeServico: { connect: { id: 'status-uuid-789' } } })
     )
   })
 
   it('deve converter startedAt e endedAt para Date', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', {
       startedAt: '2026-05-30T08:00:00.000Z',
       endedAt: '2026-05-30T10:30:00.000Z',
       duracao: 150,
     })
 
-    const chamada = vi.mocked(prismaClient.ordemdeServico.update).mock.calls[0][0]
-    expect(chamada.data.startedAt).toBeInstanceOf(Date)
-    expect(chamada.data.endedAt).toBeInstanceOf(Date)
-    expect(chamada.data.duracao).toBe(150)
+    const [, dataEnviada] = vi.mocked(repository.update).mock.calls[0]
+    expect((dataEnviada as any).startedAt).toBeInstanceOf(Date)
+    expect((dataEnviada as any).endedAt).toBeInstanceOf(Date)
+    expect((dataEnviada as any).duracao).toBe(150)
   })
 
   it('deve fazer upload da assinatura base64 para o Cloudinary', async () => {
     const { v2: cloudinary } = await import('cloudinary')
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', { assinatura: 'data:image/png;base64,iVBORw0KGgoAAAANS=' })
 
     expect(cloudinary.uploader.upload).toHaveBeenCalled()
-    expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          bannerassinatura: 'https://cloudinary.com/assinatura.jpg',
-        }),
-      })
+    expect(repository.update).toHaveBeenCalledWith(
+      'os-uuid-123',
+      expect.objectContaining({ bannerassinatura: 'https://cloudinary.com/assinatura.jpg' })
     )
   })
 
   it('deve criar atividades quando atividades_ids é um JSON válido', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', {
       atividades_ids: JSON.stringify(['ativ-uuid-1', 'ativ-uuid-2']),
     })
 
-    expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
+    expect(repository.update).toHaveBeenCalledWith(
+      'os-uuid-123',
       expect.objectContaining({
-        data: expect.objectContaining({
-          atividades: {
-            create: [
-              { atividadePadrao: { connect: { id: 'ativ-uuid-1' } } },
-              { atividadePadrao: { connect: { id: 'ativ-uuid-2' } } },
-            ],
-          },
-        }),
+        atividades: {
+          create: [
+            { atividadePadrao: { connect: { id: 'ativ-uuid-1' } } },
+            { atividadePadrao: { connect: { id: 'ativ-uuid-2' } } },
+          ],
+        },
       })
     )
   })
 
   it('lança ValidationError quando atividades_ids não é um JSON válido', async () => {
-    const service = new UpdateOrdemdeServicoService()
+    const repository = makeFakeRepository()
+    const service = new UpdateOrdemdeServicoService(repository)
 
     await expect(
       service.execute('os-uuid-123', { atividades_ids: '{invalido' })
     ).rejects.toThrow('atividades_ids precisa ser um JSON válido.')
-    expect(prismaClient.ordemdeServico.update).not.toHaveBeenCalled()
+    expect(repository.update).not.toHaveBeenCalled()
   })
 
   it('não deve chamar o banco com campos extras quando nenhum campo é enviado', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
     await service.execute('os-uuid-123', {})
 
-    expect(prismaClient.ordemdeServico.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: {} })
-    )
+    expect(repository.update).toHaveBeenCalledWith('os-uuid-123', {})
   })
 
   it('propaga o erro do banco sem tratar (fica pro errorHandler global)', async () => {
+    const repository = makeFakeRepository()
     const erroDoBanco = new Error('Registro não encontrado no banco')
-    vi.mocked(prismaClient.ordemdeServico.update).mockRejectedValue(erroDoBanco)
+    vi.mocked(repository.update).mockRejectedValue(erroDoBanco)
 
-    const service = new UpdateOrdemdeServicoService()
+    const service = new UpdateOrdemdeServicoService(repository)
 
     await expect(service.execute('os-uuid-123', { diagnostico: 'Teste' })).rejects.toThrow(erroDoBanco)
   })
@@ -196,9 +192,11 @@ describe('UpdateOrdemdeServicoController', () => {
   })
 
   it('devolve a ordem atualizada envolta na mensagem de sucesso', async () => {
-    vi.mocked(prismaClient.ordemdeServico.update).mockResolvedValue(ordemAtualizadaFalsa as any)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.update).mockResolvedValue(ordemAtualizadaFalsa as any)
 
-    const controller = new UpdateOrdemdeServicoController()
+    const service = new UpdateOrdemdeServicoService(repository)
+    const controller = new UpdateOrdemdeServicoController(service)
     const res = makeRes()
 
     await controller.handle(makeReq({ body: { diagnostico: 'Placa queimada' } }), res)

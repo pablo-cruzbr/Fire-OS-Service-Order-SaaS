@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
-import prismaClient from "../../../prisma";
 import { UploadedFile } from "express-fileupload";
 import { UpdateOrdemdeServicoInput } from "../../../schemas/ordemdeServico.schema";
 import { ValidationError } from "../../../errors/AppError";
+import {
+  OrdemdeServicoRepository,
+  ordemdeServicoRepository,
+} from "../../../repositories/OrdemdeServicoRepository";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -12,6 +15,8 @@ cloudinary.config({
 });
 
 class UpdateOrdemdeServicoService {
+  constructor(private repository: OrdemdeServicoRepository = ordemdeServicoRepository) {}
+
   async execute(id: string, body: UpdateOrdemdeServicoInput, file?: UploadedFile) {
     const updateData: any = {};
     let bannerassinaturaUrl: string | undefined;
@@ -78,24 +83,18 @@ class UpdateOrdemdeServicoService {
       }
     }
 
-    return prismaClient.ordemdeServico.update({
-      where: { id },
-      data: updateData,
-      include: {
-        atividades: true,
-        statusOrdemdeServico: true,
-      },
-    });
+    return this.repository.update(id, updateData);
   }
 }
 
 class UpdateOrdemdeServicoController {
+  constructor(private service: UpdateOrdemdeServicoService = new UpdateOrdemdeServicoService()) {}
+
   async handle(req: Request, res: Response) {
     const { id } = req.params;
     const file = (req.files as any)?.file as UploadedFile | undefined;
 
-    const service = new UpdateOrdemdeServicoService();
-    const ordem = await service.execute(id, req.body as UpdateOrdemdeServicoInput, file);
+    const ordem = await this.service.execute(id, req.body as UpdateOrdemdeServicoInput, file);
 
     return res.json({
       message: "Ordem de Serviço updated com sucesso.",
