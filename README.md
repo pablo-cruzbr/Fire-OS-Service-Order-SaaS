@@ -263,7 +263,7 @@ Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquit
 ## 🔜 Próximos Passos (Roadmap Técnico - Rumo ao Nível Pleno)
 
 - [x] **Autorização (RBAC):** controle de acesso por role (ADMIN/TECNICO/USER) nas rotas críticas da API, e por dono do recurso (CASL) na Ordem de Serviço — técnico só edita a que está atribuída a ele
-- [ ] **Infraestrutura:** Dockerização do ambiente local (PostgreSQL isolado via containers com Docker Compose)
+- [x] **Infraestrutura:** Dockerização completa — PostgreSQL e Redis já rodavam isolados via Docker Compose; adicionado `Dockerfile` multi-stage pra containerizar a própria API (`docker compose up --build` sobe banco, cache e API juntos)
 - [ ] **Arquitetura (System Design):** Documentação e diagramas de fluxo das Ordens de Serviço (Next.js/Expo -> Node.js -> PostgreSQL)
 - [x] **Validação & Segurança:** Validação de schema com Zod (piloto: criação/atualização de Ordem de Serviço) e middleware global de tratamento de erro, padronizando toda resposta de erro da API — rollout pros demais módulos em andamento
 - [ ] **Qualidade de Código:** Testes automatizados com Jest (backend) e Playwright (web)
