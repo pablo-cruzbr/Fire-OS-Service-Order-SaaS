@@ -1,4 +1,6 @@
 import prismaClient from "../../../prisma";
+import redisClient from "../../../redis";
+import { TECNICOS_CACHE_KEY } from "./ListTecnicoService";
 
 interface TecnicoCategoryRequest{
     name: string;
@@ -9,7 +11,7 @@ class CreateTecnicoService{
             throw new Error('Name Invalid');
         }
 
-        const tecnicoCategory = prismaClient.tecnico.create({
+        const tecnicoCategory = await prismaClient.tecnico.create({
             data: {
                 name: name,
             },
@@ -19,6 +21,13 @@ class CreateTecnicoService{
                 name: true,
             }
         })
+
+        try {
+            await redisClient.del(TECNICOS_CACHE_KEY);
+        } catch (error) {
+            console.error("Redis indisponível, não deu pra invalidar o cache de técnicos:", error);
+        }
+
         return tecnicoCategory
     }
 }
