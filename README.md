@@ -165,10 +165,14 @@ fire-os/                              # Monorepo
 - API REST com mais de 80 endpoints documentados em `routes.ts`
 - Autenticação JWT com middleware de proteção por rota
 - Autorização por role (RBAC) e por dono do recurso (CASL) nas rotas sensíveis — só `ADMIN` remove entidades críticas, técnico só edita a própria ordem de serviço
+- Validação de entrada com Zod e middleware global de tratamento de erro (piloto: Ordem de Serviço) — erro de input vira 422 com a lista de campos, erros do Prisma viram o status HTTP certo automaticamente
+- Camada de Repository com injeção de dependência (piloto: Ordem de Serviço) — Service não fala mais direto com o Prisma, fica testável com um repository fake
+- Cache-aside com Redis (totais de status, lista de técnicos) com TTL calibrado por tipo de dado e fallback automático se o Redis cair, sem derrubar a rota
+- Fila assíncrona (BullMQ + Redis) prototipada para upload de mídia — ainda não ligada ao fluxo real de fotos/assinatura
 - Criptografia de senhas com bcrypt
 - ORM Prisma com PostgreSQL — migrações versionadas
 - Exportação de relatórios via ExcelJS com estilização de planilha
-- Cache-Control headers para garantir dados frescos (evita 304)
+- Cache-Control headers para garantir dados frescos nessa exportação (evita 304)
 - Suporte a upload multipart (imagens de OS)
 
 ---
@@ -179,9 +183,12 @@ fire-os/                              # Monorepo
 |---|---|
 | **Frontend Web** | Next.js 14, React, TypeScript, SCSS Modules, react-select, ExcelJS |
 | **Mobile** | React Native, Expo, Context API, AsyncStorage, Axios |
-| **Backend** | Node.js, Express, TypeScript, JWT, bcrypt |
+| **Backend** | Node.js, Express, TypeScript, JWT, bcrypt, Zod, CASL |
 | **Banco de Dados** | PostgreSQL, Prisma ORM |
+| **Cache & Filas** | Redis (cache-aside), BullMQ (protótipo) |
 | **Armazenamento** | Cloudinary (imagens) |
+| **Testes & CI** | Vitest (backend, 58 testes), GitHub Actions |
+| **Infraestrutura** | Docker + Docker Compose (Postgres, Redis, API) |
 | **Calendário** | DHTMLX Scheduler v7 |
 | **Deploy Mobile** | Expo EAS Build + EAS Update |
 
@@ -252,16 +259,7 @@ npx expo start
 
 Desenvolvido solo, **fora do horário de trabalho**, paralelamente à atuação como técnico de helpdesk N2. Identifiquei o problema observando o dia a dia de campo, construí a solução do zero, e validei cada feature diretamente com técnicos e gestores em ambiente real de trabalho.
 
-O protótipo funcional foi apresentado com 3 módulos-chave e teve uso real validado — processando **47 ordens de serviço em 2 meses**, com **44 concluídas com sucesso**. Essa entrega resultou em **promoção a Desenvolvedor Fullstack antes de completar 1 ano na empresa**.
-
-Hoje mantenho este projeto como portfólio pessoal e continuo evoluindo a arquitetura e as funcionalidades de forma independente.
-
----
-## 🏁 Contexto de Desenvolvimento
-
-Desenvolvido solo, fora do horário de trabalho, paralelamente à atuação como técnico de helpdesk N2. Identifiquei o problema observando o dia a dia de campo, construí a solução do zero e validei cada feature diretamente com usuários em ambiente real.
-
-O protótipo funcional foi apresentado com 3 módulos-chave e teve uso real validado — processando **44 ordens de serviço concluídas com sucesso em 2 meses de uso real**. Esta entrega comprovou a robustez da solução, consolidando minha transição de carreira para **Desenvolvedor Fullstack**.
+O protótipo funcional foi apresentado com 3 módulos-chave e teve uso real validado — processando **47 ordens de serviço em 2 meses**, com **44 concluídas com sucesso**. Essa entrega comprovou a robustez da solução e resultou em **promoção a Desenvolvedor Fullstack antes de completar 1 ano na empresa**.
 
 Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquitetura e as funcionalidades de forma independente.
 
@@ -271,10 +269,11 @@ Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquit
 
 - [x] **Autorização (RBAC):** controle de acesso por role (ADMIN/TECNICO/USER) nas rotas críticas da API, e por dono do recurso (CASL) na Ordem de Serviço — técnico só edita a que está atribuída a ele
 - [x] **Infraestrutura:** Dockerização completa — PostgreSQL e Redis já rodavam isolados via Docker Compose; adicionado `Dockerfile` multi-stage pra containerizar a própria API (`docker compose up --build` sobe banco, cache e API juntos)
-- [ ] **Arquitetura (System Design):** Documentação e diagramas de fluxo das Ordens de Serviço (Next.js/Expo -> Node.js -> PostgreSQL)
+- [x] **Arquitetura (System Design):** Mapa completo de arquitetura com diagramas (mermaid) — camadas do backend antes/depois, sequence diagrams de request e de cache, e resposta de escala ("o que quebraria com 1000 técnicos") em [`Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md`](Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md)
 - [x] **Validação & Segurança:** Validação de schema com Zod (piloto: criação/atualização de Ordem de Serviço) e middleware global de tratamento de erro, padronizando toda resposta de erro da API — rollout pros demais módulos em andamento
-- [ ] **Qualidade de Código:** Testes automatizados com Jest (backend) e Playwright (web)
-- [ ] **Automação (CI/CD):** Pipeline com GitHub Actions para rodar testes automatizados a cada commit
+- [x] **Testes automatizados (Backend):** 58 testes unitários com **Vitest** — RBAC/CASL, validação Zod, tratamento de erro global, Repository pattern (com repository fake), cache-aside (miss/hit/fallback)
+- [ ] **Testes E2E (Web):** Playwright ainda não configurado no Frontend
+- [x] **Automação (CI/CD):** 🟡 GitHub Actions (`test.yml`) já roda a suíte de testes a cada push/PR pra `main`; falta adicionar `tsc --noEmit` e lint como steps separados (fail-fast antes do teste)
 - [ ] **Features Avançadas:** Notificações push no app mobile (Expo Notifications) e transcrição de áudio para documentação técnica (Expo Speech)
 
 ---
