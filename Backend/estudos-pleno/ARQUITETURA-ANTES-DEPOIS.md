@@ -320,7 +320,7 @@ Se um termo te deixar em dúvida, procure primeiro no `ROADMAP-PLENO.md` — o g
 
 ## 10. Próximos passos
 
-- [ ] Atualizar o diagrama mermaid do `README.md` raiz com a versão da seção 1 (Redis + fila, hoje ausentes lá).
+- [x] Atualizar o diagrama mermaid do `README.md` raiz com a versão da seção 1 (Redis + fila, hoje ausentes lá). **Feito em 04/09** — README ganhou Redis (cache-aside + fila), o Worker e um ponteiro pra este arquivo.
 - [ ] Continuar o checklist na ordem do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md` — cada item fechado vira uma linha nova na tabela da seção 5.
 - [ ] Quando (se) a fila for ligada ao `fotoController.ts` de verdade, atualizar o diagrama da seção 1 (hoje a seta Redis→Worker está tracejada porque é só protótipo).
 - [ ] Decidir e, se fizer sentido, implementar o PDF por OS (seção 7) — gerar/streamar primeiro, storage só se for confirmado que precisa de link permanente.
