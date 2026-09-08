@@ -68,8 +68,10 @@ graph TB
   end
 
   subgraph Backend["⚙️ Backend — Node.js + Express"]
-    API["REST API<br/>JWT Auth · bcrypt"]
+    API["REST API<br/>JWT Auth · RBAC/CASL · Zod"]
     DB[("PostgreSQL<br/>Prisma ORM")]
+    REDIS[("Redis<br/>Cache-aside + Fila BullMQ")]
+    WORKER["Worker<br/>(processo separado)"]
   end
 
   subgraph External["☁️ Serviços Externos"]
@@ -80,9 +82,14 @@ graph TB
   FE  -->|"HTTPS / JSON"| API
   APP -->|"HTTPS / JSON"| API
   API --> DB
+  API -->|"cache-aside (totais, listas)"| REDIS
+  REDIS -.->|"fila — protótipo, ainda não ligado ao fluxo real"| WORKER
+  WORKER -.->|"upload"| CDN
   APP -->|"Multipart Upload"| CDN
   APP -->|"Deep Link"| MAPS
 ```
+
+*Diagrama completo (camadas internas do backend, sequence diagrams de request/cache, e o "antes vs. depois" de cada pilar) em [`Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md`](Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md).*
 
 ---
 
