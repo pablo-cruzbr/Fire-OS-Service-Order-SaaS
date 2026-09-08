@@ -84,7 +84,68 @@ Um link curto de um post que viraliza recebe rajadas enormes de clique **no mesm
 
 ## Arquitetura, camada por camada
 
-O mapa de tópicos do curso organiza o projeto em 6 camadas. Vou pelas mesmas 6, com o conteúdo de verdade:
+O mapa de tópicos do curso organiza o projeto em 6 camadas. Vou pelas mesmas 6, com o conteúdo de verdade. Antes disso, dois diagramas — um mostrando as peças e como se conectam (incluindo o deploy real na AWS), outro mostrando o fluxo de um redirect passando pelos 3 caminhos possíveis (cache hit, cache miss, Redis fora do ar), que é literalmente a diferença entre pleno e sênior nesse projeto. *(Se o formato mermaid não for familiar, tem uma explicação de como ler em `ARQUITETURA-ANTES-DEPOIS.md`, seção "Como ler os diagramas".)*
+
+```mermaid
+graph TB
+  subgraph Client["Cliente"]
+    USER["Usuário (navegador)"]
+  end
+
+  subgraph AWS["☁️ AWS"]
+    GW["API Gateway"]
+    LAMBDA["Lambda — Express via serverless-http<br/>Controller (fino) → Service (regra de negócio)"]
+  end
+
+  subgraph Data["Armazenamento"]
+    PG[("PostgreSQL<br/>tabela links, índice único em codigo")]
+    REDIS[("Redis<br/>cache-aside, TTL 24h")]
+  end
+
+  subgraph Async["Processamento assíncrono"]
+    QUEUE["Fila BullMQ<br/>contagem de clique"]
+    WORKER["Worker<br/>processa em background"]
+  end
+
+  subgraph Obs["Observabilidade"]
+    SENTRY["Sentry + logs estruturados<br/>alerta específico no fallback"]
+  end
+
+  USER -->|"GET /:codigo"| GW --> LAMBDA
+  LAMBDA -->|"1. tenta o cache primeiro"| REDIS
+  REDIS -.->|"cache MISS ou Redis fora do ar<br/>(fallback — não derruba o redirect)"| PG
+  LAMBDA -->|"2. redireciona e enfileira, sem esperar"| QUEUE --> WORKER --> PG
+  LAMBDA -.->|"loga toda vez que o fallback aciona"| SENTRY
+```
+
+```mermaid
+sequenceDiagram
+  participant U as Usuário
+  participant API as Lambda (Controller → Service)
+  participant R as Redis
+  participant PG as Postgres
+  participant Q as Fila (BullMQ)
+  participant S as Sentry
+
+  U->>API: GET /:codigo
+  API->>R: GET link:{codigo}
+  alt cache HIT
+    R-->>API: url_destino
+  else cache MISS
+    API->>PG: SELECT ... WHERE codigo = ?
+    PG-->>API: url_destino
+    API->>R: SET link:{codigo} (TTL 24h)
+  else Redis fora do ar
+    R-->>API: erro de conexão (capturado, não relançado)
+    API->>S: loga "fallback acionado" (degradação, não quebra)
+    API->>PG: SELECT ... WHERE codigo = ?
+    PG-->>API: url_destino
+  end
+  API->>Q: enfileira contagem de clique (não bloqueia a resposta)
+  API-->>U: 302 redirect
+```
+
+O segundo diagrama é a resposta visual pra pergunta central do projeto ("como evitar que uma falha derrube todo o sistema?") — repare que os 3 caminhos do `alt` terminam todos no mesmo lugar (`302 redirect` pro usuário): o cache é só um atalho, nunca um requisito pra o redirect funcionar. É essa garantia que separa "usei Redis" de "sei o que acontece quando o Redis cai" (seção 5 abaixo).
 
 ### 1. Camada de API — onde a responsabilidade deveria ficar
 
