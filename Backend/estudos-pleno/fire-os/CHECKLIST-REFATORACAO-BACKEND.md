@@ -19,7 +19,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ `can.ts` (RBAC por role) wired em `routes.ts` nas rotas críticas.
 - ✅ CASL (`src/permissions/ability.ts`) — ownership de OrdemdeServico: técnico só edita a que é dele.
 - ✅ `authorizeOrdemdeServico` middleware testado (`authorizeOrdemdeServico.test.ts`).
-- ⬜ **Achado novo (14/09) — mesmo bug, 3 módulos ainda abertos:** `PATCH /assistenciatecnica/update/:id`, `PATCH /laudotecnico/update/:id` e `PATCH /documentacaotecnica/update/:id` não checam dono nenhum (só `isAuthenticated`, sem `can()` nem ownership) — qualquer `TECNICO` edita/apaga registro de outro técnico, exatamente o bug que foi corrigido em OrdemdeServico. Detalhe em `ROADMAP-PLENO.md`, item 1.
+- ⬜ **Achado novo (14/09) — mesmo bug, 3 módulos ainda abertos:** `PATCH /assistenciatecnica/update/:id`, `PATCH /laudotecnico/update/:id` e `PATCH /documentacaotecnica/update/:id` não checam dono nenhum (só `isAuthenticated`, sem `can()` nem ownership) — qualquer `TECNICO` edita/apaga registro de outro técnico, exatamente o bug que foi corrigido em OrdemdeServico. Detalhe em `GUIA-RBAC-CASL.md`, seção "Revisão 14/09/2026".
 
 ## 3. Zod nos controllers
 
@@ -37,9 +37,9 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
 - ✅ Protótipo isolado testado ao vivo (`src/queue/uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`, `dashboard.ts` com Bull Board) — Redis rodando via `docker-compose.yml`.
-- ✅ **Ligado ao fluxo real (14/09)** — `fotoController.handle` enfileira (`uploadQueue.add("upload-foto-os", ...)`) e responde `202` em vez de subir pro Cloudinary dentro do request; `uploadWorker.ts` faz o upload + grava no Postgres, com retry automático (3 tentativas, backoff exponencial). Serviço `fireos-worker` novo no `docker-compose.yml` + volume `tmp_uploads` compartilhado com a API (sem isso o worker não enxergaria o arquivo temporário, containers diferentes = disco isolado). Detalhe completo em `ROADMAP-PLENO.md`.
+- ✅ **Ligado ao fluxo real (14/09)** — `fotoController.handle` enfileira (`uploadQueue.add("upload-foto-os", ...)`) e responde `202` em vez de subir pro Cloudinary dentro do request; `uploadWorker.ts` faz o upload + grava no Postgres, com retry automático (3 tentativas, backoff exponencial). Serviço `fireos-worker` novo no `docker-compose.yml` + volume `tmp_uploads` compartilhado com a API (sem isso o worker não enxergaria o arquivo temporário, containers diferentes = disco isolado). Detalhe completo em `GUIA-FILA-BULLMQ.md`, seção 6.
 - ⬜ `saveAssinatura.ts` continua fora do escopo — a assinatura nem chega a ser enviada pelo app hoje (achado separado, ver item de assinatura no `ROADMAP-PLENO.md`).
-- ⬜ AWS: decidido deixar **fora do Fire OS por enquanto** — o projeto que cobre AWS de verdade (Lambda + API Gateway) é o Encurtador (`PROJETO-ENCURTADOR.md`, item 7), não faz sentido duplicar esforço aqui. Revisitar só se a decisão mudar.
+- ⬜ AWS: decidido deixar **fora do Fire OS por enquanto** — o projeto que cobre AWS de verdade (Lambda + API Gateway) é o Encurtador (`../projeto-encurtador/PROJETO-ENCURTADOR.md`, item 7), não faz sentido duplicar esforço aqui. Revisitar só se a decisão mudar.
 
 ## 6. Cache
 
@@ -104,4 +104,6 @@ Verifiquei cada afirmação ✅ deste checklist rodando os comandos de verdade (
 - **Único item que mudou de estado sem estar registrado:** a duplicação de seções no `README.md` raiz já não existe mais (corrigida em algum commit de docs recente) — marcado ✅ agora no `ROADMAP-PLENO.md`, seção 6.
 - **Único achado novo:** o gap de ownership nos 3 módulos técnicos (ver item 2 acima) — o checkbox de "mapear ownership" no `ROADMAP-PLENO.md` estava marcado feito sem o mapeamento ter sido escrito de fato.
 
-**Atualização, mesmo dia (14/09), depois desta revisão:** os itens "TSC + Lint no CI" (item 8) e "ligar a fila BullMQ no fluxo real" (item 5) — que essa revisão ainda listava como pendentes acima — foram implementados na sequência. Detalhe completo em `ROADMAP-PLENO.md`, seções "O que foi implementado (ESLint + fail-fast no CI)" e "O que foi implementado (fila ligada ao fluxo real)". O gap de ownership (item 0 da ordem sugerida) continua em aberto.
+**Atualização, mesmo dia (14/09), depois desta revisão:** os itens "TSC + Lint no CI" (item 8) e "ligar a fila BullMQ no fluxo real" (item 5) — que essa revisão ainda listava como pendentes acima — foram implementados na sequência. Detalhe completo em `GUIA-CI-LINT.md` e `GUIA-FILA-BULLMQ.md` (seção 6). O gap de ownership (item 0 da ordem sugerida) continua em aberto — detalhe em `GUIA-RBAC-CASL.md`.
+
+**Nota (mesmo dia, depois): `ROADMAP-PLENO.md` foi dividido** em guias menores por assunto (`GUIA-RBAC-CASL.md`, `GUIA-ZOD-REPOSITORY.md`, `GUIA-CI-LINT.md`, além dos que já existiam) porque tinha ficado grande demais pra ler de uma vez — ele continua sendo o índice/glossário, os relatos "o que foi implementado" moraram pros guias.

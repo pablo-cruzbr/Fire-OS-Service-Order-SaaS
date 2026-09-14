@@ -77,7 +77,7 @@ const { object } = await generateObject({
 });
 ```
 
-**Por que isso é mais avançado do que parece, e conecta direto com o item 2 do `ROADMAP-PLENO.md` (Zod):** a IA pode "alucinar" ou devolver algo fora do formato esperado — o schema Zod aqui não é só documentação, é **validação de verdade** de uma fonte não confiável (a IA), do mesmo jeito que Zod validaria um `req.body` de um usuário. Se a IA devolver algo torto, o `generateObject` já rejeita antes de chegar no seu banco.
+**Por que isso é mais avançado do que parece, e conecta direto com o item 2 do `fire-os/ROADMAP-PLENO.md` (Zod):** a IA pode "alucinar" ou devolver algo fora do formato esperado — o schema Zod aqui não é só documentação, é **validação de verdade** de uma fonte não confiável (a IA), do mesmo jeito que Zod validaria um `req.body` de um usuário. Se a IA devolver algo torto, o `generateObject` já rejeita antes de chegar no seu banco.
 
 ---
 
@@ -116,7 +116,7 @@ Cada fase é um commit set separado e documentado — não precisa decidir isso 
 
 > *Pare de ler vaga por vaga. Deixa a IA dizer quais valem seu tempo.*
 
-**Ganhou documento próprio: [`PROJETO-CRIVO.md`](./PROJETO-CRIVO.md)** — nome fictício "Crivo", com a spec completa (conceito técnico, como fica pleno, escopo, custo, referência visual do usefleming.com), mais conteúdo novo que não cabia aqui: uma tabela comparando decisão Junior vs. Pleno em cada parte do projeto, estimativa de tempo dia a dia, e o que estudar/revisar antes de começar. Copy de landing page fictícia em `design-references/crivo-landing-copy.md`.
+**Ganhou documento próprio: [`projeto-crivo/PROJETO-CRIVO.md`](./projeto-crivo/PROJETO-CRIVO.md)** — nome fictício "Crivo", com a spec completa (conceito técnico, como fica pleno, escopo, custo, referência visual do usefleming.com), mais conteúdo novo que não cabia aqui: uma tabela comparando decisão Junior vs. Pleno em cada parte do projeto, estimativa de tempo dia a dia, e o que estudar/revisar antes de começar. Copy de landing page fictícia em `design-references/crivo-landing-copy.md`.
 
 Resumo rápido: você salva seu perfil, cola descrições de vaga (uma ou várias de uma vez), cada uma vira um job de fila, e a IA devolve um score de compatibilidade estruturado (0-100, o que bate, o que falta) — em vez de texto solto pra você interpretar.
 
@@ -180,7 +180,7 @@ Você viu o produto de um amigo (**Oi Celine**, uma companheira de estudos com I
 
 **O que muda:** em vez de só colar uma vaga, você cola um **link de repositório público do GitHub**. A IA:
 1. Busca a estrutura do repo (API pública do GitHub, sem precisar de autenticação pra repo público) — pastas, `package.json`, README
-2. Analisa **por que** cada peça arquitetural existe (não só "tem Express", mas "por que tem fila, o que ela resolve ali") — é o mesmo exercício de rastreamento de fluxo que já treinamos no `ROADMAP-PLENO.md` (item "System Design"), automatizado
+2. Analisa **por que** cada peça arquitetural existe (não só "tem Express", mas "por que tem fila, o que ela resolve ali") — é o mesmo exercício de rastreamento de fluxo que já treinamos no `fire-os/ROADMAP-PLENO.md` (item "System Design"), automatizado
 3. Desenha isso como **mapa mental** (não lista) — usando `mermaid`, a mesma sintaxe que você já vê renderizada no GitHub e nos meus documentos
 4. A partir do mapa, propõe uma **árvore de projetos** — cada nó do mapa vira um ou mais galhos de "projeto pra ir mais fundo nisso"
 
@@ -257,7 +257,7 @@ Na abertura do evento, 500 pessoas chegam nos primeiros 10 minutos, todas queren
 
 > *O mesmo projeto clássico de entrevista, construído com as decisões que separam quem sabe codar de quem sabe arquitetar.*
 
-**Ganhou documento próprio: [`PROJETO-ENCURTADOR.md`](./PROJETO-ENCURTADOR.md)** — revive a ideia original de encurtador de URL (trocada por "Validador de Ingressos" mais acima), agora com profundidade sênior: as mesmas camadas de cache-aside e fila, mais duas coisas que nenhum outro projeto do portfólio cobre — **resiliência/fallback** (o que fazer quando o próprio Redis cai) e **deploy real em AWS Lambda** (fecha os gaps de "cloud real" e "serverless" de uma vez). Inclui uma régua de 3 níveis (Junior/Pleno/Sênior) pra mesma feature.
+**Ganhou documento próprio: [`projeto-encurtador/PROJETO-ENCURTADOR.md`](./projeto-encurtador/PROJETO-ENCURTADOR.md)** — revive a ideia original de encurtador de URL (trocada por "Validador de Ingressos" mais acima), agora com profundidade sênior: as mesmas camadas de cache-aside e fila, mais duas coisas que nenhum outro projeto do portfólio cobre — **resiliência/fallback** (o que fazer quando o próprio Redis cai) e **deploy real em AWS Lambda** (fecha os gaps de "cloud real" e "serverless" de uma vez). Inclui uma régua de 3 níveis (Junior/Pleno/Sênior) pra mesma feature.
 
 `Redis (cache-aside)` · `resiliência / fallback` · `BullMQ` · `AWS Lambda` · `arquitetura serverless` · `observabilidade` · `SOLID` · `testes unitários`
 
@@ -375,10 +375,10 @@ Você colou um panorama de requisitos reais de mercado (Node + React + TS, perfi
 | Requisito | Status | Onde |
 |---|---|---|
 | SOLID / Clean Code / Design Patterns | ❌ **Gap real** | Aplicado intuitivamente em partes do Fire OS, mas nunca documentado ou nomeado conscientemente em lugar nenhum |
-| Git Flow / PR detalhada / code review de pares | ❌ **Gap estrutural** | Já documentado no `ROADMAP-PLENO.md` — projeto solo não treina isso, é o tipo de gap que só fecha trabalhando com outra pessoa |
+| Git Flow / PR detalhada / code review de pares | ❌ **Gap estrutural** | Já documentado no `fire-os/ROADMAP-PLENO.md` — projeto solo não treina isso, é o tipo de gap que só fecha trabalhando com outra pessoa |
 | Docker | ✅ Coberto | Fire OS |
 | CI/CD (GitHub Actions) | ✅ Coberto | Fire OS |
-| Cloud real (AWS/GCP/Azure — S3, Lambda, ECS) | ⚠️ Parcial → planejado ✅ | Fire OS usa Vercel + Cloudinary. Caminho pra fechar: **Projeto 2B** (`PROJETO-ENCURTADOR.md`), deploy real em AWS Lambda + API Gateway |
+| Cloud real (AWS/GCP/Azure — S3, Lambda, ECS) | ⚠️ Parcial → planejado ✅ | Fire OS usa Vercel + Cloudinary. Caminho pra fechar: **Projeto 2B** (`projeto-encurtador/PROJETO-ENCURTADOR.md`), deploy real em AWS Lambda + API Gateway |
 
 ### Diferenciais
 
@@ -407,7 +407,7 @@ Mesma contagem de antes (21 itens tecnicamente avaliáveis, excluindo "inglês")
 
 Some **testes de frontend** e **observabilidade**, que passam de ❌ pra ✅.
 
-**→ 14 de 21 ≈ 67%**, com alta confiança (já está desenhado em detalhe no `PROJETO-CRIVO.md`, não é especulação).
+**→ 14 de 21 ≈ 67%**, com alta confiança (já está desenhado em detalhe no `projeto-crivo/PROJETO-CRIVO.md`, não é especulação).
 
 **Atualização: descobrimos que "Redis como cache" não precisa esperar o Projeto 2** — dá pra adicionar cache-aside de verdade dentro do próprio Crivo (cacheando o perfil do usuário, ver "Minhas Dúvidas" abaixo). Com esse 4º ajuste:
 
@@ -460,7 +460,7 @@ async function updatePerfil(userId: string, data: PerfilInput) {
 }
 ```
 
-- [ ] Adicionar isso como 4º ajuste de escopo no Crivo (já documentado no `PROJETO-CRIVO.md`)
+- [ ] Adicionar isso como 4º ajuste de escopo no Crivo (já documentado no `projeto-crivo/PROJETO-CRIVO.md`)
 
 ### Exemplos de SOLID/Design Patterns — no Fire OS e no Crivo
 
@@ -494,7 +494,7 @@ Usar Neon prova a primeira coisa, não as outras duas.
 
 ## Qual construir nos próximos 3 meses — recomendação de 1 a 2 projetos
 
-Você ainda vai gastar boa parte desses 3 meses aplicando pra vaga, se preparando pra entrevista e terminando itens do `ROADMAP-PLENO.md` (Zod nas rotas do Fire OS, mais testes, etc.) — então a pergunta certa não é "qual é o melhor projeto", é **qual cobre mais gap novo por semana de esforço, com risco baixo de não terminar**.
+Você ainda vai gastar boa parte desses 3 meses aplicando pra vaga, se preparando pra entrevista e terminando itens do `fire-os/ROADMAP-PLENO.md` (Zod nas rotas do Fire OS, mais testes, etc.) — então a pergunta certa não é "qual é o melhor projeto", é **qual cobre mais gap novo por semana de esforço, com risco baixo de não terminar**.
 
 Olhando o que **ainda não está coberto em lugar nenhum** (nem no Fire OS, nem no protótipo de fila que já testamos ao vivo): cache-aside de verdade, TTL, rate limiting, IA com saída estruturada, e a validação Zod que segue em aberto desde o item 2 do roadmap.
 

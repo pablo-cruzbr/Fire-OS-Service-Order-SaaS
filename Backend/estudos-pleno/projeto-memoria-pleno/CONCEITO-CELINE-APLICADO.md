@@ -47,12 +47,12 @@ O "eu não sei" explícito é uma escolha de design, não uma limitação escond
 
 ## Onde esse padrão se encaixa no seu caso, de verdade
 
-Reparei numa coisa enquanto documentava isso: **você já vive o problema que esse padrão resolve, agora mesmo, nessa própria sessão.** Seu conhecimento sobre o roadmap pleno está espalhado em pelo menos 6 documentos (`ROADMAP-PLENO.md`, `IDEIAS-PROJETOS-PLENO.md`, `PROJETO-CRIVO.md`, `PROJETO-ENCURTADOR.md`, `GUIA-FILA-BULLMQ.md`, esse aqui) — e cada vez que você tem uma dúvida, precisa lembrar em qual arquivo a resposta está, ou me perguntar de novo.
+Reparei numa coisa enquanto documentava isso: **você já vive o problema que esse padrão resolve, agora mesmo, nessa própria sessão.** Seu conhecimento sobre o roadmap pleno está espalhado em pelo menos 6 documentos (`../fire-os/ROADMAP-PLENO.md`, `../IDEIAS-PROJETOS-PLENO.md`, `../projeto-crivo/PROJETO-CRIVO.md`, `../projeto-encurtador/PROJETO-ENCURTADOR.md`, `../fire-os/GUIA-FILA-BULLMQ.md`, esse aqui) — e cada vez que você tem uma dúvida, precisa lembrar em qual arquivo a resposta está, ou me perguntar de novo.
 
 **A aplicação mais honesta do padrão da Celine não é "copiar a Celine" — é construir a versão disso pra sua própria jornada de estudo.** Um "Assistente de Estudo Pleno" que:
 
 1. **Centraliza** — indexa todos os seus `.md` de roadmap/projetos numa fonte só (RAG sobre os próprios documentos, não sobre repositório de terceiros como o Bússola de Stack faz)
-2. **Só responde com base no que você já documentou** — pergunta "o que falta pro Crivo cobrir cache?" e ele busca a resposta real no `PROJETO-CRIVO.md`, cita de qual arquivo tirou, e diz "não documentado ainda" se a resposta não existir em lugar nenhum
+2. **Só responde com base no que você já documentou** — pergunta "o que falta pro Crivo cobrir cache?" e ele busca a resposta real no `../projeto-crivo/PROJETO-CRIVO.md`, cita de qual arquivo tirou, e diz "não documentado ainda" se a resposta não existir em lugar nenhum
 3. **Prioriza pelos 3 meses que restam** — não é "aqui está tudo", é "dado o tempo que falta, isso é o que mais importa revisar essa semana"
 4. **Mapa visual de progresso** — não uma lista de checkbox, um mapa mostrando quais conceitos estão "não estudado", "estudado", "aplicado num projeto" — os 3 estágios reais que aparecem nos seus próprios documentos
 5. **Repetição espaçada nos conceitos do roadmap** — se você marcou "RBAC" como estudado há 3 semanas e nunca mais tocou no assunto, ele sugere revisar, do mesmo jeito que a Celine sugere revisar uma matéria que você não abre há tempo

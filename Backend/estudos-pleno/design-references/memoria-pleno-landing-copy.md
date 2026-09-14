@@ -1,6 +1,6 @@
 # Memória Pleno — Copy de Landing Page
 
-Nome de trabalho pro conceito documentado em `CONCEITO-CELINE-APLICADO.md` — inspirado no padrão do Oi Celine, aplicado à jornada de virar pleno. Mesmo formato das outras páginas do portfólio (badge > headline > subtítulo > CTA; cards de feature; passos numerados). Sem depoimento fabricado ou prova social falsa — é conceito, não produto no ar.
+Nome de trabalho pro conceito documentado em `../projeto-memoria-pleno/CONCEITO-CELINE-APLICADO.md` — inspirado no padrão do Oi Celine, aplicado à jornada de virar pleno. Mesmo formato das outras páginas do portfólio (badge > headline > subtítulo > CTA; cards de feature; passos numerados). Sem depoimento fabricado ou prova social falsa — é conceito, não produto no ar.
 
 ---
 
@@ -62,7 +62,7 @@ Marcou RBAC como estudado há um mês e não tocou mais no assunto? Ela lembra v
 
 ### Ela só fala o que é seu.
 
-Sem conselho genérico de "10 dicas pra virar pleno" que você já leu 20 vezes. Pergunta "o que falta no Crivo pra cobrir cache?" e a resposta vem do `PROJETO-CRIVO.md`, com a fonte citada. Se a resposta não estiver documentada em lugar nenhum, ela diz isso — não inventa.
+Sem conselho genérico de "10 dicas pra virar pleno" que você já leu 20 vezes. Pergunta "o que falta no Crivo pra cobrir cache?" e a resposta vem do `../projeto-crivo/PROJETO-CRIVO.md`, com a fonte citada. Se a resposta não estiver documentada em lugar nenhum, ela diz isso — não inventa.
 
 ---
 
@@ -132,4 +132,4 @@ Você não precisa de diploma pra provar que sabe — precisa pegar o que aprend
 ## Rodapé
 
 Memória Pleno — construído pelo mesmo dev que está usando.
-Conceito documentado, ainda não construído — ver `CONCEITO-CELINE-APLICADO.md` pro raciocínio completo e `IDEIAS-PROJETOS-PLENO.md` pra prioridade real dos próximos 3 meses.
+Conceito documentado, ainda não construído — ver `../projeto-memoria-pleno/CONCEITO-CELINE-APLICADO.md` pro raciocínio completo e `../IDEIAS-PROJETOS-PLENO.md` pra prioridade real dos próximos 3 meses.
