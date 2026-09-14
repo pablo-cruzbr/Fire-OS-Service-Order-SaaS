@@ -2,7 +2,7 @@
 
 > *Pare de ler vaga por vaga. Deixa a IA dizer quais valem seu tempo.*
 
-Documento dedicado ao Projeto 1B do `IDEIAS-PROJETOS-PLENO.md` — nome fictício **Crivo** (referência de copy em `design-references/crivo-landing-copy.md`, referência visual em `design-references/`, baseada no [usefleming.com](https://usefleming.com/)).
+Documento dedicado ao Projeto 1B do `../IDEIAS-PROJETOS-PLENO.md` — nome fictício **Crivo** (referência de copy em `../design-references/crivo-landing-copy.md`, referência visual em `../design-references/`, baseada no [usefleming.com](https://usefleming.com/)).
 
 ---
 
@@ -39,7 +39,7 @@ const matchSchema = z.object({
 });
 
 // Isso roda dentro do WORKER, um job por vaga — não na hora do request,
-// igual já fizemos no protótipo de fila com o Cloudinary (GUIA-FILA-BULLMQ.md).
+// igual já fizemos no protótipo de fila com o Cloudinary (../fire-os/GUIA-FILA-BULLMQ.md).
 // O card nasce sempre na coluna "radar" — o usuário move o resto na mão.
 const { object } = await generateObject({
   model: groq("llama-3.3-70b-versatile"),
@@ -109,14 +109,14 @@ Essa tabela em si é material de entrevista: "eu sei apontar a diferença entre 
 **Semana 1 — backend**
 - **Dia 1:** setup do projeto (Next.js + Express + Prisma + `docker-compose` com Postgres e Redis desde o primeiro commit), schema do banco (perfil, vaga, avaliação)
 - **Dia 2:** CRUD simples de perfil (cadastrar/editar skills e nível)
-- **Dia 3-4:** fila + worker básico, reaproveitando o padrão já testado ao vivo no `GUIA-FILA-BULLMQ.md` — rota que só enfileira, worker que só loga por enquanto
+- **Dia 3-4:** fila + worker básico, reaproveitando o padrão já testado ao vivo no `../fire-os/GUIA-FILA-BULLMQ.md` — rota que só enfileira, worker que só loga por enquanto
 - **Dia 5:** integração real com Groq (`generateObject`) dentro do worker, salvando o resultado no banco
 - **Dia 6:** Zod validando entrada (perfil, vaga) e a saída da IA
 - **Dia 7:** rate limiting com Redis
 
 **Semana 2 — qualidade e frontend**
 - **Dia 8-9:** testes unitários (mock de `generateObject`, mock da fila, teste de ordenação da lista por score)
-- **Dia 10-11:** frontend (2 telas, aplicando a referência visual do Crivo/Fleming documentada no `IDEIAS-PROJETOS-PLENO.md`)
+- **Dia 10-11:** frontend (2 telas, aplicando a referência visual do Crivo/Fleming documentada no `../IDEIAS-PROJETOS-PLENO.md`)
 - **Dia 12:** CI (GitHub Actions rodando os testes a cada push)
 - **Dia 13:** README com o mesmo cuidado do Fire OS — problema real, arquitetura, decisões
 - **Dia 14:** polish, revisão geral, deploy opcional
@@ -124,15 +124,15 @@ Essa tabela em si é material de entrevista: "eu sei apontar a diferença entre 
 ## O que estudar e revisar antes de começar
 
 **Revisar (você já viu isso, é só reler antes de aplicar):**
-- [ ] `GUIA-FILA-BULLMQ.md` — o padrão de fila + worker que você já testou ao vivo com o upload de imagem
-- [ ] `ROADMAP-PLENO.md`, item 2 — Zod segue em aberto no Fire OS; o Crivo é a chance de aplicar de verdade, desde o início
+- [ ] `../fire-os/GUIA-FILA-BULLMQ.md` — o padrão de fila + worker que você já testou ao vivo com o upload de imagem
+- [ ] `../fire-os/ROADMAP-PLENO.md`, item 2 — Zod segue em aberto no Fire OS; o Crivo é a chance de aplicar de verdade, desde o início
 - [ ] `src/Middleware/can.test.ts` e `src/permissions/ability.test.ts` (Fire OS) — o padrão de mock que você já usou, reaproveitável aqui pra mockar `generateObject`
 - [ ] `src/api/ai/chat/route.ts` (Fire OS) — como o Groq já está configurado lá, mesma `GROQ_API_KEY`
 
 **Estudar novo (conteúdo que você ainda não viu):**
 - [ ] `generateObject` da Vercel AI SDK (docs oficiais) — a diferença pra `generateText`, que é o que o Fire OS usa hoje
 - [ ] Zod com schema aninhado — `z.array(z.string())`, `z.enum([...])` dentro de um `z.object({...})`
-- [ ] Rate limiting com Redis — conceito já explicado no `IDEIAS-PROJETOS-PLENO.md`, item "Projeto 2" (token bucket), aplicado agora num contexto diferente (custo de IA, não tráfego HTTP)
+- [ ] Rate limiting com Redis — conceito já explicado no `../IDEIAS-PROJETOS-PLENO.md`, item "Projeto 2" (token bucket), aplicado agora num contexto diferente (custo de IA, não tráfego HTTP)
 - [ ] Operações em lote no Prisma (`createMany` ou loop de `create`) pra salvar várias avaliações de uma vez
 
 ---
@@ -143,12 +143,12 @@ Essa tabela em si é material de entrevista: "eu sei apontar a diferença entre 
 
 ## Ajustes de escopo depois do cruzamento com vaga Pleno real (25/08/2026)
 
-Você colou um panorama real de requisitos de vaga Pleno Fullstack (SP) — análise completa cruzada com o portfólio inteiro está no `IDEIAS-PROJETOS-PLENO.md`, seção "Cruzamento com requisitos reais de vaga Pleno Fullstack (SP)". Quatro gaps reais dá pra fechar **sem virar projeto novo**, só ajustando como o Crivo é construído:
+Você colou um panorama real de requisitos de vaga Pleno Fullstack (SP) — análise completa cruzada com o portfólio inteiro está no `../IDEIAS-PROJETOS-PLENO.md`, seção "Cruzamento com requisitos reais de vaga Pleno Fullstack (SP)". Quatro gaps reais dá pra fechar **sem virar projeto novo**, só ajustando como o Crivo é construído:
 
 - [ ] **Estilização com Tailwind CSS** em vez de CSS/SCSS puro — a vaga pede nominalmente Tailwind/Styled Components/Shadcn, e o Fire OS usa SCSS Modules (não é o que está sendo pedido)
 - [ ] **Testes de frontend com Testing Library** nas 2 telas do Crivo — hoje todo teste do portfólio é backend (Vitest); esse é o primeiro teste de frontend de verdade
 - [ ] **Sentry + log estruturado básico** no backend do Crivo — algumas horas de trabalho, fecha um gap de observabilidade que hoje é zero em qualquer lugar (Fire OS só tem `console.log`)
-- [ ] **Cache-aside de verdade no perfil do usuário** — Redis já está no projeto pra fila, mas ainda não é usado como cache. O perfil é lido toda vez que uma vaga é avaliada e escrito raramente (só quando você edita suas skills) — candidato clássico de cache-aside, com invalidação no update. Código de exemplo na seção "Minhas Dúvidas" do `IDEIAS-PROJETOS-PLENO.md`.
+- [ ] **Cache-aside de verdade no perfil do usuário** — Redis já está no projeto pra fila, mas ainda não é usado como cache. O perfil é lido toda vez que uma vaga é avaliada e escrito raramente (só quando você edita suas skills) — candidato clássico de cache-aside, com invalidação no update. Código de exemplo na seção "Minhas Dúvidas" do `../IDEIAS-PROJETOS-PLENO.md`.
 
 Isso não muda o escopo principal (1 tela de perfil + 1 de lista, 1 worker) nem o prazo — são decisões de **como** construir, não **o quê**, então cabem nas mesmas 1-2 semanas.
 
@@ -158,11 +158,11 @@ Isso não muda o escopo principal (1 tela de perfil + 1 de lista, 1 worker) nem 
 
 **Cobertos pelo Crivo (15 de 21 ≈ 71%):** TypeScript avançado, Express, REST, Prisma, Next.js, estilização moderna (com o ajuste do Tailwind), PostgreSQL, **Redis como cache** (com o ajuste do cache de perfil), testes backend, testes frontend (com o ajuste da Testing Library), Docker, CI/CD, mensageria (BullMQ), observabilidade (com o ajuste do Sentry).
 
-**Não cobertos só pelo Crivo:** NestJS, GraphQL, Git Flow/code review em equipe, cloud real (AWS/GCP/Azure), microsserviços/serverless — esse último não é resolvido pelo Neon (serverless de banco é coisa diferente de serverless de aplicação; ver "Minhas Dúvidas" no `IDEIAS-PROJETOS-PLENO.md` pra detalhe). SOLID/Design Patterns fica de fora da contagem — depende de quanto você documentar as decisões, não é binário (exemplos concretos também estão em "Minhas Dúvidas").
+**Não cobertos só pelo Crivo:** NestJS, GraphQL, Git Flow/code review em equipe, cloud real (AWS/GCP/Azure), microsserviços/serverless — esse último não é resolvido pelo Neon (serverless de banco é coisa diferente de serverless de aplicação; ver "Minhas Dúvidas" no `../IDEIAS-PROJETOS-PLENO.md` pra detalhe). SOLID/Design Patterns fica de fora da contagem — depende de quanto você documentar as decisões, não é binário (exemplos concretos também estão em "Minhas Dúvidas").
 
 **Três ressalvas importantes, pra não tratar esse número como verdade absoluta:**
 1. **Nem todo item pesa igual.** NestJS sozinho, se a vaga insiste nele, pode pesar mais que 3 itens marcados como ✅ juntos — isso aqui é uma contagem simples de itens, não uma média ponderada por importância real pro recrutador.
-2. **É só o Crivo isolado.** Somado ao Fire OS (que já cobre RBAC/CASL, TypeScript, Prisma, Postgres, Docker, CI, Next.js) e à sua parte real no Hone (Tailwind/shadcn no frontend), o cálculo do **portfólio inteiro** está no `IDEIAS-PROJETOS-PLENO.md` — hoje ~57%, projetado ~71% depois do Crivo pronto com os 4 ajustes.
+2. **É só o Crivo isolado.** Somado ao Fire OS (que já cobre RBAC/CASL, TypeScript, Prisma, Postgres, Docker, CI, Next.js) e à sua parte real no Hone (Tailwind/shadcn no frontend), o cálculo do **portfólio inteiro** está no `../IDEIAS-PROJETOS-PLENO.md` — hoje ~57%, projetado ~71% depois do Crivo pronto com os 4 ajustes.
 3. **Isso não substitui o ATS/o recrutador de verdade.** É um termômetro rápido pra decidir prioridade, não uma nota final — o cruzamento fica mais preciso a cada vaga real nova que você colar aqui.
 
 ## Custo — quanto isso vai custar de verdade
@@ -180,7 +180,7 @@ Conferi a documentação da Groq antes de responder isso, pra não chutar númer
 
 ## Frontend — referência visual
 
-Você mandou um print do [usefleming.com](https://usefleming.com/) (salvar em `design-references/`, veja o README daquela pasta). Uma ressalva honesta antes da análise: estruturalmente o site **não é "simples"** — é uma landing page de marketing completa, com header fixo, hero, 4 blocos de seção (features, "how it works", roadmap institucional, comunidade) e rodapé em várias colunas. O que bate com "simples e rápido" é o **estilo visual de cada componente** (poucas cores, bordas finas, bastante espaço em branco), não a quantidade de telas — e é isso que vale aproveitar, sem copiar a estrutura de landing page inteira (o Crivo é uma ferramenta de uso pessoal, não precisa de seção de roadmap institucional nem comunidade).
+Você mandou um print do [usefleming.com](https://usefleming.com/) (salvar em `../design-references/`, veja o README daquela pasta). Uma ressalva honesta antes da análise: estruturalmente o site **não é "simples"** — é uma landing page de marketing completa, com header fixo, hero, 4 blocos de seção (features, "how it works", roadmap institucional, comunidade) e rodapé em várias colunas. O que bate com "simples e rápido" é o **estilo visual de cada componente** (poucas cores, bordas finas, bastante espaço em branco), não a quantidade de telas — e é isso que vale aproveitar, sem copiar a estrutura de landing page inteira (o Crivo é uma ferramenta de uso pessoal, não precisa de seção de roadmap institucional nem comunidade).
 
 **Paleta:**
 - Fundo quase preto, com leve tom petróleo/azul escuro (não é preto puro)
@@ -207,7 +207,7 @@ Você mandou um print do [usefleming.com](https://usefleming.com/) (salvar em `d
 **Sim, atende — com ressalvas honestas, não como "sim" cego.**
 
 **Por que atende, olhando seu caso especificamente:**
-- Fecha gaps concretos que hoje **não existem em nenhum outro lugar do seu portfólio**: fila usada de forma central (não só protótipo isolado), Zod validando de verdade (item 2 do `ROADMAP-PLENO.md`, em aberto desde o início), rate limiting, e saída estruturada de IA
+- Fecha gaps concretos que hoje **não existem em nenhum outro lugar do seu portfólio**: fila usada de forma central (não só protótipo isolado), Zod validando de verdade (item 2 do `../fire-os/ROADMAP-PLENO.md`, em aberto desde o início), rate limiting, e saída estruturada de IA
 - Você constrói **sozinho, do início ao fim** — diferente do Hone, onde seu papel foi frontend/integração. É a primeira peça do seu portfólio onde fila + IA + validação são 100% seus
 - Escopo pequeno (1-2 semanas) cabe real no seu prazo de 3 meses, sem competir por tempo com aplicar pra vaga e estudar
 - Já tem a narrativa de entrevista pronta (a tabela de comparação com o Hone, o esclarecimento sobre saída estruturada) — isso sozinho já vale mais que o código, é o que faz um projeto pequeno parecer intencional em vez de "mais um CRUD com IA"

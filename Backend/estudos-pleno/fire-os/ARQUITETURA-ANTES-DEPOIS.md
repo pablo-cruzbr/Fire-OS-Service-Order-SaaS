@@ -259,7 +259,7 @@ Um PDF de uma OS específica tem uma característica que o Excel não tem: **a c
 
 **Minha recomendação: não é S3 — é reaproveitar o Cloudinary que já está integrado**, pelo mesmo motivo que gera a maior parte das decisões boas de arquitetura desse projeto: consistência. O Cloudinary já é o storage de arquivo oficial do Fire OS (fotos da OS, assinatura do cliente), já tem credencial configurada, já tem código de upload testado, e aceita PDF normalmente (`resource_type: "raw"` ou `"auto"`). Somar S3 como um **segundo** provedor de storage, só pra esse caso, adiciona: uma conta AWS pra gerenciar, IAM/bucket policy pra configurar com segurança, outra credencial pra guardar — sem resolver nada que o Cloudinary já não resolvesse.
 
-**Isso também não é uma opinião isolada — bate com uma decisão que já está registrada no projeto:** o `CHECKLIST-REFATORACAO-BACKEND.md` (item 5) já decidiu deixar "AWS de verdade" fora do Fire OS por ora, justamente porque existe outro projeto (`PROJETO-ENCURTADOR.md`) planejado especificamente pra cobrir esse gap de currículo (Lambda + API Gateway) sem duplicar esforço. Trazer S3 pra dentro do Fire OS agora iria contra essa decisão sem um motivo técnico novo forte o suficiente pra justificar reabri-la.
+**Isso também não é uma opinião isolada — bate com uma decisão que já está registrada no projeto:** o `CHECKLIST-REFATORACAO-BACKEND.md` (item 5) já decidiu deixar "AWS de verdade" fora do Fire OS por ora, justamente porque existe outro projeto (`../projeto-encurtador/PROJETO-ENCURTADOR.md`) planejado especificamente pra cobrir esse gap de currículo (Lambda + API Gateway) sem duplicar esforço. Trazer S3 pra dentro do Fire OS agora iria contra essa decisão sem um motivo técnico novo forte o suficiente pra justificar reabri-la.
 
 **Quando eu mudaria de ideia:** se um dia existir um motivo específico que o Cloudinary não cobre bem — política de retenção/expiração formal por exigência legal, controle de acesso via IAM mais granular que o token do Cloudinary, ou custo em escala grande — aí sim S3 vira a resposta certa. Hoje, com o volume do Fire OS, esse motivo não existe ainda.
 
@@ -309,11 +309,14 @@ Esse documento existe pra você enxergar o sistema inteiro de uma vez (a "flores
 
 | Se você quer entender a fundo... | Vá pra |
 |---|---|
-| Fila, BullMQ, Redis como fila, producer/worker | `GUIA-FILA-BULLMQ.md` |
+| RBAC, CASL, os 4 achados de ownership (1 corrigido, 3 ainda abertos) | `GUIA-RBAC-CASL.md` |
+| Zod, error handling global, Repository pattern | `GUIA-ZOD-REPOSITORY.md` |
+| ESLint, fail-fast no CI, CD (Vercel vs. Serverless Framework) | `GUIA-CI-LINT.md` |
+| Fila, BullMQ, Redis como fila, producer/worker, ligação ao fluxo real | `GUIA-FILA-BULLMQ.md` |
 | Cache, cache-aside, TTL, invalidação, cache stampede | `GUIA-CACHE-REDIS.md` |
 | Por que essa ordem de prioridade no que falta (rollout, CI, testes) | `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md` |
-| RBAC, CASL, Zod, error handling, Repository — com o "achado real" de cada um | `ROADMAP-PLENO.md` (é o mais longo, mas é onde está o detalhe passo a passo) |
 | Estado atual de cada item (o que já foi feito, o que falta) | `CHECKLIST-REFATORACAO-BACKEND.md` |
+| Glossário dos termos + checklist + narrativa de entrevista | `ROADMAP-PLENO.md` (o índice — mais curto agora, os relatos completos moraram pros guias acima) |
 
 Se um termo te deixar em dúvida, procure primeiro no `ROADMAP-PLENO.md` — o glossário dos "6 termos" (RBAC, Zod, pirâmide de testes, CI/CD, Docker, system design) e dos "5 termos que faltam" (fila, cache, escala horizontal, revisão de código) cobre praticamente tudo que aparece nos diagramas acima.
 
