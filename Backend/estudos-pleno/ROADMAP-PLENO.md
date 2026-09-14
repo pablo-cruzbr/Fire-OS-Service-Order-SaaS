@@ -117,6 +117,16 @@ Com isso, esquecer de proteger uma rota nova deixa de ser possível por padrão 
 
 - [x] Depois do RBAC básico funcionar, mapear onde mais no código existe uma regra de ownership escondida num `if` (grep por `tecnico_id`, `user_id` sendo comparado manualmente) — isso é o inventário antes de decidir se compensa migrar pra CASL.
 
+**Revisão 14/09/2026 — esse checkbox estava marcado como feito, mas o mapeamento nunca foi escrito, e o gap que ele deveria ter fechado continua aberto.** Rodando o mesmo grep agora (`tecnico_id` em `services/` e `controllers/`), apareceram 3 módulos com **exatamente o mesmo bug que foi corrigido em OrdemdeServico** — um campo `tecnico_id` que é só *dado a atualizar*, nunca *condição de quem pode atualizar*:
+
+- `UpdateAssistenciaTecnicaService.ts` (rota `PATCH /assistenciatecnica/update/:id`)
+- `UpdateControledeLaudoTecnicoService.ts` (rota `PATCH /laudotecnico/update/:id`)
+- `UpdateDocumentacaoTecnicaService.ts` (rota `PATCH /documentacaotecnica/update/:id`)
+
+As três rotas estão só atrás de `isAuthenticated` (`privateRouter`, sem `can()` nem `authorizeOrdemdeServico`-equivalente) — ou seja, hoje qualquer `TECNICO` autenticado edita ou apaga a assistência técnica, o laudo técnico ou a documentação técnica **de qualquer outro técnico**, só sabendo o `id`. É o mesmo achado do item 5 (CASL em OrdemdeServico), só que ainda não corrigido — e é maior alavancagem do que continuar o rollout de Zod/Repository pro próximo módulo qualquer, porque esse aqui já tem o padrão de correção pronto (`defineAbilityFor` + um middleware `authorize*` por módulo, ou generalizar `authorizeOrdemdeServico` pra receber o nome do model).
+
+- [ ] Generalizar `authorizeOrdemdeServico` (ou criar 3 equivalentes) pros 3 módulos acima — mesmo padrão, mesma regra ("TECNICO só edita o que é seu, ADMIN edita tudo").
+
 ### O que foi implementado (RBAC básico + CASL) — 17/08/2026
 
 **1. `routes.ts` virou `publicRouter` + `privateRouter`**, exatamente como no exemplo de código acima. `privateRouter.use(isAuthenticated)` roda uma vez só; nenhuma rota nova precisa mais lembrar de colar `isAuthenticated` na mão.
@@ -287,11 +297,91 @@ Você já não está começando do zero — existem 4 arquivos de teste (`AuthUs
 
 ## 4. CI/CD
 
-- [ ] `test.yml` hoje só roda `npm run test`. Adicionar `tsc --noEmit` (checagem de tipo) e lint como steps separados — pega erro de compilação antes do teste, e falha mais rápido/mais barato.
+- [x] `test.yml` hoje só roda `npm run test`. Adicionar `tsc --noEmit` (checagem de tipo) e lint como steps separados — pega erro de compilação antes do teste, e falha mais rápido/mais barato.
 - [ ] Criar um segundo workflow para o `Frontend/` (hoje só o Backend tem CI).
 - [ ] Ativar branch protection na `main` exigindo o workflow verde antes de merge — mesmo trabalhando sozinho, isso é um hábito que demonstra disciplina de squad.
 
 **Estudar:** o que roda em cada estágio de um pipeline e por quê (lint/type-check → test → build → deploy), fail-fast.
+
+### O que foi implementado (ESLint + fail-fast no CI) — 14/09/2026
+
+Vou explicar isso em pedaços pequenos, cada um respondendo uma pergunta só.
+
+#### Pedaço 1 — o que é "lint", numa frase
+
+Lint é um corretor ortográfico, só que pra código em vez de texto. Ele não roda o programa — só *lê* o código e aponta padrão suspeito: uma variável que você criou e nunca usou, um `import` que sobrou de um código que você já apagou, um jeito de escrever que o próprio time decidiu evitar. Ele não sabe se a lógica está certa (isso é trabalho do teste); só sabe se o código está "arrumado".
+
+#### Pedaço 2 — por que 3 steps separados no CI, e não só 1
+
+Antes, o `test.yml` só tinha um step: `npm run test`. Agora tem três, nessa ordem:
+
+```yaml
+- run: npm run typecheck   # tsc --noEmit — só confere tipo, não gera nada
+- run: npm run lint        # eslint . — só confere "arrumação"
+- run: npm run test        # só agora roda a suíte de teste de verdade
+```
+
+A ordem não é aleatória: `typecheck` e `lint` rodam em **segundos**, sem precisar montar mock nenhum. `test` sobe todo um ambiente simulado e roda 58+ testes — é mais lento. Se um PR tiver um erro de tipo bobo (um campo que não existe mais), a ideia de **fail-fast** é descobrir isso no step de segundos, não esperar o step de segundos-mais-lentos rodar por nada.
+
+#### Pedaço 3 — o que eu de fato instalei e criei
+
+1. `npm install -D eslint typescript-eslint` — as duas dependências. `typescript-eslint` é o pacote oficial que ensina o ESLint (que originalmente só entende JavaScript) a entender TypeScript.
+2. `Backend/eslint.config.mjs` — o arquivo de configuração (formato novo do ESLint, chamado "flat config"). É aqui que fica a regra "o que é erro, o que é aviso, o que eu ignoro".
+3. Dois scripts novos no `package.json`: `"typecheck": "tsc --noEmit"` e `"lint": "eslint ."`.
+4. Dois steps novos no `.github/workflows/test.yml`, antes do `npm run test`.
+
+#### Pedaço 4 — o achado real ao rodar pela primeira vez (o "gotcha")
+
+Rodei `npx eslint .` pela primeira vez, sem ignorar nada ainda, só pra ver o tamanho do problema — e o resultado foi **2153 problemas, 1452 deles erro**. Isso bateria exatamente no aviso que já estava escrito no `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`: *"o primeiro `npx eslint .` provavelmente reprova o repo inteiro de uma vez"*.
+
+Só que, olhando de perto **onde** esses erros estavam, quase todos vinham de uma pasta só: `@prisma/client/runtime/*.js` — esse não é código que você escreveu, é o *client* que o Prisma gera automaticamente (`npx prisma generate`) e que, nesse projeto, é salvo dentro do próprio repo (`output` customizado no `schema.prisma`), em vez de ficar escondido dentro de `node_modules` como o padrão. O ESLint não sabia que devia ignorar isso, então estava "corrigindo a ortografia" de um texto escrito por outra pessoa (o próprio Prisma), não pelo seu código.
+
+Depois de adicionar `@prisma/**` na lista de pastas ignoradas (`ignores` no `eslint.config.mjs`), sobrou isso, que é código de verdade do projeto:
+
+```
+36 problemas — 0 erros, 36 avisos (tudo @typescript-eslint/no-unused-vars)
+```
+
+**A lição de pleno aqui não é "instalei o ESLint"** — é: antes de configurar a regra certa, você precisa primeiro entender *de onde* vêm os problemas que apareceram, porque um número gigante quase sempre significa "estou lintando algo que não deveria", não "meu código está uma bagunça".
+
+#### Pedaço 5 — por que os 36 avisos viraram "warning", não "error"
+
+Esses 36 são reais — variáveis e `import`s que existem no código mas nunca são usados (ex.: `interface StatusComprasRequest` declarada e nunca referenciada). Eu **não** apaguei nenhum agora, e configurei a regra (`no-unused-vars`) como `warn`, não `error`, de propósito:
+
+```js
+// eslint.config.mjs
+rules: {
+  "@typescript-eslint/no-unused-vars": "warn", // não trava o CI
+}
+```
+
+O motivo é o mesmo princípio do rollout incremental (item 1 deste arquivo): o projeto tem ~110 controllers que nunca passaram por lint nenhum. Se eu configurasse como `error` agora, o CI ficaria vermelho a partir do primeiro PR, obrigando a limpar 36 avisos numa tacada só, sem relação com o que a próxima mudança de verdade seria. Como `warning`, o CI já protege contra problema **novo** que quebra o build (`tsc`) ou é claramente perigoso, sem travar por dívida antiga que ainda não foi a vez de pagar.
+
+#### Pedaço 6 — os 2 erros de verdade que corrigi no caminho
+
+Rodando o typecheck+lint apareceram 2 arquivos com erro real (não aviso): `CreateUserService.ts` e `UpdateUSerService.ts` usavam `import bcrypt = require('bcryptjs')` — uma sintaxe antiga de importar que o ESLint bloqueia (`no-require-imports`) porque mistura dois sistemas de módulo (CommonJS e ES Modules) sem necessidade. O resto do projeto (`AuthUserService.ts`) já importava do jeito moderno:
+
+```ts
+// antes, só nesses 2 arquivos
+import bcrypt = require('bcryptjs')
+// ...
+await bcrypt.hash(password, 8)
+
+// depois, igual ao resto do projeto
+import { hash } from "bcryptjs";
+// ...
+await hash(password, 8)
+```
+
+De brinde, `UpdateUSerService.ts` tinha um `let data: any = {...}` que nunca era reatribuído (só tinha uma propriedade mutada depois, `data.password = ...`) — trocado por `const`, porque `let` promete "isso vai mudar de valor" e não era o caso.
+
+#### Resultado
+
+`npx tsc --noEmit` limpo, `npx eslint .` com 0 erros (36 avisos conhecidos e aceitos por ora), 58 testes ainda passando — e agora **automaticamente**, a cada push/PR, antes mesmo do teste rodar.
+
+**Preenchendo o molde da narrativa:**
+
+> O CI só rodava teste — um erro de tipo ou um `require` misturado com `import` podia ficar verde do mesmo jeito, desde que os testes mockados não pegassem. Configurei ESLint pela primeira vez no projeto; a primeira rodada devolveu mais de 1400 "erros", mas investigando a origem vi que quase todos vinham do client do Prisma gerado dentro do repo, não do meu código — ignorei essa pasta e sobrou uma lista pequena e real. Considerei já deixar tudo como erro no CI, mas isso pararia o primeiro PR por causa de 36 avisos antigos sem relação com a mudança. Optei por `warn` pros avisos de dívida existente e `error` só pro que quebra de verdade (tipo, `require` misto) — troquei "zerar tudo agora" por "não deixar entrar problema novo, arrumar o resto aos poucos", mesmo princípio do rollout incremental do resto do checklist.
 
 ---
 
@@ -320,7 +410,7 @@ Um `Dockerfile` de um stage só instalaria **tudo** (TypeScript, ts-node-dev, os
 
 Pequeno, mas é o tipo de coisa que um revisor de código pleno nota:
 
-- [ ] `README.md` tem duas seções "🏁 Contexto de Desenvolvimento" (linhas 243 e 252) e duas "🔜 Próximos Passos" (linhas 262 e 272) — provavelmente sobrou de uma edição. Consolidar em uma versão só.
+- [x] `README.md` tinha duas seções "🏁 Contexto de Desenvolvimento" e duas "🔜 Próximos Passos" — **confirmado corrigido** (verificado em 14/09, só existe uma de cada agora).
 - [ ] A env var `JWT_SECREATE` (típo de `JWT_SECRET`) está espalhada por `.env`, `AuthUserService.ts` e `isAuthenticated.ts` de forma consistente, então funciona — mas o README já documenta o nome correto `JWT_SECRET`, o que vai confundir quem seguir o "Como Rodar Localmente". Padronizar um nome só.
 - [ ] Criar `Backend/.env.example` — o README manda `cp .env.example .env`, mas esse arquivo não existe no repo hoje.
 
@@ -569,8 +659,132 @@ E confirmei com `curl` que a URL retornada é real — `HTTP 200`, a imagem real
 
 > Pra aprender fila/mensageria na prática, isolei o caso real do Fire OS (upload de mídia pro Cloudinary, que hoje trava a resposta HTTP) num protótipo pequeno, separado do fluxo de produção. Problema real: eu nunca tinha mexido com BullMQ/Redis antes — no Hone (hackathon em equipe) essa parte foi implementada por um colega, então eu conhecia o conceito de longe, mas não tinha experiência prática nenhuma com o código. Considerei já sair ligando direto no `UpdateOrdemdeServicoService.ts`, mas isso ia misturar "aprender o mecanismo pela primeira vez" com "debugar upload multipart + Prisma + Cloudinary + fila, tudo de uma vez". Optei por isolar em 3 arquivos pequenos (`uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`) e testar ao vivo antes de considerar entendido. Troquei "aprender rápido, arriscando confundir conceito novo com bug de integração" por "aprender devagar, um mecanismo de cada vez" — trade-off certo pra quem tá começando do zero nisso, mesmo custando não estar em produção ainda.
 
-- [ ] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `fotoController.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima.
+- [x] Próximo passo, quando fizer sentido: trocar o `await cloudinary.uploader.upload(...)` de dentro de `fotoController.ts` por `uploadQueue.add(...)`, do jeito que já estava esboçado no bloco "Versão Pleno" acima. **Feito em 14/09** — ver "O que foi implementado (fila ligada ao fluxo real)" logo abaixo.
 - [ ] Separado disso: decidir o que fazer com `saveAssinatura.ts`/`enviarAssinatura()` — hoje a assinatura desenhada não chega a ser salva por esse fluxo (nem entraria na fila, porque nem a chamada existe ainda). Vale essa investigação antes de pensar em fila pra ela.
+
+### O que foi implementado (fila ligada ao fluxo real) — 14/09/2026
+
+O protótipo (seção acima) provava que Redis + BullMQ funcionavam juntos, isolado, sem tocar em produção. Agora é a parte que faltava: o `fotoController.ts` de verdade parou de subir foto pro Cloudinary dentro do request. Também em pedaços pequenos:
+
+#### Pedaço 1 — o que mudou no `fotoController.ts`, exatamente
+
+```ts
+// ANTES — cada foto trava o request até o Cloudinary responder
+for (const file of files) {
+  const uploadResult = await cloudinary.uploader.upload(file.tempFilePath, { folder: "ordens_servico" });
+  const foto = await prismaClient.fotoOrdemServico.create({ data: { url: uploadResult.secure_url, ordemdeServico_id } });
+  fotos.push(foto);
+}
+return res.json(fotos); // só responde depois de TODAS terminarem
+```
+
+```ts
+// DEPOIS — só entrega o recado pra fila e responde na hora
+for (const file of files) {
+  await uploadQueue.add("upload-foto-os", { ordemdeServico_id, tempFilePath: file.tempFilePath });
+}
+return res.status(202).json({ message: `${files.length} foto(s) recebida(s), processando em segundo plano.` });
+```
+
+`202 Accepted` (em vez de `200 OK`) é o código HTTP que existe exatamente pra isso: "recebi seu pedido, é válido, mas ainda não terminei de processar — não espere o resultado final nessa resposta". É um detalhe pequeno, mas é o tipo de coisa que sinaliza que você conhece o protocolo, não só "funciona".
+
+#### Pedaço 2 — quem faz o trabalho de verdade agora: o worker aprendeu 2 tarefas
+
+O `uploadWorker.ts` do protótipo só sabia fazer uma coisa (subir pro Cloudinary e logar). Agora ele reconhece **dois tipos de job** na mesma fila, pelo nome do job (`job.name`):
+
+```ts
+const worker = new Worker("upload-imagem", async (job) => {
+  if (job.name === "upload-foto-os") {
+    return processarUploadFotoOS(job);   // job de verdade: sobe + salva no Postgres
+  }
+  return processarUploadDemo(job);       // job do "npm run queue:demo": só loga, não toca no banco
+}, ...);
+```
+
+Por que não criei um worker separado só pro fluxo real? Porque os dois compartilham a mesma infraestrutura (mesma fila, mesma conexão Redis) — dividir por `job.name` dentro de **um** worker é mais simples do que rodar dois processos escutando a mesma prateleira. O protótipo de estudo (`npm run queue:demo`) continua funcionando exatamente igual, sem tocar no banco, útil pra você testar o mecanismo isolado de novo se precisar.
+
+A diferença real entre os dois: `processarUploadFotoOS` faz **duas coisas em sequência**, não uma — sobe pro Cloudinary, e só depois disso dá certo, grava o registro no Postgres. Se o worker morresse bem no meio (entre as duas), o job fica marcado como não concluído no Redis, e o próximo pedaço explica o que acontece a seguir.
+
+#### Pedaço 3 — o que acontece se o Cloudinary falhar (retry automático)
+
+Antes, se `cloudinary.uploader.upload` falhasse, o `catch` do controller devolvia um erro pro app e a foto se perdia — o técnico precisaria tentar de novo manualmente. Agora, configurei a fila pra tentar sozinha:
+
+```ts
+// uploadQueue.ts
+export const uploadQueue = new Queue("upload-imagem", {
+  connection: { url: process.env.REDIS_URL },
+  defaultJobOptions: {
+    attempts: 3,                                    // tenta até 3 vezes
+    backoff: { type: "exponential", delay: 2000 },   // espera mais a cada tentativa
+  },
+});
+```
+
+"Exponential backoff" é só isso: em vez de tentar de novo imediatamente (o que provavelmente falharia pelo mesmo motivo, ex.: internet de campo instável), a espera dobra a cada tentativa (2s, 4s, 8s...) — dá tempo da causa da falha (rede, Cloudinary fora do ar por um instante) se resolver sozinha antes da próxima tentativa.
+
+#### Pedaço 4 — o bug que eu quase deixei passar: containers têm sistema de arquivo separado
+
+Isso é o achado mais valioso desse item, então vale contar como cheguei nele. Adicionei um serviço `fireos-worker` novo no `docker-compose.yml` (mesma imagem da API, só troca o comando pra rodar o worker em vez do servidor HTTP). Só que, pensando melhor sobre **onde** cada peça roda:
+
+- `fotoController.ts` roda dentro do container `fireos-api` e escreve a foto temporária em `/tmp/` **desse container**.
+- O job que ele manda pra fila carrega só o **caminho** do arquivo (`tempFilePath`), não o arquivo em si.
+- O worker roda no container `fireos-worker` — **um container diferente**, com seu próprio `/tmp/` isolado, que não tem nada a ver com o `/tmp/` do container da API.
+
+Sem correção, o worker receberia um caminho tipo `/tmp/abc123.jpg` e tentaria abrir um arquivo que, do ponto de vista dele, **nunca existiu** — o job falharia sempre, todas as 3 tentativas, mesmo sem nada de errado com o Cloudinary. Corrigi criando um volume Docker compartilhado, montado no mesmo caminho nos dois containers:
+
+```yaml
+# docker-compose.yml
+fireos-api:
+  volumes:
+    - tmp_uploads:/tmp
+fireos-worker:
+  volumes:
+    - tmp_uploads:/tmp
+```
+
+Um **volume nomeado** no Compose é uma pasta que o Docker gerencia e pode "plugar" em mais de um container ao mesmo tempo — os dois passam a enxergar o mesmo `/tmp/` de verdade, não uma cópia cada um. Isso é system design pequeno, mas é exatamente o tipo de coisa que só aparece quando você para pra desenhar "que processo roda onde" em vez de assumir que vai funcionar porque funcionou local.
+
+**Limite que não tentei resolver agora, por ser fora do escopo desse item:** mesmo com o volume, isso ainda é "dois containers no mesmo host compartilhando disco" — não escala pra vários hosts diferentes (ex.: API e worker em máquinas físicas separadas, ou em serviços gerenciados tipo AWS ECS com discos não compartilhados). A solução que escala de verdade seria mandar o **conteúdo** do arquivo pro job (base64) ou subir pra um storage intermediário (ex.: o próprio Cloudinary, direto do controller, só que teria que ser síncrono de novo) — decisão que só vale a pena tomar se/quando o projeto precisar rodar em mais de uma máquina.
+
+#### Pedaço 5 — o bug que quase escapou no Frontend, achado revisando quem consome essa rota
+
+Antes de considerar isso pronto, chequei quem no projeto chama `POST /foto` — e achei um consumidor real que ia quebrar silenciosamente. O `ViewCardFoto.tsx` (painel web) fazia isto depois do upload:
+
+```tsx
+// ANTES — supõe que a resposta do POST já é a foto pronta
+const res = await api.post("/foto", formData, {...});
+const novas = Array.isArray(res.data) ? res.data : [res.data];
+setFotos((prev) => [...novas, ...prev]);
+```
+
+Isso funcionava porque, antes, `POST /foto` respondia com a foto já criada (`{ id, url, ordemdeServico_id }`). Com a fila, a resposta virou `{ message: "..." }` — sem `id` nem `url`. Se eu não tivesse corrigido esse arquivo, o painel web continuaria "funcionando" sem erro nenhum no console, só que empurrando um objeto quebrado pra dentro da lista de fotos — um card de foto sem imagem, com key do React undefined. Um bug silencioso, o pior tipo.
+
+```tsx
+// DEPOIS — não tenta adivinhar a foto a partir da resposta do POST;
+// busca a lista atualizada de verdade depois do upload
+await api.post("/foto", formData, {...});
+// ...
+const fotosRes = await api.get(`/foto/${ordemdeServico.id}`, {...});
+setFotos(fotosRes.data);
+```
+
+**Limite honesto que fica em aberto:** se o worker ainda não tiver processado a foto no exato momento desse `GET` (ele roda em paralelo, sem garantia de estar pronto em milissegundos), a foto mais nova só aparece da próxima vez que a lista for recarregada — não tem WebSocket nem polling automático ainda. Pra maioria dos casos (upload de imagem pequena, Cloudinary responde rápido) isso passa despercebido; documentando aqui pra não fingir que está 100% resolvido.
+
+**Não mexi (por enquanto, de propósito) no app mobile:** o `FireOS-App/index.tsx` ainda manda as fotos **uma de cada vez**, esperando cada `POST` responder antes de mandar a próxima (`for` com `await` dentro). Isso significa que o ganho de performance de ligar a fila (não travar mais esperando o Cloudinary) só aparece de verdade se o app também parar de esperar sequencialmente — hoje ele ainda espera N respostas HTTP em sequência, só que cada uma delas agora é rápida (202 quase instantâneo) em vez de lenta (esperando o Cloudinary). É uma melhoria real mesmo assim, só que parcial — paralelizar o `uploadImages()` do app é o próximo passo natural, fora do escopo desse item.
+
+#### Resultado
+
+- `fotoController.handle` não fala mais com o Cloudinary — só enfileira e responde `202`.
+- `uploadWorker.ts` faz o trabalho de verdade (upload + grava no Postgres), com retry automático (3 tentativas, backoff exponencial).
+- `docker-compose.yml` ganhou o serviço `fireos-worker` (mesma imagem, comando diferente) e um volume compartilhado (`tmp_uploads`) pros dois containers enxergarem o mesmo arquivo temporário.
+- `ViewCardFoto.tsx` (painel web) corrigido pra não quebrar com a resposta assíncrona nova.
+- 4 testes novos em `fotoController.test.ts` (mockando a fila, sem precisar de Redis nem Cloudinary de verdade pra rodar), `tsc --noEmit` limpo, 62 testes passando no total.
+
+**Preenchendo o molde da narrativa:**
+
+> O upload de foto travava a resposta HTTP até o Cloudinary terminar, um de cada vez. Já tinha um protótipo isolado de fila (BullMQ + Redis) rodando, então liguei ele no fluxo real: o controller agora só enfileira e responde 202. No caminho, achei dois problemas que não eram óbvios até eu pensar em "onde cada peça roda": (1) o worker ia rodar num container Docker diferente da API, e os dois têm sistema de arquivo isolado por padrão — sem um volume compartilhado, todo job falharia sempre; (2) o painel web já lia a resposta do POST como se fosse a foto pronta, e ia quebrar silenciosamente com o novo formato de resposta assíncrona. Corrigi os dois antes de considerar terminado. Acrescentei retry automático (3 tentativas, backoff exponencial) porque throw-away de uma falha de rede em campo era exatamente o cenário que motivou usar fila, então deixar sem retry seria resolver só metade do problema original.
+
+---
 
 **Atualização (24/08):** adicionei um painel visual (Bull Board, `src/queue/dashboard.ts`, `npm run queue:dashboard`) pra ver os jobs em tempo real em vez de só ler log de terminal, e testei enfileirando 4 imagens de uma vez (`addSampleJob.ts` agora aceita vários arquivos). Explicação completa de tudo isso — incluindo o teste ao vivo com os logs reais e um glossário rápido dos termos (queue, job, worker, producer, consumer, concurrency) — está num arquivo separado: **`GUIA-FILA-BULLMQ.md`**, pra não deixar esse item aqui gigante.
 

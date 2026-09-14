@@ -19,6 +19,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ `can.ts` (RBAC por role) wired em `routes.ts` nas rotas críticas.
 - ✅ CASL (`src/permissions/ability.ts`) — ownership de OrdemdeServico: técnico só edita a que é dele.
 - ✅ `authorizeOrdemdeServico` middleware testado (`authorizeOrdemdeServico.test.ts`).
+- ⬜ **Achado novo (14/09) — mesmo bug, 3 módulos ainda abertos:** `PATCH /assistenciatecnica/update/:id`, `PATCH /laudotecnico/update/:id` e `PATCH /documentacaotecnica/update/:id` não checam dono nenhum (só `isAuthenticated`, sem `can()` nem ownership) — qualquer `TECNICO` edita/apaga registro de outro técnico, exatamente o bug que foi corrigido em OrdemdeServico. Detalhe em `ROADMAP-PLENO.md`, item 1.
 
 ## 3. Zod nos controllers
 
@@ -36,7 +37,8 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
 - ✅ Protótipo isolado testado ao vivo (`src/queue/uploadQueue.ts`, `uploadWorker.ts`, `addSampleJob.ts`, `dashboard.ts` com Bull Board) — Redis rodando via `docker-compose.yml`.
-- ⬜ **Ainda não ligado ao fluxo real** — `fotoController.ts` e `saveAssinatura.ts` continuam síncronos, batendo direto no Cloudinary. Ligar a fila de verdade nesses dois é o próximo passo quando fizer sentido.
+- ✅ **Ligado ao fluxo real (14/09)** — `fotoController.handle` enfileira (`uploadQueue.add("upload-foto-os", ...)`) e responde `202` em vez de subir pro Cloudinary dentro do request; `uploadWorker.ts` faz o upload + grava no Postgres, com retry automático (3 tentativas, backoff exponencial). Serviço `fireos-worker` novo no `docker-compose.yml` + volume `tmp_uploads` compartilhado com a API (sem isso o worker não enxergaria o arquivo temporário, containers diferentes = disco isolado). Detalhe completo em `ROADMAP-PLENO.md`.
+- ⬜ `saveAssinatura.ts` continua fora do escopo — a assinatura nem chega a ser enviada pelo app hoje (achado separado, ver item de assinatura no `ROADMAP-PLENO.md`).
 - ⬜ AWS: decidido deixar **fora do Fire OS por enquanto** — o projeto que cobre AWS de verdade (Lambda + API Gateway) é o Encurtador (`PROJETO-ENCURTADOR.md`, item 7), não faz sentido duplicar esforço aqui. Revisitar só se a decisão mudar.
 
 ## 6. Cache
@@ -55,9 +57,8 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 ## 8. TSC + Linter
 
-- 🟡 `tsc --noEmit` já é usado como checagem manual a cada mudança (limpo hoje), mas **não é um step do CI** ainda — só `npm run test` roda no `test.yml`.
-- ⬜ Nenhum linter configurado no projeto (sem ESLint instalado, sem config).
-- ⬜ Adicionar `tsc --noEmit` e lint como steps separados no `test.yml`, antes do `test` — falha mais rápido e mais barato.
+- ✅ **ESLint instalado e configurado (14/09)** — `eslint.config.mjs`, com `@prisma/**` (client gerado) ignorado (achado: sem isso, mais de 1400 "erros" eram só o código gerado do Prisma, não o projeto). 0 erros reais, 36 avisos conhecidos (`no-unused-vars`, deixados como `warn` de propósito — rollout incremental, não travar CI por dívida antiga).
+- ✅ `tsc --noEmit` e `eslint .` agora são steps separados no `test.yml`, antes do `test` (fail-fast) — scripts `typecheck` e `lint` no `package.json`.
 
 ## 9. Docker
 
@@ -78,10 +79,29 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 ## Ordem sugerida pro que falta
 
-1. Continuar o rollout de Zod + arquitetura Controller/Service/Repository pros outros módulos (item 1 e 3 andam juntos).
-2. Replicar o cache em `ListTecnicoController.ts` (item 6) — mesmo padrão já pronto, só aplicar de novo.
-3. Ligar a fila BullMQ no fluxo real de upload (item 5) — já está prototipada, falta só conectar.
-4. TSC + Lint no CI (item 8) — barato, alto sinal de disciplina.
-5. Testes de integração / TestContainers / E2E (item 7) — mais caro em tempo, deixar por último.
+0. **Fechar o gap de ownership nos 3 módulos achados na revisão de 14/09** (item 2) — é o mesmo bug de segurança que já foi corrigido uma vez em OrdemdeServico, então o padrão de correção já existe; é mais barato e mais urgente que continuar o rollout genérico do item 1. **Ainda pendente.**
+1. Continuar o rollout de Zod + arquitetura Controller/Service/Repository pros outros módulos (item 1 e 3 andam juntos). **Ainda pendente.**
+2. ~~Replicar o cache em `ListTecnicoController.ts` (item 6)~~ — ✅ feito (04/09).
+3. ~~Ligar a fila BullMQ no fluxo real de upload (item 5)~~ — ✅ feito (14/09).
+4. ~~TSC + Lint no CI (item 8)~~ — ✅ feito (14/09).
+5. Testes de integração / TestContainers / E2E (item 7) — mais caro em tempo, deixar por último. **Ainda pendente — é o que resta desta lista.**
 
 O porquê de cada posição nessa ordem (não é só "mais fácil primeiro") está detalhado em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+
+---
+
+## Revisão 14/09/2026 — estado confirmado contra o código real, sem deriva
+
+Verifiquei cada afirmação ✅ deste checklist rodando os comandos de verdade (não só relendo o texto):
+
+- `npx vitest run` → **58/58 testes passando** (13 arquivos), igual ao número já documentado.
+- `npx tsc --noEmit` → **limpo**, sem erro.
+- `git log` → nenhum commit no Backend desde 04/09 além de docs — o código não andou, então nada aqui tinha razão pra ter mudado, e de fato não mudou.
+- `routes.ts` → `publicRouter`/`privateRouter` confirmado, `validate()` confirmado só nas 4 rotas de OrdemdeServico (rollout do item 3 ainda não avançou pra nenhum módulo novo).
+- `Dockerfile`, `.dockerignore`, `docker-compose.yml` (3 serviços) → confirmados presentes e com o conteúdo descrito.
+- `.github/workflows/test.yml` → confirmado, ainda só roda `npm install` + `npm run test`, sem `tsc`/lint como step.
+- Sem `.eslintrc`/`eslint.config.*` no projeto, sem `.env.example` no repo, `JWT_SECREATE` ainda inconsistente com o `JWT_SECRET` do README → todos ainda pendentes, como já estava documentado.
+- **Único item que mudou de estado sem estar registrado:** a duplicação de seções no `README.md` raiz já não existe mais (corrigida em algum commit de docs recente) — marcado ✅ agora no `ROADMAP-PLENO.md`, seção 6.
+- **Único achado novo:** o gap de ownership nos 3 módulos técnicos (ver item 2 acima) — o checkbox de "mapear ownership" no `ROADMAP-PLENO.md` estava marcado feito sem o mapeamento ter sido escrito de fato.
+
+**Atualização, mesmo dia (14/09), depois desta revisão:** os itens "TSC + Lint no CI" (item 8) e "ligar a fila BullMQ no fluxo real" (item 5) — que essa revisão ainda listava como pendentes acima — foram implementados na sequência. Detalhe completo em `ROADMAP-PLENO.md`, seções "O que foi implementado (ESLint + fail-fast no CI)" e "O que foi implementado (fila ligada ao fluxo real)". O gap de ownership (item 0 da ordem sugerida) continua em aberto.

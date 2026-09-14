@@ -53,9 +53,10 @@ graph TB
   APP -->|"HTTPS/JSON"| ROUTER
   ROUTER --> MW --> CTRL --> SVC --> REPO --> PG
   SVC -.->|"cache-aside (totais, lista de técnicos)"| REDIS
-  CTRL -.->|"protótipo, ainda não ligado ao fluxo real"| REDIS
-  REDIS -.-> WORKER
-  WORKER -->|"upload real"| CDN
+  CTRL -->|"enfileira (upload de foto), 202 na hora"| REDIS
+  REDIS --> WORKER
+  WORKER -->|"upload real + grava no Postgres"| CDN
+  WORKER --> PG
   APP -->|"Deep Link"| MAPS
   CTRL --> GROQ
   CTRL --> XLSX
@@ -63,10 +64,10 @@ graph TB
 ```
 
 **Leitura rápida do que mudou desde o diagrama original do README:**
-- Redis deixou de ser "não existe" pra virar uma peça com **dois papéis diferentes**: cache-aside (produção, ligado de verdade) e fila BullMQ (protótipo isolado, ainda não ligado ao `fotoController.ts` real — ver `GUIA-FILA-BULLMQ.md`).
+- Redis deixou de ser "não existe" pra virar uma peça com **dois papéis diferentes**: cache-aside (produção, ligado de verdade) e fila BullMQ (**ligada ao fluxo real desde 14/09** — o `fotoController.ts` só enfileira, o `uploadWorker.ts` sobe pro Cloudinary e grava no Postgres; detalhe em `ROADMAP-PLENO.md`, seção "fila ligada ao fluxo real").
 - O fluxo Client → API deixou de ser "uma caixa preta chamada API" e ganhou camadas visíveis (Router → Middlewares → Controller → Service → Repository) — isso é o que as seções 2 e 3 detalham.
 
-- [ ] Atualizar o diagrama do `README.md` raiz com essa versão (hoje ele só reflete o estado pré-refatoração).
+- [ ] Atualizar o diagrama do `README.md` raiz com essa versão (hoje ele só reflete o estado pré-refatoração) — as setas da fila **neste** diagrama já foram trocadas de tracejado pra sólido em 14/09 (fila real, não mais protótipo), mas o `README.md` da raiz do monorepo ainda não recebeu essa mesma atualização.
 
 ---
 
@@ -193,14 +194,14 @@ Detalhes completos (por que 30s, por que a chave inclui os filtros, o que muda n
 
 | Pilar | Antes | Depois | Vantagem prática |
 |---|---|---|---|
-| **Autorização** | `can.ts` existia mas não era usado; qualquer role logada acessava as mesmas 80+ rotas | `publicRouter`/`privateRouter` + `can([...roles])` + CASL (`authorizeOrdemdeServico`) nas rotas de OS | Um `TECNICO` não edita mais OS de outro técnico; ações admin (delete de cliente/instituição) exigem `ADMIN` de verdade |
+| **Autorização** | `can.ts` existia mas não era usado; qualquer role logada acessava as mesmas 80+ rotas | `publicRouter`/`privateRouter` + `can([...roles])` + CASL (`authorizeOrdemdeServico`) nas rotas de OS | Um `TECNICO` não edita mais OS de outro técnico; ações admin (delete de cliente/instituição) exigem `ADMIN` de verdade. **Ressalva (achada em 14/09):** o mesmo bug de ownership continua aberto em 3 módulos que a correção da OS não cobriu — `assistenciatecnica`, `laudotecnico`, `documentacaotecnica` (ver `CHECKLIST-REFATORACAO-BACKEND.md`, item 2) |
 | **Validação de entrada** | `const {x,y,z} = req.body` direto, sem checagem — erro malformado virava 500 genérico | Schema Zod (`validate()`) nos endpoints de Create/Update/detail de OrdemdeServico | Erro de input vira 422 com a lista exata de campos errados, antes de qualquer lógica rodar |
 | **Tratamento de erro** | `try/catch` repetido em cada controller, cada um decidindo status na mão | `errorHandler` global, `AppError`/`ValidationError`/`NotFoundError`/`ConflictError`, zero `try/catch` nos 2 controllers refatorados | Um erro do Prisma (`P2002`, `P2025`, `P2003`) já vira o status HTTP certo automaticamente, em qualquer módulo que adotar o padrão |
 | **Acesso a dados** | Service chamava `prismaClient.ordemdeServico.*` direto — teste precisava mockar o módulo do Prisma inteiro | Repository (`OrdemdeServicoRepository`) isola o Prisma; Service recebe repository via injeção de dependência | Teste do Service usa repository fake, sem saber que existe um Prisma por trás — troca de ORM no futuro afetaria só o Repository |
 | **Cache** | Toda listagem de OS refazia 8 `count()` a cada request, sempre | Cache-aside com Redis (TTL 30s em OS, 60s + invalidação ativa em técnico), com fallback se o Redis cair | Menos carga no Postgres sob tráfego normal, sem risco de a rota cair se o Redis cair |
-| **Processamento assíncrono** | Upload de fotos síncrono, dentro do request — tela do técnico trava esperando o Cloudinary | Protótipo isolado de fila (BullMQ + Redis) validado — ainda não ligado ao fluxo real | Prova de conceito rodando de verdade (testada com 4 jobs reais, logs comprovando concorrência 1), pronta pra ligar quando fizer sentido |
-| **Testes** | 4 arquivos de teste, cobertura rasa, sem cobrir middleware nenhum | 58 testes (Vitest), cobrindo RBAC/CASL, validação, erro, repository fake, cache (miss/hit/fallback) | Middleware mais crítico do sistema (`can.ts`) hoje tem teste — antes tinha zero |
-| **CI** | `test.yml` só rodava `npm run test` | (ainda igual — próximo item do checklist) | — pendente: `tsc --noEmit` + lint como steps separados |
+| **Processamento assíncrono** | Upload de fotos síncrono, dentro do request — tela do técnico trava esperando o Cloudinary | `fotoController.ts` só enfileira e responde `202`; `uploadWorker.ts` sobe pro Cloudinary e grava no Postgres, com retry automático (3 tentativas, backoff exponencial) | Ligado ao fluxo real em 14/09 — não é mais protótipo isolado. Achado no caminho: worker roda em container Docker separado da API, precisou de volume compartilhado (`tmp_uploads`) pro arquivo temporário ser visível dos dois lados |
+| **Testes** | 4 arquivos de teste, cobertura rasa, sem cobrir middleware nenhum | 62 testes (Vitest), cobrindo RBAC/CASL, validação, erro, repository fake, cache (miss/hit/fallback), fila (`fotoController.test.ts`, mockando a fila) | Middleware mais crítico do sistema (`can.ts`) hoje tem teste — antes tinha zero |
+| **CI** | `test.yml` só rodava `npm run test` | `typecheck` (`tsc --noEmit`) e `lint` (ESLint, novo no projeto) como steps separados, antes do `test` | Fail-fast: erro de tipo ou de lint barra o PR em segundos, sem esperar a suíte de teste inteira rodar |
 | **Docker** | Só Postgres containerizado; API rodava direto no Node local | `Dockerfile` multi-stage pra API + `.dockerignore` + `docker-compose.yml` com os 3 serviços (`fireos-api`, `fireos-db`, `fireos-redis`) | Ambiente reproduzível em qualquer máquina — sintaxe validada, build real ainda não testado numa máquina com Docker de pé |
 | **Relatórios/Documentos** | — | Excel (`ExportOrdemdeServicoController.ts`) já existe, gerado sob demanda; PDF por OS específica ainda **não existe** | Ver seção 7 — decisão em aberto sobre storage (S3 vs. Cloudinary vs. nenhum) |
 
@@ -321,8 +322,9 @@ Se um termo te deixar em dúvida, procure primeiro no `ROADMAP-PLENO.md` — o g
 ## 10. Próximos passos
 
 - [x] Atualizar o diagrama mermaid do `README.md` raiz com a versão da seção 1 (Redis + fila, hoje ausentes lá). **Feito em 04/09** — README ganhou Redis (cache-aside + fila), o Worker e um ponteiro pra este arquivo.
+- [ ] **Prioridade inserida em 14/09, acima do resto:** fechar o gap de ownership achado nos 3 módulos técnicos (mesma classe de bug da linha "Autorização" na tabela da seção 5) — é mais barato que o resto porque o padrão de correção (CASL + middleware `authorize*`) já existe, só falta replicar.
 - [ ] Continuar o checklist na ordem do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md` — cada item fechado vira uma linha nova na tabela da seção 5.
-- [ ] Quando (se) a fila for ligada ao `fotoController.ts` de verdade, atualizar o diagrama da seção 1 (hoje a seta Redis→Worker está tracejada porque é só protótipo).
+- [x] Quando (se) a fila for ligada ao `fotoController.ts` de verdade, atualizar o diagrama da seção 1 (hoje a seta Redis→Worker está tracejada porque é só protótipo). **Feito em 14/09** — fila ligada de verdade, setas do diagrama já sólidas.
 - [ ] Decidir e, se fizer sentido, implementar o PDF por OS (seção 7) — gerar/streamar primeiro, storage só se for confirmado que precisa de link permanente.
 
 Checklist de estado atual: `CHECKLIST-REFATORACAO-BACKEND.md`. Raciocínio e exemplos de cada item: `ROADMAP-PLENO.md`.
