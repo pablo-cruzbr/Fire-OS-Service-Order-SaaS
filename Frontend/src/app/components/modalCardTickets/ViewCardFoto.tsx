@@ -71,15 +71,23 @@ export default function ViewCardFoto({ ordemdeServico, onClose }: Props) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("ordemdeServico_id", ordemdeServico.id);
-        const res = await api.post("/foto", formData, {
+        await api.post("/foto", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": undefined,
           },
         });
-        const novas = Array.isArray(res.data) ? res.data : [res.data];
-        setFotos((prev) => [...novas, ...prev]);
       }
+      // O upload agora é assíncrono (fila BullMQ): o POST só confirma que a
+      // foto entrou na fila, quem sobe pro Cloudinary de verdade é o worker,
+      // em outro processo. Por isso a resposta do POST não é mais a foto
+      // pronta — busca a lista atualizada do backend em vez de montar a foto
+      // a partir do retorno. Se o worker ainda não tiver processado, a foto
+      // mais recente só aparece no próximo refresh.
+      const fotosRes = await api.get(`/foto/${ordemdeServico.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFotos(fotosRes.data);
     } catch (error) {
       console.error("Erro ao fazer upload:", error);
     } finally {
