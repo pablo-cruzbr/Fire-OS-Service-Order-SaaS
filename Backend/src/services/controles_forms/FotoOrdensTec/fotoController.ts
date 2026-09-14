@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import prismaClient from "../../../prisma";
-import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 import { UploadedFile } from "express-fileupload";
+import { uploadQueue } from "../../../queue/uploadQueue";
 
 export class fotoController {
   async handle(req: Request, res: Response) {
@@ -36,26 +37,19 @@ export class fotoController {
         ? (uploaded as unknown as UploadedFile[])
         : [uploaded as UploadedFile];
 
-      const fotos = [];
-
+      // Não sobe mais pro Cloudinary aqui dentro do request — só entrega um
+      // job por foto pra fila e responde na hora. Quem sobe de verdade é o
+      // uploadWorker.ts, rodando em outro processo (src/queue/uploadWorker.ts).
       for (const file of files) {
-        console.log(`-> Iniciando upload: ${file.name}`);
-
-        const uploadResult: UploadApiResponse = await cloudinary.uploader.upload(
-          file.tempFilePath,
-          { folder: "ordens_servico" }
-        );
-
-        const foto = await prismaClient.fotoOrdemServico.create({
-          data: {
-            url: uploadResult.secure_url,
-            ordemdeServico_id: ordemdeServico_id, // Agora a variável existe!
-          },
+        await uploadQueue.add("upload-foto-os", {
+          ordemdeServico_id,
+          tempFilePath: file.tempFilePath,
         });
-
-        fotos.push(foto);
       }
-      return res.json(fotos);
+
+      return res.status(202).json({
+        message: `${files.length} foto(s) recebida(s), processando em segundo plano.`,
+      });
 
     } catch (error: any) {
       console.error("-> Erro durante a requisição:", error);
