@@ -1,5 +1,5 @@
 import prismaclient from "../../prisma";
-import bcrypt = require('bcryptjs');
+import { hash } from "bcryptjs";
 
 interface UserRequest {
     user_id: string; 
@@ -32,17 +32,17 @@ class UpdateUserService {
             throw new Error("Usuário não encontrado!");
         }
 
-        let data: any = {
+        const data: any = {
             name,
             email,
             cliente_id,
             setor_id,
             instituicaoUnidade_id,
-            tecnico_id 
+            tecnico_id
         };
 
         if (password) {
-            data.password = await bcrypt.hash(password, 8);
+            data.password = await hash(password, 8);
         }
 
         const user = await prismaclient.user.update({

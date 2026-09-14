@@ -24,6 +24,14 @@ jobs:
         run: npm install
         working-directory: ./Backend
 
+      - name: Type-check
+        run: npm run typecheck
+        working-directory: ./Backend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: ./Backend
+
       - name: Run tests
         run: npm run test
         working-directory: ./Backend
