@@ -32,6 +32,34 @@ services:
     depends_on:
       - fireos-db
       - fireos-redis
+    volumes:
+      # A API escreve a foto temporária em /tmp/ (server.ts, tempFileDir) e só
+      # manda o CAMINHO pro job da fila — quem lê o arquivo de verdade é o
+      # worker, num container separado. Container separado = sistema de
+      # arquivo separado por padrão, então sem esse volume compartilhado o
+      # worker tentaria abrir um arquivo que, do ponto de vista dele, nunca
+      # existiu, e o job falharia sempre.
+      - tmp_uploads:/tmp
+
+  fireos-worker:
+    # Mesma imagem da API (mesmo Dockerfile, mesmo dist/), só que o
+    # comando de start é o worker em vez do server — é outro processo,
+    # não outra aplicação. Sem esse serviço, o fotoController.ts enfileira
+    # a foto e ela nunca é processada dentro do Compose.
+    build: .
+    container_name: fireos_worker_container
+    command: node dist/queue/uploadWorker.js
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://admin:fireos_password_123@fireos-db:5432/fireos_saas
+      REDIS_URL: redis://fireos-redis:6379
+    depends_on:
+      - fireos-db
+      - fireos-redis
+    volumes:
+      - tmp_uploads:/tmp
 
 volumes:
   postgres_data:
+  tmp_uploads:
