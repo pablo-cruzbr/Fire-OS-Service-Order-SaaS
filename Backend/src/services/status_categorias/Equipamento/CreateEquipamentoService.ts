@@ -1,46 +1,28 @@
-import prismaClient from "../../../prisma";
+import { CreateEquipamentoInput } from "../../../schemas/equipamento.schema";
+import { EquipamentoRepository, equipamentoRepository } from "../../../repositories/EquipamentoRepository";
+import { ConflictError } from "../../../errors/AppError";
 
-interface EquipamentoRequest{
-    name: string;
-    patrimonio: string;
-    instituicaoUnidade_id?: string;
-    tipodeEquipamento_id?: string;
-}
+class CreateEquipamentoService {
+  constructor(private repository: EquipamentoRepository = equipamentoRepository) {}
 
-class CreateEquipamentoService{
-    async execute(name, patrimonio, instituicaoUnidade_id,  tipodeEquipamento_id){
-        if (name === ''){
-            throw new Error('Name Invalid');
-        }
+  async execute(data: CreateEquipamentoInput) {
+    const patrimonioEmUso = await this.repository.findByPatrimonio(data.patrimonio);
 
-        const equipamentoExistente = await prismaClient.equipamento.findFirst({
-            where:{
-                patrimonio: patrimonio
-            }
-        })
-
-        if (equipamentoExistente){
-            throw new Error('Esse patrimonio já existe!')
-        }
-
-        const equipamento = prismaClient.equipamento.create({
-            data:{
-                name:name,
-                patrimonio: patrimonio,
-                instituicaoUnidade_id: instituicaoUnidade_id,
-                tipodeEquipamento_id:  tipodeEquipamento_id
-            },
-
-            select:{
-                id: true,
-                name: true,
-                patrimonio: true,
-                instituicaoUnidade_id: true,
-                tipodeEquipamento_id: true
-            }
-        })
-        return equipamento
+    if (patrimonioEmUso) {
+      throw new ConflictError("Esse patrimônio já existe!");
     }
+
+    return this.repository.create({
+      name: data.name,
+      patrimonio: data.patrimonio,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+      tipodeEquipamento: data.tipodeEquipamento_id
+        ? { connect: { id: data.tipodeEquipamento_id } }
+        : undefined,
+    });
+  }
 }
 
-export {CreateEquipamentoService}
+export { CreateEquipamentoService };

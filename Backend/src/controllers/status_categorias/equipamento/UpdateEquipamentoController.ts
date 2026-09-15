@@ -1,24 +1,14 @@
-import { Request, Response } from 'express';
-import { UpdateEquipamentoService } from '../../../services/status_categorias/Equipamento/UpdateEquipamentoService';
+import { Request, Response } from "express";
+import { UpdateEquipamentoService } from "../../../services/status_categorias/Equipamento/UpdateEquipamentoService";
+import { UpdateEquipamentoInput } from "../../../schemas/equipamento.schema";
 
 class UpdateEquipamentoController {
+  constructor(private service: UpdateEquipamentoService = new UpdateEquipamentoService()) {}
+
   async handle(req: Request, res: Response) {
-    const { id, name, patrimonio, instituicaoUnidade_id } = req.body;
-    const updateEquipamentoService = new UpdateEquipamentoService();
-
-    try {
-      const equipamento = await updateEquipamentoService.execute({
-        id,
-        name,
-        patrimonio,
-        instituicaoUnidade_id
-      });
-
-      return res.json(equipamento);
-
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
-    }
+    const { id } = req.params;
+    const equipamento = await this.service.execute(id, req.body as UpdateEquipamentoInput);
+    return res.json(equipamento);
   }
 }
 

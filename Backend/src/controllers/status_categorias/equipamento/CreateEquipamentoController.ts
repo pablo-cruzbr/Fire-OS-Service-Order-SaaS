@@ -1,16 +1,14 @@
 import { Request, Response } from "express";
 import { CreateEquipamentoService } from "../../../services/status_categorias/Equipamento/CreateEquipamentoService";
+import { CreateEquipamentoInput } from "../../../schemas/equipamento.schema";
 
 class CreateEquipamentoController {
-    async handle(req: Request, res:Response){
-       
-        const {name, patrimonio, instituicaoUnidade_id,  tipodeEquipamento_id} = req.body
-        const createEquipamentoService = new CreateEquipamentoService();
+  constructor(private service: CreateEquipamentoService = new CreateEquipamentoService()) {}
 
-        const equipamento = await createEquipamentoService.execute(name, patrimonio, instituicaoUnidade_id,  tipodeEquipamento_id);
-
-        return res.json(equipamento)
-    }
+  async handle(req: Request, res: Response) {
+    const equipamento = await this.service.execute(req.body as CreateEquipamentoInput);
+    return res.json(equipamento);
+  }
 }
 
-export {CreateEquipamentoController}
+export { CreateEquipamentoController };

@@ -20,6 +20,8 @@ import { createLaboratorioSchema, updateLaboratorioSchema } from "./schemas/labo
 import { createMaquinasPendentesLabSchema, updateMaquinasPendentesLabSchema } from "./schemas/maquinasPendentesLab.schema";
 import { createMaquinasPendentesOroSchema, updateMaquinasPendentesOroSchema } from "./schemas/maquinasPendentesOro.schema";
 import { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema } from "./schemas/solicitacaoCompras.schema";
+import { createEquipamentoSchema, updateEquipamentoSchema } from "./schemas/equipamento.schema";
+import { createInformacoesSetorSchema, updateInformacoesSetorSchema } from "./schemas/informacoesSetor.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -40,6 +42,7 @@ import { RemoveTecnicoController } from "./controllers/status_categorias/tecnico
 import { CreateEquipamentoController } from "./controllers/status_categorias/equipamento/CreateEquipamentoController";
 import { ListEquipamentoController } from "./controllers/status_categorias/equipamento/ListEquipamentoController";
 import { RemoveEquipamentoController } from "./controllers/status_categorias/equipamento/RemoveEquipamentoController";
+import { UpdateEquipamentoController } from "./controllers/status_categorias/equipamento/UpdateEquipamentoController";
 import { CreatestatusMaquinasPendentesController } from "./controllers/status_categorias/statusMaquinasPendentesLab/CreatestatusMaquinasPendentesController";
 import { ListMaquinasPendentesLabController } from "./controllers/status_categorias/statusMaquinasPendentesLab/ListMaquinasPendentesLabController";
 import { ListMaquinasPendentesOroController } from "./controllers/status_categorias/statusMaquinasPendentesOro/ListstatusMaquinasPendentesOroController";
@@ -117,6 +120,7 @@ import { SaveAssinaturaController } from "./controllers/controles_forms/OrdemdeS
 import { AssinaturaController } from "./controllers/controles_forms/OrdemdeServico/assinatura/saveAssinatura";
 import { CreateInformacoesSetorController } from "./controllers/status_categorias/setor/informacoessetor/CreateInformacoesSetorController";
 import { ListInformacaoesSetoresController } from "./controllers/status_categorias/setor/informacoessetor/ListInformacoesSetorController";
+import { UpdateInformacoesSetorController } from "./controllers/status_categorias/setor/informacoessetor/UpdateInformacoesSetorController";
 import { GetOrdemdeServicoByIdController } from "./controllers/controles_forms/OrdemdeServico/ListByIdOrdemdeServicoController";
 import { CreatetipodeOrdemdeServicoController } from "./controllers/status_categorias/tipodeOrdemdeServico/CreateTipodeOrdemdeServicoController";
 import { ListtipodeOrdemdeServicoController } from "./controllers/status_categorias/tipodeOrdemdeServico/ListTipodeOrdemdeServicoController";
@@ -203,7 +207,13 @@ privateRouter.post('/categorysetor', new CreateSetorController().handle)
 privateRouter.delete('/deletesetor', can(['ADMIN']), new RemoveSetorController().handle)
 
 // - Informações Setor
-privateRouter.post('/informacoessetor', new CreateInformacoesSetorController().handle)
+privateRouter.post('/informacoessetor', validate(createInformacoesSetorSchema), new CreateInformacoesSetorController().handle)
+privateRouter.patch(
+  '/informacoessetor/:id',
+  validate(idParamSchema, 'params'),
+  validate(updateInformacoesSetorSchema),
+  new UpdateInformacoesSetorController().handle
+)
 privateRouter.get('/listinformacoessetor', new ListInformacaoesSetoresController().handle)
 
 //3 - Instuituicao/Unidade
@@ -222,9 +232,15 @@ privateRouter.get('/listtecnico', new ListTecnicoController().handle)
 privateRouter.delete('/removertecnico/:id', can(['ADMIN']), new RemoveTecnicoController().handle)
 
 // 6 -  Equipamento
-privateRouter.post('/equipamento', new CreateEquipamentoController().handle)
+privateRouter.post('/equipamento', validate(createEquipamentoSchema), new CreateEquipamentoController().handle)
 privateRouter.get('/listequipamento', new ListEquipamentoController().handle)
-privateRouter.delete('/deleteequipamento/:id', new RemoveEquipamentoController().handle)
+privateRouter.delete('/deleteequipamento/:id', validate(idParamSchema, 'params'), new RemoveEquipamentoController().handle)
+privateRouter.patch(
+  '/equipamento/:id',
+  validate(idParamSchema, 'params'),
+  validate(updateEquipamentoSchema),
+  new UpdateEquipamentoController().handle
+)
 
 
 // 7 - StatusOrdemdeServicoService
