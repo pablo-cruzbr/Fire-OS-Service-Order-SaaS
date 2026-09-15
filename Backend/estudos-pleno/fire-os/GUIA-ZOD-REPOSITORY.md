@@ -149,4 +149,23 @@ Escolhidos como próximo alvo depois de uma análise do backend como um todo (~1
 
 ---
 
+## Sexto passo: os 5 módulos restantes de `controles_forms` — 15/09/2026
+
+Terminado o grupo inteiro de `controles_forms` que faltava (Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaodeCompras) — o último item da tabela de prioridade que ainda tinha "5 módulos sem Zod" virou zero. São **8 módulos de `controles_forms` no total agora com Zod + Repository** (contando os 3 técnicos do passo anterior e o OrdemdeServico original).
+
+**Achado que se repetiu — confirma que "checar campo a campo" não foi sorte uma vez só:** `ControledeMaquinasPendentesOro` e `ControledeMaquinasPendentesLab` parecem o mesmo módulo (nome quase igual, mesma forma), mas `instituicaoUnidade_id` é **opcional** em "Lab" e **obrigatório** em "Oro" no `schema.prisma`. Se eu tivesse copiado o schema Zod de um pro outro sem abrir o `schema.prisma` de cada um, um dos dois ficaria errado — exatamente o mesmo tipo de gotcha do LaudoTecnico no passo anterior, só que dessa vez entre dois módulos com nome quase idêntico, onde a tentação de assumir "são iguais" é ainda maior.
+
+**Achados de qualidade no caminho (bugs pré-existentes, não relacionados a Zod/Repository, mas que apareceram por estar lendo o código de perto):**
+- `ControledeEstabilizadores` não tem rota de Delete — só Create/List/Update existem hoje. Não criei uma; documentando que é assim de propósito (decisão de escopo do módulo), não uma lacuna do rollout.
+- O Delete de `ControledeMaquinasPendentesLab` devolvia a mensagem de erro **"Controle de Laudo técnico não encontrado"** — copiado do módulo errado (LaudoTecnico). Corrigido pra "Máquinas Pendentes no Laboratório".
+- O arquivo `DeleteControledeMaquinasPendentesLabController.ts`, dentro da pasta `ControledeMaquinasPendentesOro/`, na verdade é o Delete controller do **Oro**, não do "Lab" — só o nome do arquivo está errado (a classe exportada já tinha o nome certo). Mantive o nome do arquivo como está pra não causar um diff de rename sem necessidade — só documentando o porquê de parecer estranho se alguém for procurar.
+
+**Resultado:** 182 testes passando (51 novos: 5 arquivos de schema, 5 de repository, 14 de service), `tsc --noEmit` limpo, `eslint` sem erro novo. O número de arquivos com o padrão antigo de `try/catch` caiu de 22 pra **12** — e o grupo inteiro de `controles_forms` que tinha 16 arquivos pendentes (nos dois últimos passos) foi zerado.
+
+**Preenchendo o molde da narrativa:**
+
+> Depois dos 3 módulos técnicos, terminei o grupo de `controles_forms` inteiro fechando os 5 módulos restantes — mesma forma (Create/Update/Delete com FKs pra equipamento/instituição/status), mas não assumi que "mesma forma" significava "mesmo schema". Comparando os dois módulos de nome mais parecido (MaquinasPendentesLab e MaquinasPendentesOro) achei que um tem uma FK opcional que no outro é obrigatória — a mesma categoria de erro que só aparece quando você confere campo a campo, não quando confia no nome do módulo. De brinde, achei 2 bugs de copiar-colar (uma mensagem de erro errada, um arquivo com nome trocado) que não tinham nada a ver com o rollout em si, só apareceram porque estava lendo o código de perto pra escrever o schema certo.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
