@@ -16,7 +16,22 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 **O que é:** uma camada fininha entre o Service (a regra de negócio) e o banco, que esconde o ORM (o Prisma) atrás de métodos com nome de negócio — `create`, `update` — pra ninguém mais no projeto precisar saber que existe um Prisma ali dentro. O ganho prático não é só organização: o teste do Service passa a receber um repository **fake** no lugar do banco de verdade, em vez de mockar o módulo inteiro do Prisma.
 
-**No Fire OS:** 10 repositories existem hoje (15/09) — `OrdemdeServicoRepository.ts`, `UserRepository.ts`, e um por módulo de `controles_forms` (8 no total: AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica, Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaoCompras). Cada Service recebe o repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um fake com `vi.fn()`). Os outros ~91 services do projeto (concentrados em `status_categorias` agora) ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
+**No Fire OS:** 12 repositories existem hoje (15/09) — `OrdemdeServicoRepository.ts`, `UserRepository.ts`, um por módulo de `controles_forms` (8 no total), e agora `EquipamentoRepository.ts` + `InformacoesSetorRepository.ts`. Cada Service recebe o repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um fake com `vi.fn()`). Os outros ~89 services do projeto (concentrados nas ~15 tabelas de lookup de `status_categorias` agora) ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
+
+**"Piloto em 9 módulos, rollout pendente nos outros ~91" — o que essa frase quer dizer, sem jargão:**
+
+Pensa assim: o Fire OS tem hoje quase 100 "gavetas" de controller (cliente, equipamento, setor, OrdemdeServico, user, etc.), e **todas elas nasceram do mesmo jeito** — Controller chamando `prismaClient` direto, sem Zod, com `try/catch` na mão. É a mesma "receita antiga" copiada e colada 100 vezes.
+
+- **Piloto** = eu não saí trocando as 100 gavetas de uma vez. Escolhi **uma** (OrdemdeServico, por ser a mais crítica do negócio), apliquei a receita nova nela inteira (Zod + Repository + erro global), e só depois de essa funcionar de verdade — testada, rodando, sem quebrar nada — repeti a mesma receita em mais módulos. Isso é "pilotar": provar que a ideia funciona num caso pequeno antes de assumir o risco de aplicar em tudo.
+- **Rollout** = o processo de ir replicando essa receita já validada, módulo por módulo, até cobrir o projeto inteiro. "Rollout pendente nos outros ~91" só quer dizer: a receita já está provada, falta o trabalho repetitivo (mas não mecânico — cada módulo tem seu próprio `schema.prisma`, e várias vezes achei bug real só de ler campo por campo) de aplicar ela nas ~91 gavetas que faltam.
+- **Por que 9 e não 100 de uma vez:** cada módulo que vira Repository muda controller **e** service **e** ganha teste novo — é um PR grande se feito de uma vez só, e um bug introduzido em 100 arquivos ao mesmo tempo é muito mais difícil de achar do que um bug em 9. Fazer aos poucos (e revisar o resultado a cada grupo, como você tem feito) é a versão seguranca-em-primeiro-lugar do mesmo trabalho.
+
+**Onde estão os 11 hoje:** OrdemdeServico (o piloto original) + `user` (achado o bug de segurança no caminho) + os 8 módulos de `controles_forms` + `Equipamento`/`InformacoesSetor` (achados 2 bugs reais de rota 404 no caminho — ver `GUIA-ZOD-REPOSITORY.md`, "Sétimo passo").
+
+**Onde estão os ~89 que faltam:** quase todos em `status_categorias` — dividido em duas frentes bem diferentes (ver `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md` pro raciocínio completo):
+
+1. **1 "entidade real" restante** — `tipodeInstituicaoUnidade` na lista original virou, na investigação, o Update de `InstituicaoUnidade` (arquivo na pasta errada) — e esse é código morto: sem rota, sem chamada no Frontend. Decisão de produto em aberto (ligar ou apagar), não é mais um item de rollout puro.
+2. **~15 "tabelas de lookup"** (tipo `statuscategoria`, cada uma só com um campo `name`) — quase 30 arquivos que são basicamente a mesma coisa copiada e colada. Aqui a jogada de pleno não é repetir o rollout 15 vezes: é perceber que um **único** schema Zod genérico (`z.object({ name: z.string().min(1) })`) e um **único** Repository genérico servem pra todas — só o texto do erro e o nome do model do Prisma mudam. Fazer isso módulo-a-módulo aqui seria desperdiçar tempo repetindo o óbvio; identificar que dá pra generalizar **é** o trabalho de nível pleno.
 
 ### 2. RBAC (Role-Based Access Control)
 
@@ -34,7 +49,7 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 **O que é:** garantir que o dado que chega de fora (`req.body`, query params, upload) tem o formato esperado *antes* dele entrar na regra de negócio — em vez de descobrir que estava errado quando o banco já quebrou ou o bcrypt já tentou rodar em cima de algo inválido.
 
-**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `user` e todos os 8 módulos de `controles_forms` já validam via Zod, junto com o piloto original de OrdemdeServico — 10 módulos no total. Os outros ~91 controllers (majoritariamente `status_categorias` agora) ainda não passaram pelo rollout.
+**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `user`, os 8 módulos de `controles_forms`, e agora `Equipamento` + `InformacoesSetor` já validam via Zod, junto com o piloto original de OrdemdeServico — 11 módulos no total. Os outros ~89 controllers (majoritariamente as tabelas de lookup de `status_categorias` agora) ainda não passaram pelo rollout.
 
 ### 5. Tratamento de erros global (error-handling middleware)
 

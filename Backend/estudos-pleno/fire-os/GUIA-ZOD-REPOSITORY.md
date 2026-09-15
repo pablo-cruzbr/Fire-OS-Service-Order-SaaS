@@ -168,4 +168,30 @@ Terminado o grupo inteiro de `controles_forms` que faltava (Estabilizadores, Lab
 
 ---
 
+## Sétimo passo: as 2 primeiras entidades reais de `status_categorias` (Equipamento, InformacoesSetor) — 15/09/2026
+
+Com `controles_forms` inteiro fechado, entrei no próximo grupo do rollout: as 3 "entidades reais" de `status_categorias` (`equipamento`, `informacoessetor`, `tipodeInstituicaoUnidade`), listadas assim na tabela de prioridade porque têm relacionamento de verdade com outras tabelas (diferente das ~15 tabelas de lookup que só têm um campo `name`).
+
+**Antes de escrever qualquer schema, conferi se as rotas de Update desses 3 módulos existiam de verdade** — e a resposta foi não, em 2 casos de um jeito bem mais sério do que "falta Zod":
+
+**1. `PATCH /equipamento/:id` não existia em `routes.ts` — mas o Frontend já chama essa rota.** `EditEquipamentoForm.tsx` faz `api.patch('/equipamento/${equipamento.id}', ...)` a partir de um botão "Editar" real, na tela de equipamentos. O `UpdateEquipamentoController.ts` existia, com lógica pronta — só nunca foi importado nem wireado em `routes.ts`. Isso significa que, em produção, clicar em "Editar equipamento" sempre devolvia **404**, silenciosamente, sem ninguém ter notado (ou notaram e acharam que era outro bug). Corrigido: rota adicionada, com `validate()` de Zod.
+
+**2. O mesmo bug, no mesmo formato, em `informacoessetor`.** `EditRamalSetorForm,.tsx` chama `api.patch('/informacoessetor/${dados.id}', ...)` — `UpdateInformacoesSetorController.ts` também já existia, também nunca foi wireado. Mesmo resultado: 404 sempre que alguém tentava editar um ramal/setor.
+
+**3. Um terceiro bug, esse silencioso em vez de barulhento — a exclusão de equipamento nunca funcionou.** A rota `DELETE /deleteequipamento/:id` existe e o Frontend chama exatamente ela (`api.delete('/deleteequipamento/${equipamento_id}')`, id como segmento de caminho) — mas o controller lia `req.query.equipamento_id` em vez de `req.params.id`. Como não tem query string nenhuma na chamada real, `equipamento_id` sempre chegava `undefined` no Prisma, e o delete sempre falhava (capturado pelo `try/catch` genérico, que devolvia um 400 discreto — fácil de confundir com "erro de rede" em vez de "essa funcionalidade nunca existiu"). Corrigido: o controller agora lê `req.params.id`, batendo com a rota e com o Frontend.
+
+**4. Um quarto achado, esse de tratamento de erro: conflito de patrimônio duplicado devolvia 500, não 400/409.** `CreateEquipamentoController.ts` não tinha `try/catch` nenhum, e o `CreateEquipamentoService.ts` lançava um `Error` genérico quando o patrimônio já existia. Sem captura no controller, esse erro subia até o `errorHandler` global — que não reconhece `Error` puro, só `AppError` e subclasses — e virava 500 genérico. Corrigido com `ConflictError` (409), que o `errorHandler` já sabe traduzir.
+
+**5. Bug de partial-update em `informacoessetor`:** o `UpdateInformacoesSetorService.ts` original resolvia `cliente_id`/`instituicaoUnidade_id` de forma incondicional, mesmo quando esses campos não vinham no payload — ou seja, se algum outro caller um dia mandasse um update parcial sem esses 2 campos, a associação existente seria apagada sem querer. Na prática o formulário real sempre manda os 2 campos (confirmado lendo o `.tsx`), então esse bug nunca foi disparado até hoje — mas o Repository novo só toca nesses campos quando eles realmente vêm no `req.body`, fechando o risco antes que apareça.
+
+**Achado à parte, documentado mas não corrigido — código morto:** o item 3 da lista original ("tipodeInstituicaoUnidade (Update)") não é o que o nome sugere. O arquivo `UpdateInstituicaoUnidadeController.ts` mora na pasta `tipodeInsituicaoUnidade/`, mas na verdade atualiza a entidade **InstituicaoUnidade** (name/endereço/telefone/tipo), não o "tipo de instituição" em si. E, conferindo o Frontend, **nenhuma tela chama essa rota — porque a rota nem existe em `routes.ts`.** Isso é código morto de verdade: escrito, nunca ligado, nunca usado. Decisão de produto, não de arquitetura: vale a pena ligar essa rota (nova funcionalidade: editar instituição) ou apagar o código morto? Fica em aberto — ver `CHECKLIST-REFATORACAO-BACKEND.md`.
+
+**Resultado:** 211 testes passando (29 novos: 2 arquivos de schema, 2 de repository, 5 de service), `tsc --noEmit` limpo, `eslint` sem erro novo (0 erros, 40 avisos). 2 dos 3 módulos do grupo fechados de verdade (Equipamento, InformacoesSetor) — o terceiro ficou documentado como achado à parte.
+
+**Preenchendo o molde da narrativa:**
+
+> Antes de escrever o schema Zod de Equipamento e InformacoesSetor, conferi se as rotas de Update realmente existiam — e não existiam, mesmo com o Frontend já chamando elas. Eram 404 silenciosos em produção, do tipo que só aparece quando alguém realmente tenta editar aquele registro. Corrigi as 2 rotas que faltavam, e no caminho achei mais dois bugs sem relação direta com Zod: um delete de equipamento que nunca funcionou (lia o id do lugar errado) e um erro de conflito que devolvia 500 em vez de um status que fizesse sentido. Também achei um terceiro módulo com o mesmo formato de bug (Update sem rota) que, ao investigar o Frontend, não tinha usuário nenhum esperando por ele — decidi documentar como código morto em vez de inventar uma rota nova sem ninguém ter pedido.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
