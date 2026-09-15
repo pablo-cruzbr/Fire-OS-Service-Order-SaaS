@@ -23,6 +23,7 @@ import { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema } from "
 import { createEquipamentoSchema, updateEquipamentoSchema } from "./schemas/equipamento.schema";
 import { createInformacoesSetorSchema, updateInformacoesSetorSchema } from "./schemas/informacoesSetor.schema";
 import { createLookupCategoriaSchema, deleteStatusOrdemdeServicoQuerySchema } from "./schemas/lookupCategoria.schema";
+import { updateInstituicaoUnidadeSchema } from "./schemas/instituicaoUnidade.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -32,11 +33,13 @@ import { RemoveSetorController } from "./controllers/status_categorias/setor/Rem
 import { CreateInstituicaoUnidadeController } from "./controllers/status_categorias/instituicaoUnidade/CreateInstituicaoUnidadeController";
 import { ListInstituicaoUnidadeController } from "./controllers/status_categorias/instituicaoUnidade/ListInstituicaoUnidadeController";
 import { RemoveInstituicaoUnidadeController } from "./controllers/status_categorias/instituicaoUnidade/RemoveInstituicaoUnidadeController";
+import { UpdateInstituicaoUnidadeController } from "./controllers/status_categorias/instituicaoUnidade/UpdateInstituicaoUnidadeController";
 import { CreateStatusOrdemdeServicoController } from "./controllers/status_categorias/statusOrdemdeServico/CreateStatusOrdemdeServicoController";
 import { ListStatusOrdemdeServicoController } from "./controllers/status_categorias/statusOrdemdeServico/ListStatusOrdemdeServicoController";
 import { RemoveStatusOrdemServicoController } from "./controllers/status_categorias/statusOrdemdeServico/RemoveStatusOrdemServicoController";
 import { CreatetipodeChamadoController } from "./controllers/status_categorias/tipodeChamado/CreatetipodeChamadoController";
 import { ListtipodeEquipamentoController } from "./controllers/status_categorias/tipodeEquipamento/ListtipodeEquipamentoController";
+import { CreatetipodeEquipamentoController } from "./controllers/status_categorias/tipodeEquipamento/CreateTipodeEquipamentoController";
 import { ListtipodeChamadoService } from "./services/status_categorias/tipodeChamado/ListtipodeChamadoService";
 import { CreateTecnicoController } from "./controllers/status_categorias/tecnico/CreateTecnicoController";
 import { ListTecnicoController } from "./controllers/status_categorias/tecnico/ListTecnicoController";
@@ -221,6 +224,18 @@ privateRouter.get('/listinformacoessetor', new ListInformacaoesSetoresController
 //3 - Instuituicao/Unidade
 privateRouter.post('/categoryintituicao', new CreateInstituicaoUnidadeController().handle)
 privateRouter.delete('/deleteinstituicao', can(['ADMIN']), new RemoveInstituicaoUnidadeController().handle)
+// Achado no rollout de status_categorias: esse controller existia (editar
+// name/endereco/telefone/tipo de uma instituição), com lógica pronta, mas
+// nunca teve rota nem uso no Frontend — decidido ligar mesmo assim (ver
+// CHECKLIST-REFATORACAO-BACKEND.md) pra completar o CRUD do módulo, que já
+// tinha Create/List/Remove. Mesmo nível de proteção do Remove (ADMIN).
+privateRouter.patch(
+  '/instituicaounidade/update/:id',
+  can(['ADMIN']),
+  validate(idParamSchema, 'params'),
+  validate(updateInstituicaoUnidadeSchema),
+  new UpdateInstituicaoUnidadeController().handle
+)
 
 // tipodeInstituicaoUnidade
 privateRouter.post('/tipodeinstituicaounidade', validate(createLookupCategoriaSchema), new CreatetipodeInstituicaoUnidadeController().handle)
@@ -235,6 +250,11 @@ privateRouter.post('/tipodechamado', validate(createLookupCategoriaSchema), new 
 // Vercel". O dropdown nunca mostrou nenhuma opção em produção. Adicionada
 // agora com o path exato que o Frontend espera.
 privateRouter.get('/list/tipo/equipamento', new ListtipodeEquipamentoController().handle)
+// Achado no rollout anterior: controller já modernizado (Zod + Repository
+// genérico), só sem rota — sem uso no Frontend hoje, mas decidido ligar
+// mesmo assim pra fechar o CRUD do módulo (Create+List, igual aos outros
+// 12 de lookup).
+privateRouter.post('/tipodeequipamento', validate(createLookupCategoriaSchema), new CreatetipodeEquipamentoController().handle)
 
 // 5 - Tecnico
 privateRouter.post('/tecnico', new CreateTecnicoController().handle)
