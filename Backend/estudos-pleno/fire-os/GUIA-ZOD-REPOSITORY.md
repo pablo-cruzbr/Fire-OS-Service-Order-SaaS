@@ -83,7 +83,49 @@ const service = new CreateOrdemServicoService(repository)
 **Resultado:** 52 testes passando (2 novos, testando o Repository isolado — esse sim mocka o Prisma, porque é literalmente o trabalho dele). `tsc --noEmit` limpo.
 
 - [x] Repository pattern implementado pra Create + Update de OrdemdeServico.
-- [ ] Replicar pros outros módulos conforme o rollout de Zod for avançando (decidido: junto, não separado — cada módulo novo já nasce com Controller fino + Service + Repository).
+- [x] Replicar pros outros módulos conforme o rollout de Zod for avançando — **primeiro módulo novo: `user`, 15/09.** Ver abaixo.
+
+---
+
+## Quarto passo: módulo `user` (Create + Update + Auth) — 15/09/2026
+
+Escolhido como o primeiro módulo do rollout (de ~100 restantes) por dois motivos concretos, não por estar mais fácil: (1) é o exemplo que já estava documentado há semanas no glossário do `ROADMAP-PLENO.md` como o "antes" do Zod (`CreateUserController.ts:6`, `const {name,email,password,...} = req.body` sem checar nada); (2) uma revisão do software como um todo achou um **achado de segurança novo, mais grave que os já corrigidos**, exatamente nesse módulo — ver a seção seguinte.
+
+**1. `PATCH /user/update/:id` não tinha `can()` nem ownership nenhum.** Só `isAuthenticated`. E o controller pegava o `id` de `req.params`, não de `req.user_id`:
+
+```ts
+// ANTES — UpdateUserController.ts
+const { id } = req.params;          // qualquer id, não necessariamente o do usuário logado
+const { name, email, password, ... } = req.body;
+await updateUserService.execute({ user_id: id, ... });
+```
+
+Isso significa: **qualquer usuário autenticado, de qualquer role, trocava a senha, o e-mail ou a instituição de qualquer outro usuário**, só sabendo o `id`. Pior que os achados de ownership já corrigidos (item RBAC), porque aqui o alvo é a própria conta — é sequestro de conta, não só edição indevida de um registro. Confirmei no Frontend (`EditUsuariosForm.tsx`) que a rota é usada de propósito por uma tela de gestão de usuários — então o fix certo não é "só o dono", é `can(['ADMIN'])`, igual já existe em `GET /listusers`:
+
+```ts
+// DEPOIS — routes.ts
+privateRouter.patch(
+  '/user/update/:id',
+  can(['ADMIN']),
+  validate(idParamSchema, 'params'),
+  validate(updateUserSchema),
+  new UpdateUserController().handle
+)
+```
+
+**2. Zod aplicado nos 3 endpoints que recebem body:** `createUserSchema` (nome obrigatório, email com formato validado, senha com mínimo de 6 caracteres), `updateUserSchema` (tudo opcional, mas senha continua com mínimo de 6 quando informada) e `authUserSchema` (email + senha). O `idParamSchema` que validava só `:id` de OrdemdeServico virou **`common.schema.ts`** — não fazia mais sentido morar só lá assim que um segundo módulo precisou dele.
+
+**3. `UserRepository.ts` novo** — mesmo padrão do `OrdemdeServicoRepository.ts`: `findByEmail`, `create`, `update`, escondendo o Prisma. `AuthUserService` (login), `CreateUserService` e `UpdateUserService` recebem o repository via construtor.
+
+**4. Bug de verdade corrigido no caminho: senha errada devolvia 500, não 401.** `AuthUserController` nunca teve `try/catch`, e o `Error("usuário ou senha está incorreta")` que o service lançava não era nenhum dos tipos que o `errorHandler` reconhece (`ZodError`, `ValidationError`, `AppError`, erro conhecido do Prisma) — caía direto no `catch-all` de 500. Criei `UnauthorizedError` (401) em `src/errors/AppError.ts` e troquei o `Error` genérico por ele. Login errado agora responde `401`, não `500`.
+
+**5. `CreateUserService` trocou `Error` genérico por `ConflictError`** (409) no caso de e-mail duplicado — mesma lógica do item 4 acima, usando o tipo certo em vez do genérico.
+
+**Resultado:** 92 testes passando (13 novos: `common.schema.test.ts`, `user.schema.test.ts`, `UserRepository.test.ts`, `UpdateUSerService.test.ts` novo, mais os testes existentes de `CreateUserService`/`AuthUserService` reescritos pra usar repository fake em vez de mockar o Prisma direto). `tsc --noEmit` limpo, `eslint` sem erro novo.
+
+**Preenchendo o molde da narrativa (o achado mais forte desse módulo):**
+
+> Ao decidir qual módulo priorizar no rollout de Zod/Repository, analisei o backend como um todo em vez de pegar o próximo da lista — e achei que `PATCH /user/update/:id` não tinha checagem de dono nenhuma, só autenticação. Qualquer usuário autenticado podia trocar a senha de qualquer outro, incluindo admins. Considerei restringir a "só o próprio usuário", mas confirmei no Frontend que a rota é usada de propósito por uma tela de gestão — restringir assim quebraria a funcionalidade real. Optei por `can(['ADMIN'])`, mesma regra já aplicada em `/listusers`. Troquei "generalizar mais um middleware de ownership" por "aplicar o RBAC que já existia e só não tinha sido colado nessa rota" — o fix mais simples que resolve o problema real, sem inventar mecanismo novo.
 
 ---
 

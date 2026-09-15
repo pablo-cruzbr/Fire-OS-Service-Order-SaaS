@@ -4,15 +4,27 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 **Legenda:** ✅ feito e testado · 🟡 piloto/parcial (funciona, mas não cobre tudo ainda) · ⬜ pendente
 
+## Estado atual, resumo (atualizado 15/09/2026, depois do módulo `user`)
+
+**Ainda não está tudo terminado** — mas o item de maior risco de segurança do projeto (pior que os já corrigidos) foi achado e fechado nesta rodada.
+
+✅ **Fechado por completo:** item 2 (RBAC/CASL, incluindo os 4 recursos com ownership **e** o achado novo em `user/update`), item 4 (tratamento de erros global, incluindo `UnauthorizedError` novo), item 6 (cache), item 8 (TSC + Linter), item 9 (Docker, build real validado).
+
+🟡 **Piloto em 2 módulos agora, rollout pendente nos outros ~98:** item 1 (Repository pattern em OrdemdeServico + `user`), item 3 (Zod em OrdemdeServico + `user`, ~9 rotas de ~100+), item 4 (o `try/catch` ainda existe em **36 arquivos**).
+
+⬜ **Ainda em zero:** item 7 (testes de integração, TestContainers, E2E, `coverage` no `vitest.config.ts`). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
+
+**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~98 controllers restantes — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+
 ---
 
 ## 1. Reorganização de arquitetura (Controller → Service → Prisma)
 
 > Resposta da pergunta "existe uma forma mais pleno de reorganizar isso?": sim — ver `ROADMAP-PLENO.md`, item 2, seção "O que foi implementado".
 
-- 🟡 Piloto aplicado em **Create + Update de OrdemdeServico**: Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
-- ✅ Repository pattern implementado (`src/repositories/OrdemdeServicoRepository.ts`) — isola as chamadas `prismaClient.ordemdeServico.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
-- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~100 controllers, módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08).
+- 🟡 Piloto aplicado em **Create + Update de OrdemdeServico** e **Create + Update + Auth de `user`** (15/09): Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
+- ✅ Repository pattern implementado (`src/repositories/OrdemdeServicoRepository.ts`, `src/repositories/UserRepository.ts`) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
+- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~98 controllers restantes, módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ## 2. RBAC / Autorização
 
@@ -20,19 +32,21 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ CASL (`src/permissions/ability.ts`) — ownership de OrdemdeServico: técnico só edita a que é dele.
 - ✅ `authorizeOrdemdeServico` middleware testado (`authorizeOrdemdeServico.test.ts`).
 - ✅ **Gap de ownership nos 3 módulos técnicos, fechado (15/09).** `authorizeOwnership.ts` novo generaliza a regra pra qualquer recurso com um `tecnico_id` — aplicado em `PATCH /assistenciatecnica/update/:id`, `/laudotecnico/update/:id` e `/documentacaotecnica/update/:id`. Detalhe em `GUIA-RBAC-CASL.md`, seção "O que foi implementado (generalizado pros 3 módulos)".
+- ✅ **Achado novo e mais grave, fechado no mesmo dia (15/09):** `PATCH /user/update/:id` não tinha `can()` nem ownership nenhum — qualquer usuário autenticado trocava senha/email/instituição de **qualquer outro usuário**, sequestro de conta. Corrigido com `can(['ADMIN'])`, confirmando antes no Frontend que a rota é mesmo usada por uma tela de gestão de usuários. Detalhe em `GUIA-ZOD-REPOSITORY.md`, seção "Quarto passo: módulo user".
 
 ## 3. Zod nos controllers
 
-- 🟡 Piloto: `createOrdemdeServicoSchema`, `updateOrdemdeServicoSchema`, `idParamSchema` — aplicados via `validate()` em `POST /ordemdeservico`, `PATCH /ordemdeservico/update/:id` e `GET /ordemdeservico/:id`.
-- ⬜ Replicar pros módulos restantes: `user`, `cliente`, `setor`, `equipamento`, `instituicao`, `controles_forms` (os outros formulários além de OrdemdeServico), etc.
+- 🟡 Piloto: `createOrdemdeServicoSchema`, `updateOrdemdeServicoSchema`, `idParamSchema` (movido pra `common.schema.ts`, compartilhado) — aplicados via `validate()` em `POST /ordemdeservico`, `PATCH /ordemdeservico/update/:id` e `GET /ordemdeservico/:id`.
+- ✅ **`user` fechado (15/09)** — `createUserSchema`, `updateUserSchema`, `authUserSchema` aplicados em `POST /users`, `PATCH /user/update/:id` e `POST /session`.
+- ⬜ Replicar pros módulos restantes: `cliente`, `setor`, `equipamento`, `instituicao`, `controles_forms` (os outros formulários além de OrdemdeServico), etc.
 - ⬜ Validar variáveis de ambiente no boot com um schema Zod (`DATABASE_URL`, `JWT_SECREATE`, `CLOUDINARY_*`) — falha de config aparecer no start, não em runtime.
 
 ## 4. Tratamento de erros global
 
-- ✅ `AppError` / `ValidationError` / `NotFoundError` / `ConflictError` (`src/errors/AppError.ts`).
+- ✅ `AppError` / `ValidationError` / `NotFoundError` / `ConflictError` / `UnauthorizedError` (novo, 15/09) em `src/errors/AppError.ts`.
 - ✅ Middleware global `errorHandler` (`src/Middleware/errorHandler.ts`), plugado uma vez em `server.ts` — trata `ZodError`, `AppError` e erros conhecidos do Prisma (`P2002`→409, `P2025`→404, `P2003`→400), resto vira 500 padronizado.
-- ✅ `try/catch` removido dos dois controllers já refatorados (Create/Update de OrdemdeServico) — erro sobe sozinho via `express-async-errors`.
-- ⬜ Continua pendente **apenas** nos ~100 controllers que ainda não passaram pelo item 3 — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir".
+- ✅ `try/catch` removido dos controllers já refatorados (Create/Update de OrdemdeServico, Create/Update/Auth de `user`) — erro sobe sozinho via `express-async-errors`. Bug real corrigido no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade.
+- ⬜ Continua pendente **apenas** nos ~98 controllers que ainda não passaram pelo item 3 — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir". Hoje: **36 arquivos** ainda com `try/catch` manual.
 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
@@ -49,7 +63,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 ## 7. Testes automatizados
 
-- ✅ 79 testes unitários passando (Vitest) — cobrindo auth, RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update de OrdemdeServico (agora com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), e o middleware genérico de ownership (`authorizeOwnership.test.ts`).
+- ✅ 92 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update de OrdemdeServico e de `user` (ambos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas de `user`/`common` novos.
 - ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
 - ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
 - ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
@@ -122,3 +136,17 @@ Verifiquei cada afirmação ✅ deste checklist rodando os comandos de verdade (
 **Nada de novo pendente foi encontrado.** O que falta continua sendo exatamente a "Ordem sugerida" acima: (0) fechar o gap de ownership nos 3 módulos, (1) rollout de Zod/Repository, (2) testes de integração/E2E.
 
 **Atualização, mesmo dia (15/09), depois desta revisão: o item 0 foi fechado.** `authorizeOwnership.ts` (novo) generaliza a regra de ownership pra qualquer recurso com `tecnico_id`, aplicado nos 3 módulos técnicos — 79 testes passando agora (17 novos), `tsc`/`eslint` limpos. Detalhe completo em `GUIA-RBAC-CASL.md`, seção "O que foi implementado (generalizado pros 3 módulos)". O que resta da lista é só o rollout de Zod/Repository (item 1) e os testes de integração/E2E (item 7).
+
+---
+
+## Checagem 15/09/2026 (terceira rodada) — respondendo "terminou tudo?"
+
+Não. Conferi de novo, item por item, antes de responder:
+
+- `cat vitest.config.ts` → só `globals`/`environment`, **sem `coverage` configurado** — item 7 (último sub-item) confirmado zerado.
+- `.env.example` → **não existe** no repo (`ls` não achou). README continua mandando `cp .env.example .env`, que quebraria hoje.
+- `JWT_SECREATE` → **ainda inconsistente** em `.env`, `AuthUserService.ts` e `isAuthenticated.ts` (esse último até tem um comentário lembrando de checar o nome da var).
+- `grep -c "validate("  src/routes.ts` → **4** — Zod continua só em OrdemdeServico.
+- `grep -rl "try {" src/controllers src/services | wc -l` → **37 arquivos** ainda capturam erro na mão — é o tamanho real do que falta no rollout (item 1/3/4 juntos).
+
+Resumo movido pro topo do arquivo ("Estado atual, resumo") pra não precisar ler as 3 rodadas de revisão só pra saber o que falta.
