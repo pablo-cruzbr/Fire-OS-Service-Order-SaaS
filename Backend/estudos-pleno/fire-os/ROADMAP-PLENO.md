@@ -16,7 +16,7 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 **O que é:** uma camada fininha entre o Service (a regra de negócio) e o banco, que esconde o ORM (o Prisma) atrás de métodos com nome de negócio — `create`, `update` — pra ninguém mais no projeto precisar saber que existe um Prisma ali dentro. O ganho prático não é só organização: o teste do Service passa a receber um repository **fake** no lugar do banco de verdade, em vez de mockar o módulo inteiro do Prisma.
 
-**No Fire OS:** 13 repository classes existem hoje (15/09) — `OrdemdeServicoRepository.ts`, `UserRepository.ts`, um por módulo de `controles_forms` (8 no total), `EquipamentoRepository.ts`, `InformacoesSetorRepository.ts`, e `LookupCategoriaRepository.ts` — esse último genérico, parametrizado pelo nome do model do Prisma no construtor, reaproveitado pelos 13 módulos de "tabela de lookup" (`statusCompras`, `tarefa`, `tipodeChamado`, etc.) em vez de 13 classes quase idênticas. Cada Service recebe o repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um fake com `vi.fn()`). Os outros ~76 services do projeto ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
+**No Fire OS:** 14 repository classes existem hoje (15/09) — `OrdemdeServicoRepository.ts`, `UserRepository.ts`, um por módulo de `controles_forms` (8 no total), `EquipamentoRepository.ts`, `InformacoesSetorRepository.ts`, `InstituicaoUnidadeRepository.ts`, e `LookupCategoriaRepository.ts` — esse último genérico, parametrizado pelo nome do model do Prisma no construtor, reaproveitado pelos 13 módulos de "tabela de lookup" (`statusCompras`, `tarefa`, `tipodeChamado`, etc.) em vez de 13 classes quase idênticas. Cada Service recebe o repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um fake com `vi.fn()`). Os outros ~75 services do projeto ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
 
 **"Piloto em 9 módulos, rollout pendente nos outros ~91" — o que essa frase quer dizer, sem jargão:**
 
@@ -28,9 +28,9 @@ Pensa assim: o Fire OS tem hoje quase 100 "gavetas" de controller (cliente, equi
 
 **Onde estão os 24 hoje:** OrdemdeServico (o piloto original) + `user` (achado o bug de segurança no caminho) + os 8 módulos de `controles_forms` + `Equipamento`/`InformacoesSetor` (achados 2 bugs reais de rota 404 no caminho) + as **13 tabelas de lookup** de `status_categorias` (`statusCompras`, `statusEstabilizadores`, `statusMaquinasPendentesLab`, `statusMaquinasPendentesOro`, `statusOrdemdeServico`, `statusReparo`, `prioridade`, `tarefa`, `tipodeChamado`, `tipodeEquipamento`, `tipodeInstituicaoUnidade`, `tipodeOrdemdeServico`, e o `statusControledeLaboratorio`) — essas últimas 13 via **um** schema + **um** Repository genérico, não 13 conjuntos separados. Ver `GUIA-ZOD-REPOSITORY.md`, "Sétimo passo" e "Oitavo passo", pro relato completo (inclusive um achado de rota 404 que o próprio dev do Frontend já desconfiava, comentário no código e tudo).
 
-**Onde estão os ~76 que faltam:** o resto de `status_categorias` (cliente, setor, tecnico, instituicaoUnidade, e outros que ainda não foram auditados um a um) e o restante do projeto fora desse grupo.
+**Onde estão os ~75 que faltam:** o resto de `status_categorias` (cliente, setor, tecnico, e outros que ainda não foram auditados um a um) e o restante do projeto fora desse grupo.
 
-- **2 achados de código morto ao longo do caminho** — `UpdateInstituicaoUnidadeController.ts` (Update de InstituicaoUnidade) e `CreateTipodeEquipamentoController.ts` (Create de TipodeEquipamento) — ambos sem rota, sem chamada no Frontend. Decisão de produto em aberto (ligar ou apagar), não é mais um item de rollout puro.
+- **2 achados de código morto ao longo do caminho, já decididos e fechados:** `UpdateInstituicaoUnidadeController.ts` e `CreateTipodeEquipamentoController.ts` — nenhum dos dois tinha rota nem chamada no Frontend. Perguntado diretamente, a decisão pros dois foi ligar a rota — o de InstituicaoUnidade ganhou schema + Repository novos e foi movido pra pasta certa; o de TipodeEquipamento só precisou da linha em `routes.ts`, já que usava o Service genérico de lookup. Ambos confirmados ao vivo (401 sem token, não 404).
 
 ### 2. RBAC (Role-Based Access Control)
 
@@ -48,7 +48,7 @@ Pensa assim: o Fire OS tem hoje quase 100 "gavetas" de controller (cliente, equi
 
 **O que é:** garantir que o dado que chega de fora (`req.body`, query params, upload) tem o formato esperado *antes* dele entrar na regra de negócio — em vez de descobrir que estava errado quando o banco já quebrou ou o bcrypt já tentou rodar em cima de algo inválido.
 
-**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `user`, os 8 módulos de `controles_forms`, `Equipamento` + `InformacoesSetor`, e as 13 tabelas de lookup de `status_categorias` já validam via Zod, junto com o piloto original de OrdemdeServico — 24 módulos no total. Os outros ~76 controllers ainda não passaram pelo rollout.
+**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `user`, os 8 módulos de `controles_forms`, `Equipamento` + `InformacoesSetor`, as 13 tabelas de lookup de `status_categorias`, e `InstituicaoUnidade` já validam via Zod, junto com o piloto original de OrdemdeServico — 25 módulos no total. Os outros ~75 controllers ainda não passaram pelo rollout.
 
 ### 5. Tratamento de erros global (error-handling middleware)
 
