@@ -7,6 +7,8 @@ import { DetailUserController } from "./controllers/user/DetailUserController";
 import { isAuthenticated } from "./Middleware/isAuthenticated";
 import { can } from "./Middleware/can";
 import { authorizeOrdemdeServico } from "./Middleware/authorizeOrdemdeServico";
+import { authorizeOwnership } from "./Middleware/authorizeOwnership";
+import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
 import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema } from "./schemas/ordemdeServico.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
@@ -247,7 +249,16 @@ privateRouter.post('/controledeassistenciatecnica', new CreateControledeAssisten
 privateRouter.get('/listcontroledeassistenciatecnica', new ListControledeAssistenciaTecnicaController().handle);
 privateRouter.delete('/controledeassistenciatecnica/:id', new DeleteControledeAssistenciaTecnicaController().handle);
 privateRouter.get('/controledeassistenciatecnica/detail', new DetailAssistenciaTecnicaController().handle)
-privateRouter.patch('/assistenciatecnica/update/:id', new UpdateAssistenciaTecnicaController().handle)
+privateRouter.patch(
+  '/assistenciatecnica/update/:id',
+  authorizeOwnership(
+    "ControleDeAssistenciaTecnica",
+    "update",
+    (id) => prismaClient.controleDeAssistenciaTecnica.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
+    "Controle de assistência técnica não encontrado."
+  ),
+  new UpdateAssistenciaTecnicaController().handle
+)
 // CRIAR UPDATE - PACTH
 
 //CONTROLE DE LAUDO TÉCNICO
@@ -255,7 +266,16 @@ privateRouter.post('/controledelaudotecnico', new CreateControledeLaudoTecnicoCo
 privateRouter.get('/listcontroledelaudotecnico', new ListControledeLaudoTecnicoController().handle)
 privateRouter.delete('/deletecontroledelaudotecnico/:id', new DeleteControledeLaudoTecnicoController().handle);
 privateRouter.get('/controledelaudotecnico/detail', new DetailLaudoTenicoController().handle)
-privateRouter.patch('/laudotecnico/update/:id', new UpdateControllerdeLaudoTecnicoController().handle)
+privateRouter.patch(
+  '/laudotecnico/update/:id',
+  authorizeOwnership(
+    "ControleDeLaudoTecnico",
+    "update",
+    (id) => prismaClient.controleDeLaudoTecnico.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
+    "Controle de laudo técnico não encontrado."
+  ),
+  new UpdateControllerdeLaudoTecnicoController().handle
+)
 //CRIAR UPDATE - PATCH
 
 //CONTROLE DE LABORATORIO
@@ -287,7 +307,16 @@ privateRouter.post('/documentacaotecnica', new CreateDocumentacaoTecnicaControll
 privateRouter.get('/listdocumentacaotecnica', new ListDocumentacaoTecnicaController().handle)
 privateRouter.delete('/deletedocumentacaotecnica/:id', new DeleteDocumentacaoTecnicaController().handle)
 privateRouter.get('/controlededocumentacaotecnica/detail', new DetailDocumentacaoTecnicaController().handle)
-privateRouter.patch('/documentacaotecnica/update/:id', new UpdateDocumentacaoTecnicaController().handle)
+privateRouter.patch(
+  '/documentacaotecnica/update/:id',
+  authorizeOwnership(
+    "DocumentacaoTecnica",
+    "update",
+    (id) => prismaClient.documentacaoTecnica.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
+    "Documentação técnica não encontrada."
+  ),
+  new UpdateDocumentacaoTecnicaController().handle
+)
 
 //SOLICITACAO DE COMPRAS
 privateRouter.post('/solicitacaodecompras', new CreateSolicitacaodeComprasController().handle)
