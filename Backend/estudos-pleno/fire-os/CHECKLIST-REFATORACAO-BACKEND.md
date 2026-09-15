@@ -4,17 +4,17 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 **Legenda:** ✅ feito e testado · 🟡 piloto/parcial (funciona, mas não cobre tudo ainda) · ⬜ pendente
 
-## Estado atual, resumo (atualizado 15/09/2026, depois dos 3 módulos técnicos)
+## Estado atual, resumo (atualizado 15/09/2026, depois dos 5 módulos restantes de `controles_forms`)
 
-**Ainda não está tudo terminado** — mas o item de maior risco de segurança do projeto foi achado e fechado, e o rollout de Zod/Repository já está em 5 módulos (de ~100).
+**Ainda não está tudo terminado** — mas o rollout de Zod/Repository já cobre **8 módulos de `controles_forms` inteiros** (OrdemdeServico + os 3 técnicos + os 5 que faltavam), além de `user`. O grupo `controles_forms` como categoria está zerado no try/catch antigo.
 
 ✅ **Fechado por completo:** item 2 (RBAC/CASL, incluindo os 4 recursos com ownership **e** o achado em `user/update`), item 4 (tratamento de erros global, incluindo `UnauthorizedError` novo), item 6 (cache), item 8 (TSC + Linter), item 9 (Docker, build real validado).
 
-🟡 **Piloto em 5 módulos agora, rollout pendente nos outros ~95:** item 1 (Repository pattern em OrdemdeServico, `user`, AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica), item 3 (Zod nesses mesmos 5, ~15 rotas de ~100+), item 4 (o `try/catch` antigo caiu de 28 pra **22 arquivos**).
+🟡 **Piloto em 9 módulos agora, rollout pendente nos outros ~91:** item 1 (Repository pattern em OrdemdeServico, `user`, e os 8 módulos de `controles_forms`), item 3 (Zod nesses mesmos 9), item 4 (o `try/catch` antigo caiu de 28 pra **12 arquivos**).
 
 ⬜ **Ainda em zero:** item 7 (testes de integração, TestContainers, E2E, `coverage` no `vitest.config.ts`). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
 
-**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~95 controllers restantes — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~91 controllers restantes (agora concentrados em `status_categorias`) — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ---
 
@@ -22,9 +22,9 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 > Resposta da pergunta "existe uma forma mais pleno de reorganizar isso?": sim — ver `ROADMAP-PLENO.md`, item 2, seção "O que foi implementado".
 
-- 🟡 Piloto aplicado em **Create + Update de OrdemdeServico**, **Create + Update + Auth de `user`**, e **Create + Update + Delete de AssistenciaTecnica/LaudoTecnico/DocumentacaoTecnica** (15/09): Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
-- ✅ Repository pattern implementado (`OrdemdeServicoRepository.ts`, `UserRepository.ts`, `AssistenciaTecnicaRepository.ts`, `LaudoTecnicoRepository.ts`, `DocumentacaoTecnicaRepository.ts`) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
-- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~95 controllers restantes, módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+- 🟡 Piloto aplicado em **OrdemdeServico**, **`user`**, e os **8 módulos de `controles_forms`** (AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica, Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaodeCompras) — 15/09: Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
+- ✅ Repository pattern implementado — 10 repositories no total (`OrdemdeServicoRepository`, `UserRepository`, e um por módulo de `controles_forms`) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
+- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~91 controllers restantes — concentrados em `status_categorias` agora que `controles_forms` está fechado — módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ## 2. RBAC / Autorização
 
@@ -38,29 +38,28 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 - 🟡 Piloto: `createOrdemdeServicoSchema`, `updateOrdemdeServicoSchema`, `idParamSchema` (movido pra `common.schema.ts`, compartilhado) — aplicados via `validate()` em `POST /ordemdeservico`, `PATCH /ordemdeservico/update/:id` e `GET /ordemdeservico/:id`.
 - ✅ **`user` fechado (15/09)** — `createUserSchema`, `updateUserSchema`, `authUserSchema` aplicados em `POST /users`, `PATCH /user/update/:id` e `POST /session`.
-- ✅ **3 módulos técnicos fechados (15/09)** — `assistenciaTecnica.schema.ts`, `laudoTecnico.schema.ts`, `documentacaoTecnica.schema.ts` aplicados nos Create/Update/Delete dos 3, incluindo `idParamSchema` agora também no Delete (antes não validava `:id` nenhum).
-- ⬜ Replicar pros módulos restantes: `cliente`, `setor`, `equipamento`, `instituicao`, os 5 `controles_forms` que faltam (Estabilizadores, Laboratorio, MaquinasPendentesLab/Oro, SolicitacaodeCompras), etc.
+- ✅ **8 módulos de `controles_forms` fechados (15/09)** — um schema por módulo (`assistenciaTecnica`, `laudoTecnico`, `documentacaoTecnica`, `estabilizadores`, `laboratorio`, `maquinasPendentesLab`, `maquinasPendentesOro`, `solicitacaoCompras`), incluindo `idParamSchema` agora também no Delete de todos eles (antes não validava `:id` nenhum). Achado ao comparar os schemas: `MaquinasPendentesLab` e `MaquinasPendentesOro` parecem o mesmo módulo mas `instituicaoUnidade_id` é opcional num e obrigatório no outro — só apareceu checando o `schema.prisma` de cada um, não pelo nome.
+- ⬜ Replicar pros módulos restantes: `cliente`, `setor`, `equipamento`, `instituicao`, etc. (agora só falta `status_categorias`, `controles_forms` está fechado).
 - ⬜ Validar variáveis de ambiente no boot com um schema Zod (`DATABASE_URL`, `JWT_SECREATE`, `CLOUDINARY_*`) — falha de config aparecer no start, não em runtime.
 
 ## 4. Tratamento de erros global
 
 - ✅ `AppError` / `ValidationError` / `NotFoundError` / `ConflictError` / `UnauthorizedError` (novo, 15/09) em `src/errors/AppError.ts`.
 - ✅ Middleware global `errorHandler` (`src/Middleware/errorHandler.ts`), plugado uma vez em `server.ts` — trata `ZodError`, `AppError` e erros conhecidos do Prisma (`P2002`→409, `P2025`→404, `P2003`→400), resto vira 500 padronizado.
-- ✅ `try/catch` removido dos controllers já refatorados (Create/Update de OrdemdeServico, Create/Update/Auth de `user`, Create/Update/Delete dos 3 módulos técnicos) — erro sobe sozinho via `express-async-errors`. Bug real corrigido no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade.
-- ⬜ Continua pendente **apenas** nos controllers que ainda não passaram pelo item 3 — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir".
+- ✅ `try/catch` removido de todos os controllers de `controles_forms` já refatorados (OrdemdeServico Create/Update, `user` Create/Update/Auth, os 8 módulos de `controles_forms`) — erro sobe sozinho via `express-async-errors`. Bug real corrigido no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade.
+- ⬜ Continua pendente **apenas** nos controllers que ainda não passaram pelo item 3 (hoje, só `status_categorias` e alguns extras de OrdemdeServico) — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir".
 
-**Contagem (correção 15/09 registrada, atualizada depois dos 3 módulos técnicos):** só conta quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), não try/catch legítimo (retry, fallback de Redis). Hoje: **22 arquivos**, agrupados assim:
+**Contagem (atualizada 15/09, depois de fechar `controles_forms` inteiro):** só conta quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), não try/catch legítimo (retry, fallback de Redis). Hoje: **12 arquivos** — o grupo `controles_forms` (que tinha 16 arquivos nos dois últimos passos) está **zerado**:
 
 | Grupo | Arquivos | Módulos |
 |---|---|---|
-| `controles_forms` — 5 módulos sem Zod ainda | 10 | Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaodeCompras (Update+Delete cada) |
 | OrdemdeServico — rotas fora do piloto Create/Update | 7 | 3 `ListBy*Controller`, `time/TimeOrdemdeServicoController`, 3 de assinatura (`CreateAssinatura`, `GetAssinatura`, `saveAssinatura`) |
 | `status_categorias` — entidades reais | 3 | `equipamento`, `informacoessetor`, `tipodeInstituicaoUnidade` (Update) |
 | Misc | 2 | `Eventos/EventosControllers.ts`, `fotoController.ts` (métodos `delete`/`listByOrdem` — só `handle` foi refeito pra fila) |
 
-~~`controles_forms` — 3 módulos técnicos~~ (AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica) — ✅ fechado (15/09), saiu da tabela.
+~~`controles_forms` — todos os 8 módulos~~ — ✅ fechado (15/09), saiu inteiro da tabela.
 
-Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 juntos) — bate com a análise de prioridade do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`. Próximo candidato natural: os 5 módulos de `controles_forms` que faltam — mesmo formato dos que acabaram de fechar, então o padrão já está validado 2 vezes.
+Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 juntos) — bate com a análise de prioridade do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`. Próximo candidato natural: as 3 entidades reais de `status_categorias` (equipamento, informacoessetor, tipodeInstituicaoUnidade) — depois disso, o que resta é maioria de módulos "só nome" (lookup tables), onde vale a pena um padrão genérico em vez de módulo-a-módulo.
 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
@@ -77,7 +76,7 @@ Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 ju
 
 ## 7. Testes automatizados
 
-- ✅ 131 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update de OrdemdeServico, `user` e os 3 módulos técnicos (Create/Update/Delete, todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas novos.
+- ✅ 182 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update/Delete de OrdemdeServico, `user` e os 8 módulos de `controles_forms` (todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas novos.
 - ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
 - ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
 - ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
@@ -178,3 +177,19 @@ Depois do achado crítico no `user`, priorizei esses 3 módulos porque já tinha
 - 131 testes passando (39 novos), `tsc`/`eslint` limpos.
 
 Detalhe completo: `GUIA-ZOD-REPOSITORY.md`, seção "Quinto passo".
+
+---
+
+## Atualização 15/09/2026 — grupo inteiro de `controles_forms` fechado (5 módulos restantes)
+
+Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro e SolicitacaodeCompras — os últimos 5 módulos de `controles_forms` sem Zod. Com isso, **`controles_forms` como categoria está com Zod + Repository em todos os 8 módulos**, e o grupo saiu inteiro da tabela de try/catch pendente.
+
+- 5 schemas novos, 5 repositories novos.
+- `try/catch` removido de 10 arquivos — contagem geral caiu de 22 pra **12**.
+- Achado que se repetiu (mesma categoria do LaudoTecnico no passo anterior): `MaquinasPendentesLab` e `MaquinasPendentesOro` parecem o mesmo módulo, mas `instituicaoUnidade_id` é opcional num e obrigatório no outro — só confirmado abrindo o `schema.prisma` de cada um.
+- 2 bugs de copiar-colar corrigidos no caminho (mensagem de erro de um módulo aparecendo no outro; um arquivo de Delete com o nome do módulo errado, embora a classe exportada estivesse certa).
+- 182 testes passando (51 novos), `tsc`/`eslint` limpos.
+
+O que resta do rollout agora é majoritariamente `status_categorias` — 3 entidades reais (equipamento, informacoessetor, tipodeInstituicaoUnidade) e depois o grupo grande de tabelas "só nome".
+
+Detalhe completo: `GUIA-ZOD-REPOSITORY.md`, seção "Sexto passo".
