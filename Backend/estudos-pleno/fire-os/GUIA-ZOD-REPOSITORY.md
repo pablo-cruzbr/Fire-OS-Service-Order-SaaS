@@ -129,4 +129,24 @@ privateRouter.patch(
 
 ---
 
+## Quinto passo: os 3 módulos técnicos (AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica) — 15/09/2026
+
+Escolhidos como próximo alvo depois de uma análise do backend como um todo (~100 controllers, "muito do mesmo" — ver a conversa que gerou essa priorização), não por estarem no topo de uma lista qualquer: esses 3 já tinham o CASL de ownership aplicado (achado de 14/09), então fechar Zod + Repository neles termina um trabalho já começado em vez de abrir uma frente nova. Os 3 têm exatamente o mesmo formato — Create/Update/Delete — então o rollout saiu mais rápido que o do `user`, mas vale registrar as diferenças que apareceram no caminho.
+
+**1. Schemas por módulo**, cada um com Create (campos obrigatórios batendo com o `schema.prisma` — nada de opcional "porque sim") e Update (tudo opcional): `assistenciaTecnica.schema.ts`, `laudoTecnico.schema.ts`, `documentacaoTecnica.schema.ts`. Achado ao comparar os 3: **LaudoTecnico é o único sem nenhuma FK opcional** — `instituicaoUnidade_id` é obrigatório lá, mas opcional nos outros dois. Sem olhar o `schema.prisma` de cada um, esse tipo de diferença passa despercebido e o schema Zod fica errado (rejeitando um payload válido, ou aceitando um inválido).
+
+**2. Repository por módulo** (`AssistenciaTecnicaRepository.ts`, `LaudoTecnicoRepository.ts`, `DocumentacaoTecnicaRepository.ts`), mesmo formato do `OrdemdeServicoRepository.ts`/`UserRepository.ts`: `create`/`update`/`delete`, escondendo o Prisma.
+
+**3. `try/catch` removido de 6 arquivos** (Update + Delete × 3 módulos) — o padrão era idêntico nos 3: `catch (error: any) { return res.status(400)... }`. Sem checagem manual de existência antes do update/delete — segue o mesmo princípio já usado em `UpdateOrdemdeServicoService.ts`: se o `id` não existir, o Prisma lança `P2025` e o `errorHandler` global já traduz pra `404`.
+
+**4. Achado pequeno no caminho: `documentacaoTecnica`, na criação, aceitava um `id` vindo do cliente.** O controller antigo desestruturava `id` do `req.body` e mandava direto pro `prismaClient.documentacaoTecnica.create({ data: { id, ... } })` — deixando quem chama a API escolher o próprio UUID do registro, em vez do banco gerar (`@default(uuid())` já existe no `schema.prisma`, nunca foi usado). Nenhum outro Create do projeto faz isso. Removido do schema Zod novo — parecia sobra de copiar-colar de outro módulo, não uma decisão de negócio.
+
+**Resultado:** 131 testes passando (39 novos: 4 arquivos de schema, 3 de repository, 9 de service — Create/Update/Delete × 3 módulos), `tsc --noEmit` limpo, `eslint` sem erro novo (só 3 avisos previsíveis de destructuring-pra-omitir-campo nos testes de schema, mesma categoria dos avisos já aceitos no projeto). O número de arquivos com o padrão antigo de `try/catch` caiu de 28 pra **22**.
+
+**Preenchendo o molde da narrativa:**
+
+> Depois de fechar o achado de segurança do `user`, apliquei o mesmo rollout de Zod/Repository nos 3 módulos técnicos que já tinham ownership corrigido — terminar um trabalho começado em vez de espalhar em módulos novos. Os 3 têm o mesmo formato, o que acelerou o trabalho, mas também escondia um risco: copiar o schema de um módulo pro outro sem checar o `schema.prisma` de cada um. Confirmei campo por campo e achei que `LaudoTecnico` não tem nenhuma FK opcional, diferente dos outros dois — se eu tivesse assumido que os 3 eram idênticos, o schema ia rejeitar (ou aceitar) payload errado silenciosamente. Também achei um `id` client-controlado esquecido no Create de `documentacaoTecnica`, que não existe em nenhum outro módulo — removi por parecer resíduo de copiar-colar, não decisão deliberada.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.

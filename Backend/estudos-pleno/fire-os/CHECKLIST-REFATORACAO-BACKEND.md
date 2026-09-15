@@ -4,17 +4,17 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 **Legenda:** ✅ feito e testado · 🟡 piloto/parcial (funciona, mas não cobre tudo ainda) · ⬜ pendente
 
-## Estado atual, resumo (atualizado 15/09/2026, depois do módulo `user`)
+## Estado atual, resumo (atualizado 15/09/2026, depois dos 3 módulos técnicos)
 
-**Ainda não está tudo terminado** — mas o item de maior risco de segurança do projeto (pior que os já corrigidos) foi achado e fechado nesta rodada.
+**Ainda não está tudo terminado** — mas o item de maior risco de segurança do projeto foi achado e fechado, e o rollout de Zod/Repository já está em 5 módulos (de ~100).
 
-✅ **Fechado por completo:** item 2 (RBAC/CASL, incluindo os 4 recursos com ownership **e** o achado novo em `user/update`), item 4 (tratamento de erros global, incluindo `UnauthorizedError` novo), item 6 (cache), item 8 (TSC + Linter), item 9 (Docker, build real validado).
+✅ **Fechado por completo:** item 2 (RBAC/CASL, incluindo os 4 recursos com ownership **e** o achado em `user/update`), item 4 (tratamento de erros global, incluindo `UnauthorizedError` novo), item 6 (cache), item 8 (TSC + Linter), item 9 (Docker, build real validado).
 
-🟡 **Piloto em 2 módulos agora, rollout pendente nos outros ~98:** item 1 (Repository pattern em OrdemdeServico + `user`), item 3 (Zod em OrdemdeServico + `user`, ~9 rotas de ~100+), item 4 (o `try/catch` antigo ainda existe em **28 arquivos** — ver item 4 abaixo pro porquê esse número mudou de 36 pra 28).
+🟡 **Piloto em 5 módulos agora, rollout pendente nos outros ~95:** item 1 (Repository pattern em OrdemdeServico, `user`, AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica), item 3 (Zod nesses mesmos 5, ~15 rotas de ~100+), item 4 (o `try/catch` antigo caiu de 28 pra **22 arquivos**).
 
 ⬜ **Ainda em zero:** item 7 (testes de integração, TestContainers, E2E, `coverage` no `vitest.config.ts`). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
 
-**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~98 controllers restantes — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~95 controllers restantes — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ---
 
@@ -22,9 +22,9 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 > Resposta da pergunta "existe uma forma mais pleno de reorganizar isso?": sim — ver `ROADMAP-PLENO.md`, item 2, seção "O que foi implementado".
 
-- 🟡 Piloto aplicado em **Create + Update de OrdemdeServico** e **Create + Update + Auth de `user`** (15/09): Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
-- ✅ Repository pattern implementado (`src/repositories/OrdemdeServicoRepository.ts`, `src/repositories/UserRepository.ts`) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
-- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~98 controllers restantes, módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+- 🟡 Piloto aplicado em **Create + Update de OrdemdeServico**, **Create + Update + Auth de `user`**, e **Create + Update + Delete de AssistenciaTecnica/LaudoTecnico/DocumentacaoTecnica** (15/09): Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
+- ✅ Repository pattern implementado (`OrdemdeServicoRepository.ts`, `UserRepository.ts`, `AssistenciaTecnicaRepository.ts`, `LaudoTecnicoRepository.ts`, `DocumentacaoTecnicaRepository.ts`) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
+- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~95 controllers restantes, módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ## 2. RBAC / Autorização
 
@@ -38,27 +38,29 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 - 🟡 Piloto: `createOrdemdeServicoSchema`, `updateOrdemdeServicoSchema`, `idParamSchema` (movido pra `common.schema.ts`, compartilhado) — aplicados via `validate()` em `POST /ordemdeservico`, `PATCH /ordemdeservico/update/:id` e `GET /ordemdeservico/:id`.
 - ✅ **`user` fechado (15/09)** — `createUserSchema`, `updateUserSchema`, `authUserSchema` aplicados em `POST /users`, `PATCH /user/update/:id` e `POST /session`.
-- ⬜ Replicar pros módulos restantes: `cliente`, `setor`, `equipamento`, `instituicao`, `controles_forms` (os outros formulários além de OrdemdeServico), etc.
+- ✅ **3 módulos técnicos fechados (15/09)** — `assistenciaTecnica.schema.ts`, `laudoTecnico.schema.ts`, `documentacaoTecnica.schema.ts` aplicados nos Create/Update/Delete dos 3, incluindo `idParamSchema` agora também no Delete (antes não validava `:id` nenhum).
+- ⬜ Replicar pros módulos restantes: `cliente`, `setor`, `equipamento`, `instituicao`, os 5 `controles_forms` que faltam (Estabilizadores, Laboratorio, MaquinasPendentesLab/Oro, SolicitacaodeCompras), etc.
 - ⬜ Validar variáveis de ambiente no boot com um schema Zod (`DATABASE_URL`, `JWT_SECREATE`, `CLOUDINARY_*`) — falha de config aparecer no start, não em runtime.
 
 ## 4. Tratamento de erros global
 
 - ✅ `AppError` / `ValidationError` / `NotFoundError` / `ConflictError` / `UnauthorizedError` (novo, 15/09) em `src/errors/AppError.ts`.
 - ✅ Middleware global `errorHandler` (`src/Middleware/errorHandler.ts`), plugado uma vez em `server.ts` — trata `ZodError`, `AppError` e erros conhecidos do Prisma (`P2002`→409, `P2025`→404, `P2003`→400), resto vira 500 padronizado.
-- ✅ `try/catch` removido dos controllers já refatorados (Create/Update de OrdemdeServico, Create/Update/Auth de `user`) — erro sobe sozinho via `express-async-errors`. Bug real corrigido no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade.
+- ✅ `try/catch` removido dos controllers já refatorados (Create/Update de OrdemdeServico, Create/Update/Auth de `user`, Create/Update/Delete dos 3 módulos técnicos) — erro sobe sozinho via `express-async-errors`. Bug real corrigido no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade.
 - ⬜ Continua pendente **apenas** nos controllers que ainda não passaram pelo item 3 — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir".
 
-**Correção 15/09 (revisão do próprio número):** o `grep "try {"` que eu tinha usado antes contava **36** arquivos, mas isso incluía try/catch que já é código bom, não dívida — o retry de `numeroOS` em `CreateOrdemdeServicoController.ts`, o `JSON.parse` de `atividades_ids` em `UpdateOrdemdeServicoService.ts`, e o fallback do Redis nos 4 services de cache (`ListOrdemdeServicoService.ts`, `ListTecnicoService.ts`, `CreateTecnicoService.ts`, `RemoveTecnicoService.ts`). Nenhum desses tem `res.status()` dentro do `catch` — eles relançam o erro ou só logam, que é o padrão certo. Contando só quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), o número real é **28 arquivos**, agrupados assim:
+**Contagem (correção 15/09 registrada, atualizada depois dos 3 módulos técnicos):** só conta quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), não try/catch legítimo (retry, fallback de Redis). Hoje: **22 arquivos**, agrupados assim:
 
 | Grupo | Arquivos | Módulos |
 |---|---|---|
 | `controles_forms` — 5 módulos sem Zod ainda | 10 | Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaodeCompras (Update+Delete cada) |
-| `controles_forms` — 3 módulos técnicos (já têm ownership, falta Zod) | 6 | AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica (Update+Delete cada) |
 | OrdemdeServico — rotas fora do piloto Create/Update | 7 | 3 `ListBy*Controller`, `time/TimeOrdemdeServicoController`, 3 de assinatura (`CreateAssinatura`, `GetAssinatura`, `saveAssinatura`) |
 | `status_categorias` — entidades reais | 3 | `equipamento`, `informacoessetor`, `tipodeInstituicaoUnidade` (Update) |
 | Misc | 2 | `Eventos/EventosControllers.ts`, `fotoController.ts` (métodos `delete`/`listByOrdem` — só `handle` foi refeito pra fila) |
 
-Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 juntos) — bate com a análise de prioridade do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+~~`controles_forms` — 3 módulos técnicos~~ (AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica) — ✅ fechado (15/09), saiu da tabela.
+
+Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 juntos) — bate com a análise de prioridade do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`. Próximo candidato natural: os 5 módulos de `controles_forms` que faltam — mesmo formato dos que acabaram de fechar, então o padrão já está validado 2 vezes.
 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
@@ -75,7 +77,7 @@ Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 ju
 
 ## 7. Testes automatizados
 
-- ✅ 92 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update de OrdemdeServico e de `user` (ambos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas de `user`/`common` novos.
+- ✅ 131 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update de OrdemdeServico, `user` e os 3 módulos técnicos (Create/Update/Delete, todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas novos.
 - ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
 - ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
 - ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
@@ -162,3 +164,17 @@ Não. Conferi de novo, item por item, antes de responder:
 - `grep -rl "try {" src/controllers src/services | wc -l` → **37 arquivos** ainda capturam erro na mão — é o tamanho real do que falta no rollout (item 1/3/4 juntos).
 
 Resumo movido pro topo do arquivo ("Estado atual, resumo") pra não precisar ler as 3 rodadas de revisão só pra saber o que falta.
+
+---
+
+## Atualização 15/09/2026 — 3 módulos técnicos fechados (AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica)
+
+Depois do achado crítico no `user`, priorizei esses 3 módulos porque já tinham o ownership (CASL) corrigido desde 14/09 — fechar Zod + Repository neles termina um trabalho já começado, em vez de abrir módulo novo. Os 3 têm formato idêntico (Create/Update/Delete com FK pra cliente/técnico/instituição), então saiu mais rápido que o `user`.
+
+- Schemas novos: `assistenciaTecnica.schema.ts`, `laudoTecnico.schema.ts`, `documentacaoTecnica.schema.ts`.
+- Repositories novos: `AssistenciaTecnicaRepository.ts`, `LaudoTecnicoRepository.ts`, `DocumentacaoTecnicaRepository.ts`.
+- `try/catch` removido de 6 arquivos (Update+Delete × 3) — contagem geral caiu de 28 pra **22**.
+- Achado pequeno no caminho: `documentacaoTecnica` aceitava um `id` vindo do cliente na criação (nenhum outro módulo faz isso) — removido, parecia resíduo de copiar-colar.
+- 131 testes passando (39 novos), `tsc`/`eslint` limpos.
+
+Detalhe completo: `GUIA-ZOD-REPOSITORY.md`, seção "Quinto passo".

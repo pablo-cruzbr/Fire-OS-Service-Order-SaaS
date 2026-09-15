@@ -16,7 +16,7 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 **O que é:** uma camada fininha entre o Service (a regra de negócio) e o banco, que esconde o ORM (o Prisma) atrás de métodos com nome de negócio — `create`, `update` — pra ninguém mais no projeto precisar saber que existe um Prisma ali dentro. O ganho prático não é só organização: o teste do Service passa a receber um repository **fake** no lugar do banco de verdade, em vez de mockar o módulo inteiro do Prisma.
 
-**No Fire OS:** `src/repositories/OrdemdeServicoRepository.ts` e `src/repositories/UserRepository.ts` (15/09) são os dois repositories que existem hoje. `CreateOrdemServicoService`/`UpdateOrdemdeServicoService` e `CreateUserService`/`UpdateUserService`/`AuthUserService` recebem o repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um fake com `vi.fn()`). Os outros ~98 services do projeto ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
+**No Fire OS:** 5 repositories existem hoje (15/09) — `OrdemdeServicoRepository.ts`, `UserRepository.ts`, `AssistenciaTecnicaRepository.ts`, `LaudoTecnicoRepository.ts`, `DocumentacaoTecnicaRepository.ts`. Cada Service recebe o repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um fake com `vi.fn()`). Os outros ~95 services do projeto ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
 
 ### 2. RBAC (Role-Based Access Control)
 
@@ -34,7 +34,7 @@ Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada term
 
 **O que é:** garantir que o dado que chega de fora (`req.body`, query params, upload) tem o formato esperado *antes* dele entrar na regra de negócio — em vez de descobrir que estava errado quando o banco já quebrou ou o bcrypt já tentou rodar em cima de algo inválido.
 
-**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `createUserSchema`/`updateUserSchema`/`authUserSchema` (`src/schemas/user.schema.ts`) já validam os 3 endpoints do módulo `user`, junto com o piloto original de OrdemdeServico. Os outros ~98 controllers ainda não passaram pelo rollout.
+**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `user` e os 3 módulos técnicos (AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica) já validam via Zod, junto com o piloto original de OrdemdeServico — 5 módulos no total. Os outros ~95 controllers ainda não passaram pelo rollout.
 
 ### 5. Tratamento de erros global (error-handling middleware)
 
