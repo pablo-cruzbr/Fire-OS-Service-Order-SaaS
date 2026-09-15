@@ -39,3 +39,40 @@ describe('defineAbilityFor — OrdemdeServico', () => {
     expect(ability.can('update', qualquerOrdem)).toBe(false)
   })
 })
+
+describe('defineAbilityFor — os 3 módulos técnicos (achado e corrigido em 14-15/09)', () => {
+  const recursos = [
+    'ControleDeAssistenciaTecnica',
+    'ControleDeLaudoTecnico',
+    'DocumentacaoTecnica',
+  ] as const
+
+  it.each(recursos)('ADMIN pode dar update em qualquer %s', (recurso) => {
+    const ability = defineAbilityFor({ role: 'ADMIN' })
+    const registroDeOutroTecnico = subject(recurso, { tecnico_id: 'tecnico-999' })
+
+    expect(ability.can('update', registroDeOutroTecnico)).toBe(true)
+  })
+
+  it.each(recursos)('TECNICO pode dar update no próprio %s', (recurso) => {
+    const ability = defineAbilityFor({ role: 'TECNICO', tecnico_id: 'tecnico-1' })
+    const registroProprio = subject(recurso, { tecnico_id: 'tecnico-1' })
+
+    expect(ability.can('update', registroProprio)).toBe(true)
+  })
+
+  it.each(recursos)('TECNICO NÃO pode dar update em %s de outro técnico', (recurso) => {
+    const ability = defineAbilityFor({ role: 'TECNICO', tecnico_id: 'tecnico-1' })
+    const registroDeOutroTecnico = subject(recurso, { tecnico_id: 'tecnico-999' })
+
+    expect(ability.can('update', registroDeOutroTecnico)).toBe(false)
+  })
+
+  it.each(recursos)('USER não pode dar update em %s, só ler', (recurso) => {
+    const ability = defineAbilityFor({ role: 'USER' })
+    const qualquerRegistro = subject(recurso, { tecnico_id: 'tecnico-1' })
+
+    expect(ability.can('read', qualquerRegistro)).toBe(true)
+    expect(ability.can('update', qualquerRegistro)).toBe(false)
+  })
+})
