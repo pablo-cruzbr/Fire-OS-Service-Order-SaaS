@@ -79,7 +79,95 @@ O checklist do `ROADMAP-PLENO.md` tinha um item marcado feito ("mapear onde mais
 
 As três rotas estão só atrás de `isAuthenticated` (`privateRouter`, sem `can()` nem `authorizeOrdemdeServico`-equivalente) — ou seja, hoje qualquer `TECNICO` autenticado edita ou apaga a assistência técnica, o laudo técnico ou a documentação técnica **de qualquer outro técnico**, só sabendo o `id`. É o mesmo achado do item 5 acima, só que ainda não corrigido — e é maior alavancagem do que continuar o rollout de Zod/Repository pro próximo módulo qualquer, porque esse aqui já tem o padrão de correção pronto (`defineAbilityFor` + um middleware `authorize*` por módulo, ou generalizar `authorizeOrdemdeServico` pra receber o nome do model).
 
-- [ ] Generalizar `authorizeOrdemdeServico` (ou criar 3 equivalentes) pros 3 módulos acima — mesmo padrão, mesma regra ("TECNICO só edita o que é seu, ADMIN edita tudo"). **Prioridade máxima do checklist** — ver `CHECKLIST-REFATORACAO-BACKEND.md`.
+- [x] Generalizar `authorizeOrdemdeServico` (ou criar 3 equivalentes) pros 3 módulos acima — mesmo padrão, mesma regra ("TECNICO só edita o que é seu, ADMIN edita tudo"). **Feito em 15/09** — ver "O que foi implementado" logo abaixo.
+
+---
+
+## O que foi implementado (generalizado pros 3 módulos) — 15/09/2026
+
+Escolhi **generalizar** em vez de criar 3 middlewares quase idênticos — era literalmente a pergunta que o próprio achado de 14/09 deixou em aberto ("generalizar `authorizeOrdemdeServico` ou criar 3 equivalentes?"). Copiar o middleware 3 vezes ia repetir o mesmo risco que motivou usar CASL em primeiro lugar no item 5: duas (ou quatro) verificações manuais que podem divergir com o tempo.
+
+**1. `ability.ts` ganhou uma lista de "recursos com dono" (`OwnableSubject`)** em vez de só `"OrdemdeServico"` fixo:
+
+```ts
+// antes: só um recurso, regra escrita na mão pra ele
+type Subjects = "OrdemdeServico" | "all";
+// ...
+if (user.role === "TECNICO") {
+  can("read", "OrdemdeServico");
+  can("update", "OrdemdeServico", { tecnico_id: user.tecnico_id ?? "__sem_tecnico__" });
+  return build();
+}
+```
+
+```ts
+// depois: qualquer recurso da lista recebe a MESMA regra, num loop
+export type OwnableSubject = "OrdemdeServico" | "ControleDeAssistenciaTecnica" | "ControleDeLaudoTecnico" | "DocumentacaoTecnica";
+const OWNABLE_SUBJECTS: OwnableSubject[] = [ /* os 4 */ ];
+// ...
+if (user.role === "TECNICO") {
+  for (const resource of OWNABLE_SUBJECTS) {
+    can("read", resource);
+    can("update", resource, { tecnico_id: user.tecnico_id ?? "__sem_tecnico__" });
+  }
+  return build();
+}
+```
+
+Adicionar um 5º recurso no futuro (se aparecer outro módulo com o mesmo formato de dono) vira **uma linha** na lista, não uma regra nova pra escrever.
+
+**2. `authorizeOrdemdeServico.ts` virou a peça original generalizada, num arquivo novo — `authorizeOwnership.ts`.** Em vez de "buscar a OS, montar ability, checar" só pra `OrdemdeServico`, a versão genérica recebe **como parâmetro** o nome do subject e a função de buscar o registro:
+
+```ts
+export function authorizeOwnership(
+  subjectName: OwnableSubject,
+  action: "read" | "update",
+  findRecord: (id: string) => Promise<{ id: string; tecnico_id: string | null } | null>,
+  notFoundMessage: string,
+  forbiddenMessage?: string
+) {
+  return async (req, res, next) => {
+    const record = await findRecord(req.params.id);
+    if (!record) return res.status(404).json({ error: notFoundMessage });
+
+    const ability = defineAbilityFor({ role: req.user_role, tecnico_id: req.user_tecnico_id });
+    if (ability.cannot(action, subject(subjectName, record))) {
+      return res.status(403).json({ error: forbiddenMessage ?? "Você não tem permissão para acessar este registro." });
+    }
+    return next();
+  };
+}
+```
+
+`authorizeOrdemdeServico.ts` não sumiu — virou uma casca fina que chama `authorizeOwnership("OrdemdeServico", ...)`, mantendo o nome e a mensagem de erro exatos que já existiam (pra não quebrar nada que já dependesse dele — nem o teste antigo precisou mudar uma linha).
+
+**3. As 3 rotas em `routes.ts` ganharam o middleware, cada uma passando só "como buscar esse registro":**
+
+```ts
+privateRouter.patch(
+  '/assistenciatecnica/update/:id',
+  authorizeOwnership(
+    "ControleDeAssistenciaTecnica",
+    "update",
+    (id) => prismaClient.controleDeAssistenciaTecnica.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
+    "Controle de assistência técnica não encontrado."
+  ),
+  new UpdateAssistenciaTecnicaController().handle
+)
+```
+
+Mesma coisa pra `/laudotecnico/update/:id` e `/documentacaotecnica/update/:id`, cada um só trocando o nome do subject, o método do Prisma (`controleDeLaudoTecnico`, `documentacaoTecnica`) e a mensagem de "não encontrado".
+
+**Antes:** um `TECNICO` autenticado editava a assistência técnica, o laudo técnico ou a documentação técnica de **qualquer outro técnico**, só sabendo o `id`.
+**Depois:** mesma tentativa retorna `403`. `ADMIN` continua podendo editar qualquer registro.
+
+**4. Testes novos — 79 no total agora (17 novos desde a última contagem):**
+- `src/permissions/ability.test.ts` ganhou um describe novo com `it.each` cobrindo os 3 recursos × 4 cenários (ADMIN edita qualquer um / TECNICO edita o próprio / TECNICO não edita o de outro / USER só lê) — 12 testes novos, sem repetir o corpo do teste 3 vezes.
+- `src/Middleware/authorizeOwnership.test.ts` (novo) — 5 testes cobrindo o middleware genérico isolado (404, 403, dono passa, ADMIN passa, mensagem customizada), com um `findRecord` fake em vez de mockar o Prisma — mesmo princípio do Repository fake usado no resto do projeto.
+
+**Preenchendo o molde da narrativa:**
+
+> O achado de 14/09 (o mesmo bug de ownership da OrdemdeServico aberto em mais 3 módulos) deixou uma pergunta em aberto: generalizar o middleware ou copiar 3 vezes? Copiar seria mais rápido de escrever, mas reproduziria o mesmo risco que motivou centralizar com CASL da primeira vez — regras que divergem com o tempo porque vivem em lugares diferentes. Extraí a parte genérica (`authorizeOwnership`) do que antes só existia hard-coded pra OrdemdeServico, e transformei `authorizeOrdemdeServico` numa casca fina por cima dela, pra não quebrar nada que já usava esse nome. Troquei "3 arquivos quase iguais" por "1 função configurável + 4 linhas de wiring em `routes.ts`" — e o próximo módulo com esse mesmo formato de dono custa uma linha na lista de subjects, não um middleware novo.
 
 ---
 

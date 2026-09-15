@@ -19,7 +19,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ `can.ts` (RBAC por role) wired em `routes.ts` nas rotas críticas.
 - ✅ CASL (`src/permissions/ability.ts`) — ownership de OrdemdeServico: técnico só edita a que é dele.
 - ✅ `authorizeOrdemdeServico` middleware testado (`authorizeOrdemdeServico.test.ts`).
-- ⬜ **Achado novo (14/09) — mesmo bug, 3 módulos ainda abertos:** `PATCH /assistenciatecnica/update/:id`, `PATCH /laudotecnico/update/:id` e `PATCH /documentacaotecnica/update/:id` não checam dono nenhum (só `isAuthenticated`, sem `can()` nem ownership) — qualquer `TECNICO` edita/apaga registro de outro técnico, exatamente o bug que foi corrigido em OrdemdeServico. Detalhe em `GUIA-RBAC-CASL.md`, seção "Revisão 14/09/2026".
+- ✅ **Gap de ownership nos 3 módulos técnicos, fechado (15/09).** `authorizeOwnership.ts` novo generaliza a regra pra qualquer recurso com um `tecnico_id` — aplicado em `PATCH /assistenciatecnica/update/:id`, `/laudotecnico/update/:id` e `/documentacaotecnica/update/:id`. Detalhe em `GUIA-RBAC-CASL.md`, seção "O que foi implementado (generalizado pros 3 módulos)".
 
 ## 3. Zod nos controllers
 
@@ -49,7 +49,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 ## 7. Testes automatizados
 
-- ✅ 52 testes unitários passando (Vitest) — cobrindo auth, RBAC/CASL, Create/Update de OrdemdeServico (agora com repository fake em vez de mock do Prisma), a infra de validação/erro, e o cache-aside da listagem.
+- ✅ 79 testes unitários passando (Vitest) — cobrindo auth, RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update de OrdemdeServico (agora com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), e o middleware genérico de ownership (`authorizeOwnership.test.ts`).
 - ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
 - ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
 - ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
@@ -64,7 +64,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 - ✅ Postgres e Redis já rodavam isolados via `docker-compose.yml`.
 - ✅ `Dockerfile` multi-stage novo pra própria API (`Backend/Dockerfile`) + `.dockerignore` + serviço `fireos-api` adicionado ao compose, com `depends_on` do banco e do Redis.
-- 🟡 Sintaxe validada (`docker compose config` rodou limpo), mas **build real não testado** — Docker Desktop não estava ativo neste ambiente. Rodar `docker compose up --build` numa máquina com Docker rodando pra confirmar de ponta a ponta.
+- ✅ **Build real validado (15/09)** — `docker compose build fireos-api` completou sem erro (stage de build: `npm ci` + `prisma generate` + `tsc`; stage de runtime: `COPY --from=build` do `dist/`). Faltava só isso pra fechar o item.
 - ✅ Achado à parte: `.env.local` não estava no `.gitignore` — corrigido; conferido que nunca foi commitado.
 
 ---
@@ -79,8 +79,8 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 ## Ordem sugerida pro que falta
 
-0. **Fechar o gap de ownership nos 3 módulos achados na revisão de 14/09** (item 2) — é o mesmo bug de segurança que já foi corrigido uma vez em OrdemdeServico, então o padrão de correção já existe; é mais barato e mais urgente que continuar o rollout genérico do item 1. **Ainda pendente.**
-1. Continuar o rollout de Zod + arquitetura Controller/Service/Repository pros outros módulos (item 1 e 3 andam juntos). **Ainda pendente.**
+0. ~~Fechar o gap de ownership nos 3 módulos achados na revisão de 14/09~~ (item 2) — ✅ feito (15/09).
+1. Continuar o rollout de Zod + arquitetura Controller/Service/Repository pros outros módulos (item 1 e 3 andam juntos). **Ainda pendente — é o que resta desta lista, junto com testes de integração.**
 2. ~~Replicar o cache em `ListTecnicoController.ts` (item 6)~~ — ✅ feito (04/09).
 3. ~~Ligar a fila BullMQ no fluxo real de upload (item 5)~~ — ✅ feito (14/09).
 4. ~~TSC + Lint no CI (item 8)~~ — ✅ feito (14/09).
@@ -107,3 +107,18 @@ Verifiquei cada afirmação ✅ deste checklist rodando os comandos de verdade (
 **Atualização, mesmo dia (14/09), depois desta revisão:** os itens "TSC + Lint no CI" (item 8) e "ligar a fila BullMQ no fluxo real" (item 5) — que essa revisão ainda listava como pendentes acima — foram implementados na sequência. Detalhe completo em `GUIA-CI-LINT.md` e `GUIA-FILA-BULLMQ.md` (seção 6). O gap de ownership (item 0 da ordem sugerida) continua em aberto — detalhe em `GUIA-RBAC-CASL.md`.
 
 **Nota (mesmo dia, depois): `ROADMAP-PLENO.md` foi dividido** em guias menores por assunto (`GUIA-RBAC-CASL.md`, `GUIA-ZOD-REPOSITORY.md`, `GUIA-CI-LINT.md`, além dos que já existiam) porque tinha ficado grande demais pra ler de uma vez — ele continua sendo o índice/glossário, os relatos "o que foi implementado" moraram pros guias.
+
+---
+
+## Revisão 15/09/2026 — segunda checagem contra o código real
+
+- `npx vitest run` → **62/62 testes passando** (14 arquivos) — corrigido o número aqui, que ainda estava em 52 (esquecido de atualizar depois da fila).
+- `npx tsc --noEmit` → limpo. `npx eslint .` → 0 erros, 36 avisos (mesmos de sempre).
+- `routes.ts` → confirmado, os 3 módulos do achado de 14/09 (`assistenciatecnica`, `laudotecnico`, `documentacaotecnica`) **continuam sem ownership** — nada mudou aqui, segue sendo a maior prioridade.
+- `docker compose build fireos-api` → **rodou de verdade agora** (Docker Desktop estava ativo nesta sessão) e completou sem erro — item 9 fechado por completo, não é mais só sintaxe validada.
+- `git log` → só o commit da reorganização de pastas do `estudos-pleno/` desde a última revisão — nenhum código mudou, então nada mais tinha razão de ter mudado (e não mudou).
+- Achado pequeno, fora do escopo do checklist: `Backend/@prisma/client/` (a pasta que o `eslint.config.mjs` ignora) parece ser sobra de uma configuração antiga — o `schema.prisma` atual não tem `output` customizado no `generator client`, então o Prisma gera pro lugar padrão (`node_modules/@prisma/client`). Não trava nada (o `.gitignore` cobre `node_modules`), só é uma pasta órfã que dava pra apagar do repo um dia — não prioritário.
+
+**Nada de novo pendente foi encontrado.** O que falta continua sendo exatamente a "Ordem sugerida" acima: (0) fechar o gap de ownership nos 3 módulos, (1) rollout de Zod/Repository, (2) testes de integração/E2E.
+
+**Atualização, mesmo dia (15/09), depois desta revisão: o item 0 foi fechado.** `authorizeOwnership.ts` (novo) generaliza a regra de ownership pra qualquer recurso com `tecnico_id`, aplicado nos 3 módulos técnicos — 79 testes passando agora (17 novos), `tsc`/`eslint` limpos. Detalhe completo em `GUIA-RBAC-CASL.md`, seção "O que foi implementado (generalizado pros 3 módulos)". O que resta da lista é só o rollout de Zod/Repository (item 1) e os testes de integração/E2E (item 7).
