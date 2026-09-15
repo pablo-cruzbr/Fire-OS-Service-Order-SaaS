@@ -187,7 +187,7 @@ fire-os/                              # Monorepo
 | **Banco de Dados** | PostgreSQL, Prisma ORM |
 | **Cache & Filas** | Redis (cache-aside), BullMQ (protótipo) |
 | **Armazenamento** | Cloudinary (imagens) |
-| **Testes & CI** | Vitest (backend, 58 testes), GitHub Actions |
+| **Testes & CI** | Vitest (backend, 211 testes, ~31% de cobertura), GitHub Actions |
 | **Infraestrutura** | Docker + Docker Compose (Postgres, Redis, API) |
 | **Calendário** | DHTMLX Scheduler v7 |
 | **Deploy Mobile** | Expo EAS Build + EAS Update |
@@ -271,9 +271,9 @@ Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquit
 - [x] **Infraestrutura:** Dockerização completa — PostgreSQL e Redis já rodavam isolados via Docker Compose; adicionado `Dockerfile` multi-stage pra containerizar a própria API (`docker compose up --build` sobe banco, cache e API juntos)
 - [x] **Arquitetura (System Design):** Mapa completo de arquitetura com diagramas (mermaid) — camadas do backend antes/depois, sequence diagrams de request e de cache, e resposta de escala ("o que quebraria com 1000 técnicos") em [`Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md`](Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md)
 - [x] **Validação & Segurança:** Validação de schema com Zod (piloto: criação/atualização de Ordem de Serviço) e middleware global de tratamento de erro, padronizando toda resposta de erro da API — rollout pros demais módulos em andamento
-- [x] **Testes automatizados (Backend):** 58 testes unitários com **Vitest** — RBAC/CASL, validação Zod, tratamento de erro global, Repository pattern (com repository fake), cache-aside (miss/hit/fallback)
-- [ ] **Testes E2E (Web):** Playwright ainda não configurado no Frontend
-- [x] **Automação (CI/CD):** 🟡 GitHub Actions (`test.yml`) já roda a suíte de testes a cada push/PR pra `main`; falta adicionar `tsc --noEmit` e lint como steps separados (fail-fast antes do teste)
+- [x] **Testes automatizados (Backend):** 211 testes unitários com **Vitest** — RBAC/CASL, validação Zod, tratamento de erro global, Repository pattern (com repository fake), cache-aside (miss/hit/fallback) — `coverage` configurado com piso mínimo de 30% (ainda baixo porque boa parte do rollout de Zod/Repository segue em andamento; sobe conforme o rollout avança)
+- [ ] **Testes de integração e E2E:** ainda usam só mock do Prisma, não um Postgres real; Playwright também não configurado no Frontend
+- [x] **Automação (CI/CD):** GitHub Actions (`test.yml`) roda `tsc --noEmit`, lint e a suíte de testes (com coverage) em steps separados a cada push/PR pra `main`, fail-fast antes do teste
 - [ ] **Features Avançadas:** Notificações push no app mobile (Expo Notifications) e transcrição de áudio para documentação técnica (Expo Speech)
 
 ---
