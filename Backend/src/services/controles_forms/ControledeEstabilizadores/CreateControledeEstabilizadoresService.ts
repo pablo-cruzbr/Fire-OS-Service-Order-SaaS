@@ -1,57 +1,25 @@
-import prismaClient from "../../../prisma";
-
-interface ControledeEstabilizadoresRequest {
-  name: string;
-  idChamado: string;
-  problema: string;
-  observacoes: string;
-  osdaAssistencia: string;
-  datadeChegada: string; // string
-  datadeRetirada: string; // string
-  estabilizadores_id: string;
-  statusEstabilizadores_id: string;
-  instituicaoUnidade_id?: string;
-}
+import { CreateEstabilizadoresInput } from "../../../schemas/estabilizadores.schema";
+import { EstabilizadoresRepository, estabilizadoresRepository } from "../../../repositories/EstabilizadoresRepository";
 
 class CreateControledeEstabilizadoresService {
-  async execute({
-    name,
-    idChamado,
-    problema,
-    observacoes,
-    osdaAssistencia,
-    datadeChegada,
-    datadeRetirada,
-    estabilizadores_id,
-    statusEstabilizadores_id,
-    instituicaoUnidade_id,
-  }: ControledeEstabilizadoresRequest) {
-    if (!name || name.trim() === "") {
-      throw new Error("Insira o nome!");
-    }
+  constructor(private repository: EstabilizadoresRepository = estabilizadoresRepository) {}
 
-    const controle = await prismaClient.controledeEstabilizadores.create({
-      data: {
-        idChamado,
-        problema,
-        observacoes,
-        osdaAssistencia,
-        datadeChegada, // já é string
-        datadeRetirada, // já é string
-        estabilizadores: { connect: { id: estabilizadores_id } },
-        statusEstabilizadores: { connect: { id: statusEstabilizadores_id } },
-        instituicaoUnidade: instituicaoUnidade_id
-          ? { connect: { id: instituicaoUnidade_id } }
-          : undefined,
-      },
-      include: {
-        estabilizadores: { select: { name: true, patrimonio: true } },
-        statusEstabilizadores: { select: { name: true } },
-        instituicaoUnidade: { select: { name: true, endereco: true } },
-      },
+  async execute(data: CreateEstabilizadoresInput) {
+    return this.repository.create({
+      idChamado: data.idChamado,
+      problema: data.problema,
+      observacoes: data.observacoes,
+      osdaAssistencia: data.osdaAssistencia,
+      // Mantido igual ao comportamento anterior: normaliza pra ISO string
+      // (o campo é String no schema.prisma, não DateTime).
+      datadeChegada: new Date(data.datadeChegada).toISOString(),
+      datadeRetirada: new Date(data.datadeRetirada).toISOString(),
+      estabilizadores: { connect: { id: data.estabilizadores_id } },
+      statusEstabilizadores: { connect: { id: data.statusEstabilizadores_id } },
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
     });
-
-    return controle;
   }
 }
 

@@ -1,29 +1,12 @@
-import prismaClient from "../../../prisma";
-
-interface DeleteControledeLaboratorioRequest {
-  id: string;
-}
-
+import { LaboratorioRepository, laboratorioRepository } from "../../../repositories/LaboratorioRepository";
 
 class DeleteControledeLaboratorioService {
-  async execute({ id }: DeleteControledeLaboratorioRequest) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar o controle de Laboratorio.");
-    }
+  constructor(private repository: LaboratorioRepository = laboratorioRepository) {}
 
-    // Verifica se o registro existe antes de deletar
-    const controleExists = await prismaClient.controleDeLaboratorio.findUnique({
-      where: { id },
-    });
-
-    if (!controleExists) {
-      throw new Error("Controle de Laboratorio não encontrado.");
-    }
-
-    await prismaClient.controleDeLaboratorio.delete({
-      where: { id },
-    });
-
+  async execute(id: string) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    await this.repository.delete(id);
     return { message: "Controle de Laboratorio deletado com sucesso." };
   }
 }

@@ -1,40 +1,13 @@
 import { Response, Request } from "express";
 import { CreateControledeLaboratorioService } from "../../../services/controles_forms/ControledeLaboratorio/CreateControledeLaboratorioService";
+import { CreateLaboratorioInput } from "../../../schemas/laboratorio.schema";
 
 class CreateControledeLaboratorioController {
+  constructor(private service: CreateControledeLaboratorioService = new CreateControledeLaboratorioService()) {}
+
   async handle(req: Request, res: Response) {
-   
-      const {
-        nomedoEquipamento,
-        defeito,
-        marca,
-        osDeAbertura,
-        osDeDevolucao,
-        data_de_Chegada,
-        data_de_Finalizacao,
-        instituicaoUnidade_id,
-        cliente_id,
-        equipamento_id,
-        statusControledeLaboratorio_id,
-      } = req.body;
-
-      const createControlledeLaboratorioService = new CreateControledeLaboratorioService();
-
-      const controle = await createControlledeLaboratorioService.execute({
-        nomedoEquipamento,
-        defeito,
-        marca,
-        osDeAbertura,
-        osDeDevolucao,
-        data_de_Chegada,
-        data_de_Finalizacao,
-        instituicaoUnidade_id,
-        cliente_id,
-        equipamento_id,
-        statusControledeLaboratorio_id,
-      });
-
-      return res.json(controle);
+    const controle = await this.service.execute(req.body as CreateLaboratorioInput);
+    return res.json(controle);
   }
 }
 

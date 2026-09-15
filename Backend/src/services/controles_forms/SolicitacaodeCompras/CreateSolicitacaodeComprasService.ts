@@ -1,45 +1,22 @@
-import prismaClient from "../../../prisma";
-
-interface SolicitacaodeComprasRequest {
-  itemSolicitado: string;
-  solicitante: string;
-  motivoDaSolicitacao: string;
-  preco: number;
-  linkDeCompra: string;
-  statusCompras_id: string;
-}
+import { CreateSolicitacaoComprasInput } from "../../../schemas/solicitacaoCompras.schema";
+import {
+  SolicitacaoComprasRepository,
+  solicitacaoComprasRepository,
+} from "../../../repositories/SolicitacaoComprasRepository";
 
 class CreateSolicitacaodeComprasService {
-    async execute({
-        itemSolicitado,
-        solicitante,
-        motivoDaSolicitacao,
-        preco,
-        linkDeCompra,
-        statusCompras_id
-    }: SolicitacaodeComprasRequest){
-       if (!itemSolicitado || itemSolicitado.trim() === "") {
-            throw new Error("Insira o nome do item solicitado!");
-        }
+  constructor(private repository: SolicitacaoComprasRepository = solicitacaoComprasRepository) {}
 
-
-        const controle = await prismaClient.solicitacaoDeCompras.create({
-            data:{
-                itemSolicitado,
-                solicitante,
-                motivoDaSolicitacao,
-                preco,
-                linkDeCompra,
-                statusCompras_id
-            },
-            include:{
-                statusCompras:{
-                    select:{name: true}
-                }
-            }
-        })
-        return controle;
-    }
+  async execute(data: CreateSolicitacaoComprasInput) {
+    return this.repository.create({
+      itemSolicitado: data.itemSolicitado,
+      solicitante: data.solicitante,
+      motivoDaSolicitacao: data.motivoDaSolicitacao,
+      preco: data.preco,
+      linkDeCompra: data.linkDeCompra,
+      statusCompras: { connect: { id: data.statusCompras_id } },
+    });
+  }
 }
 
-export {CreateSolicitacaodeComprasService}
+export { CreateSolicitacaodeComprasService };

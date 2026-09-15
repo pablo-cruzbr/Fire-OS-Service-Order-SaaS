@@ -1,50 +1,21 @@
-import prismaClient from "../../../prisma";
-
-interface ControledeMPORequest {
-  datadaInstalacao: string;
-  osInstalacao: string;
-  osRetirada: string;
-  equipamento_id: string;
-  statusMaquinasPendentesOro_id: string;
-  instituicaoUnidade_id: string; 
-}
+import { CreateMaquinasPendentesOroInput } from "../../../schemas/maquinasPendentesOro.schema";
+import {
+  MaquinasPendentesOroRepository,
+  maquinasPendentesOroRepository,
+} from "../../../repositories/MaquinasPendentesOroRepository";
 
 class CreateControledeMaquinasPendentesOroService {
-  async execute({
-    datadaInstalacao,
-    osInstalacao,
-    osRetirada,
-    equipamento_id,
-    statusMaquinasPendentesOro_id,
-    instituicaoUnidade_id, 
-  }: ControledeMPORequest) {
-    if (!datadaInstalacao || datadaInstalacao.trim() === "") {
-      throw new Error("Insira a data de instalação!");
-    }
+  constructor(private repository: MaquinasPendentesOroRepository = maquinasPendentesOroRepository) {}
 
-    const controle = await prismaClient.controledeMaquinasPendentesOro.create({
-      data: {
-        datadaInstalacao: new Date(datadaInstalacao),
-        osInstalacao,
-        osRetirada,
-        equipamento_id,
-        statusMaquinasPendentesOro_id,
-        instituicaoUnidade_id, 
-      },
-      include: {
-        equipamento: {
-          select: {
-            name: true,
-            patrimonio: true,
-          },
-        },
-        statusMaquinasPendentesOro: {
-          select: { name: true },
-        },
-      },
+  async execute(data: CreateMaquinasPendentesOroInput) {
+    return this.repository.create({
+      datadaInstalacao: data.datadaInstalacao,
+      osInstalacao: data.osInstalacao,
+      osRetirada: data.osRetirada,
+      equipamento: { connect: { id: data.equipamento_id } },
+      instituicaoUnidade: { connect: { id: data.instituicaoUnidade_id } },
+      statusMaquinasPendentesOro: { connect: { id: data.statusMaquinasPendentesOro_id } },
     });
-
-    return controle;
   }
 }
 

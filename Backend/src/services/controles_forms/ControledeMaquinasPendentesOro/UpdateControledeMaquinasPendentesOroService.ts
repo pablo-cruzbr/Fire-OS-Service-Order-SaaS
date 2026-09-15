@@ -1,80 +1,29 @@
-import prismaClient from "../../../prisma";
-
-type UpdateMaquinasPendentesOroRequest = {
-  id: string;
-  datadaInstalacao: string; 
-  osInstalacao: string;
-  osRetirada: string;
-  equipamento_id: string;
-  statusMaquinasPendentesOro_id: string;
-  instituicaoUnidade_id: string;
-};
+import { UpdateMaquinasPendentesOroInput } from "../../../schemas/maquinasPendentesOro.schema";
+import {
+  MaquinasPendentesOroRepository,
+  maquinasPendentesOroRepository,
+} from "../../../repositories/MaquinasPendentesOroRepository";
 
 class UpdateControledeMaquinasPendentesOroService {
-  async execute({
-    id,
-    datadaInstalacao,
-    osInstalacao,
-    osRetirada,
-    equipamento_id,
-    statusMaquinasPendentesOro_id,
-    instituicaoUnidade_id,
-  }: UpdateMaquinasPendentesOroRequest) {
-    if (!id) {
-      throw new Error("ID obrigatório para atualizar o card de Máquinas Pendentes no Laboratório.");
-    }
+  constructor(private repository: MaquinasPendentesOroRepository = maquinasPendentesOroRepository) {}
 
-    const checkExists = await prismaClient.controledeMaquinasPendentesOro.findUnique({
-      where: { id },
+  async execute(id: string, data: UpdateMaquinasPendentesOroInput) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    const controle = await this.repository.update(id, {
+      datadaInstalacao: data.datadaInstalacao,
+      osInstalacao: data.osInstalacao,
+      osRetirada: data.osRetirada,
+      equipamento: data.equipamento_id ? { connect: { id: data.equipamento_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+      statusMaquinasPendentesOro: data.statusMaquinasPendentesOro_id
+        ? { connect: { id: data.statusMaquinasPendentesOro_id } }
+        : undefined,
     });
 
-    if (!checkExists) {
-      throw new Error("Registro não encontrado.");
-    }
-
-    await prismaClient.controledeMaquinasPendentesOro.update({
-      where: { id },
-      data: {
-        id,
-        datadaInstalacao: new Date(datadaInstalacao), // <-- aqui faz a conversão
-        osInstalacao,
-        osRetirada,
-        equipamento_id,
-        statusMaquinasPendentesOro_id,
-        instituicaoUnidade_id,
-      },
-    });
-
-    const controle = await prismaClient.controledeMaquinasPendentesOro.findUnique({
-      where: { id },
-      include: {
-        instituicaoUnidade: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true,
-          },
-        },
-        equipamento: {
-          select: {
-            id: true,
-            name: true,
-            patrimonio: true,
-          },
-        },
-        statusMaquinasPendentesOro: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    return {
-      message: "Controle de Máquinas Pendentes atualizado com sucesso.",
-      controle,
-    };
+    return { message: "Controle de Máquinas Pendentes atualizado com sucesso.", controle };
   }
 }
 

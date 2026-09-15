@@ -1,29 +1,16 @@
-import prismaClient from "../../../prisma";
-
-interface DeleteControledeMaquinasPendentesLabRequest {
-  id: string;
-}
+import {
+  MaquinasPendentesLabRepository,
+  maquinasPendentesLabRepository,
+} from "../../../repositories/MaquinasPendentesLabRepository";
 
 class DeleteControledeMaquinasPendentesLabService {
-  async execute({ id }:  DeleteControledeMaquinasPendentesLabRequest  ) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar o controle de assistência técnica.");
-    }
+  constructor(private repository: MaquinasPendentesLabRepository = maquinasPendentesLabRepository) {}
 
-    // Verifica se o registro existe antes de deletar
-    const controleExists = await prismaClient.controleDeMaquinasPendentesLaboratorio.findUnique({
-      where: { id },
-    });
-
-    if (!controleExists) {
-      throw new Error("Controle de Laudo técnico não encontrado.");
-    }
-
-    await prismaClient.controleDeMaquinasPendentesLaboratorio.delete({
-      where: { id },
-    });
-
-    return { message: "Controle de Laudo técnico deletado com sucesso." };
+  async execute(id: string) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    await this.repository.delete(id);
+    return { message: "Controle de Máquinas Pendentes no Laboratório deletado com sucesso." };
   }
 }
 
