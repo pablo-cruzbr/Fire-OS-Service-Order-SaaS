@@ -11,8 +11,10 @@ export default tseslint.config(
     // "@prisma/**" é o client gerado pelo `prisma generate` (output custom do
     // schema.prisma) — código de terceiros que mora dentro do repo, não
     // nosso; lintar ele só gera ~2400 avisos sem sinal nenhum (achado ao
-    // rodar `npx eslint .` pela primeira vez).
-    ignores: ["dist/**", "node_modules/**", "generated/**", "@prisma/**"],
+    // rodar `npx eslint .` pela primeira vez). "coverage/**" é o relatório
+    // HTML gerado pelo `vitest run --coverage` (achado do mesmo jeito, ao
+    // configurar coverage pela primeira vez) — também não é nosso código.
+    ignores: ["dist/**", "node_modules/**", "generated/**", "@prisma/**", "coverage/**"],
   },
   ...tseslint.configs.recommended,
   {
