@@ -12,6 +12,9 @@ import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
 import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema } from "./schemas/ordemdeServico.schema";
 import { createUserSchema, updateUserSchema, authUserSchema } from "./schemas/user.schema";
+import { createAssistenciaTecnicaSchema, updateAssistenciaTecnicaSchema } from "./schemas/assistenciaTecnica.schema";
+import { createLaudoTecnicoSchema, updateLaudoTecnicoSchema } from "./schemas/laudoTecnico.schema";
+import { createDocumentacaoTecnicaSchema, updateDocumentacaoTecnicaSchema } from "./schemas/documentacaoTecnica.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -256,35 +259,39 @@ privateRouter.get('/liststatusurgencia', new ListStatusUrgenciaController().hand
 //---> FORMULARIOS <---
 
 //CONTROLE DE ASSISTENCIA TÉCNICA
-privateRouter.post('/controledeassistenciatecnica', new CreateControledeAssistenciaTecnicaController().handle)
+privateRouter.post('/controledeassistenciatecnica', validate(createAssistenciaTecnicaSchema), new CreateControledeAssistenciaTecnicaController().handle)
 privateRouter.get('/listcontroledeassistenciatecnica', new ListControledeAssistenciaTecnicaController().handle);
-privateRouter.delete('/controledeassistenciatecnica/:id', new DeleteControledeAssistenciaTecnicaController().handle);
+privateRouter.delete('/controledeassistenciatecnica/:id', validate(idParamSchema, 'params'), new DeleteControledeAssistenciaTecnicaController().handle);
 privateRouter.get('/controledeassistenciatecnica/detail', new DetailAssistenciaTecnicaController().handle)
 privateRouter.patch(
   '/assistenciatecnica/update/:id',
+  validate(idParamSchema, 'params'),
   authorizeOwnership(
     "ControleDeAssistenciaTecnica",
     "update",
     (id) => prismaClient.controleDeAssistenciaTecnica.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
     "Controle de assistência técnica não encontrado."
   ),
+  validate(updateAssistenciaTecnicaSchema),
   new UpdateAssistenciaTecnicaController().handle
 )
 // CRIAR UPDATE - PACTH
 
 //CONTROLE DE LAUDO TÉCNICO
-privateRouter.post('/controledelaudotecnico', new CreateControledeLaudoTecnicoController().handle)
+privateRouter.post('/controledelaudotecnico', validate(createLaudoTecnicoSchema), new CreateControledeLaudoTecnicoController().handle)
 privateRouter.get('/listcontroledelaudotecnico', new ListControledeLaudoTecnicoController().handle)
-privateRouter.delete('/deletecontroledelaudotecnico/:id', new DeleteControledeLaudoTecnicoController().handle);
+privateRouter.delete('/deletecontroledelaudotecnico/:id', validate(idParamSchema, 'params'), new DeleteControledeLaudoTecnicoController().handle);
 privateRouter.get('/controledelaudotecnico/detail', new DetailLaudoTenicoController().handle)
 privateRouter.patch(
   '/laudotecnico/update/:id',
+  validate(idParamSchema, 'params'),
   authorizeOwnership(
     "ControleDeLaudoTecnico",
     "update",
     (id) => prismaClient.controleDeLaudoTecnico.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
     "Controle de laudo técnico não encontrado."
   ),
+  validate(updateLaudoTecnicoSchema),
   new UpdateControllerdeLaudoTecnicoController().handle
 )
 //CRIAR UPDATE - PATCH
@@ -314,18 +321,20 @@ privateRouter.patch('/controledemaquinaspendentesoro/update/:id', new UpdateCont
 // CRIAR UPDATE - PACTH
 
 //DOCUMENTAÇÃO TÉCNICA
-privateRouter.post('/documentacaotecnica', new CreateDocumentacaoTecnicaController().handle)
+privateRouter.post('/documentacaotecnica', validate(createDocumentacaoTecnicaSchema), new CreateDocumentacaoTecnicaController().handle)
 privateRouter.get('/listdocumentacaotecnica', new ListDocumentacaoTecnicaController().handle)
-privateRouter.delete('/deletedocumentacaotecnica/:id', new DeleteDocumentacaoTecnicaController().handle)
+privateRouter.delete('/deletedocumentacaotecnica/:id', validate(idParamSchema, 'params'), new DeleteDocumentacaoTecnicaController().handle)
 privateRouter.get('/controlededocumentacaotecnica/detail', new DetailDocumentacaoTecnicaController().handle)
 privateRouter.patch(
   '/documentacaotecnica/update/:id',
+  validate(idParamSchema, 'params'),
   authorizeOwnership(
     "DocumentacaoTecnica",
     "update",
     (id) => prismaClient.documentacaoTecnica.findUnique({ where: { id }, select: { id: true, tecnico_id: true } }),
     "Documentação técnica não encontrada."
   ),
+  validate(updateDocumentacaoTecnicaSchema),
   new UpdateDocumentacaoTecnicaController().handle
 )
 

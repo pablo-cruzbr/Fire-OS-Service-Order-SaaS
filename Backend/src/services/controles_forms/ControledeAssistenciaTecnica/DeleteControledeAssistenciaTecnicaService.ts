@@ -1,28 +1,15 @@
-import prismaClient from "../../../prisma";
-
-interface DeleteControledeAssistenciaTecnicaRequest {
-  id: string;
-}
+import {
+  AssistenciaTecnicaRepository,
+  assistenciaTecnicaRepository,
+} from "../../../repositories/AssistenciaTecnicaRepository";
 
 class DeleteControledeAssistenciaTecnicaService {
-  async execute({ id }: DeleteControledeAssistenciaTecnicaRequest) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar o controle de assistência técnica.");
-    }
+  constructor(private repository: AssistenciaTecnicaRepository = assistenciaTecnicaRepository) {}
 
-    // Verifica se o registro existe antes de deletar
-    const controleExists = await prismaClient.controleDeAssistenciaTecnica.findUnique({
-      where: { id },
-    });
-
-    if (!controleExists) {
-      throw new Error("Controle de assistência técnica não encontrado.");
-    }
-
-    await prismaClient.controleDeAssistenciaTecnica.delete({
-      where: { id },
-    });
-
+  async execute(id: string) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    await this.repository.delete(id);
     return { message: "Controle de assistência técnica deletado com sucesso." };
   }
 }

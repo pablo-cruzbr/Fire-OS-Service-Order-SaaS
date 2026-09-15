@@ -1,74 +1,30 @@
-import prismaClient from "../../../prisma";
+import { CreateAssistenciaTecnicaInput } from "../../../schemas/assistenciaTecnica.schema";
+import {
+  AssistenciaTecnicaRepository,
+  assistenciaTecnicaRepository,
+} from "../../../repositories/AssistenciaTecnicaRepository";
 
-interface ControledeATRequest{
-    name: string;
-    mesAno: Date;
-    idChamado: string;
-    assistencia: string;
-    observacoes: string;
-    osDaAssistencia: string;
-    dataDeRetirada: Date;
-    equipamento_id: string;
-    statusReparo_id: string;
-    instituicaoUnidade_id: string;
-    tecnico_id: string;
-    cliente_id: string;
-}
+class CreateControledeAssistenciaTecnicaService {
+  constructor(private repository: AssistenciaTecnicaRepository = assistenciaTecnicaRepository) {}
 
-class CreateControledeAssistenciaTecnicaService{
-    async execute({
-        name, 
-        mesAno, 
-        idChamado,
-        assistencia,
-        observacoes,
-        osDaAssistencia,
-        dataDeRetirada,
-        equipamento_id,
-        statusReparo_id,
-        instituicaoUnidade_id,
-        tecnico_id,
-        cliente_id,  
-    }:  ControledeATRequest){
-          if (!name || name.trim() === "") {
-      throw new Error("Insira o nome!");
-    }
-
-   const controle = await prismaClient.controleDeAssistenciaTecnica.create({
-  data: {
-    name,
-    mesAno,
-    idChamado,
-    assistencia,
-    observacoes,
-    osDaAssistencia,
-    dataDeRetirada,
-    equipamento: { connect: { id: equipamento_id } },
-    statusReparo: { connect: { id: statusReparo_id } },
-    instituicaoUnidade: { connect: { id: instituicaoUnidade_id } },
-    tecnico: { connect: { id: tecnico_id } },
-    cliente: { connect: { id: cliente_id } },
-  },
- include: {
- equipamento:{
-  select: {name: true}
- },
-  statusReparo:{
-    select: {name: true}
-  },
-  instituicaoUnidade:{
-    select: {name: true}
-  },
-  tecnico: {
-    select: { name: true }
-  },
-  cliente:{
-    select:{name: true}
+  async execute(data: CreateAssistenciaTecnicaInput) {
+    return this.repository.create({
+      name: data.name,
+      mesAno: data.mesAno,
+      idChamado: data.idChamado,
+      assistencia: data.assistencia,
+      observacoes: data.observacoes,
+      osDaAssistencia: data.osDaAssistencia,
+      dataDeRetirada: data.dataDeRetirada,
+      equipamento: { connect: { id: data.equipamento_id } },
+      statusReparo: { connect: { id: data.statusReparo_id } },
+      tecnico: { connect: { id: data.tecnico_id } },
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
+    });
   }
 }
 
-    });
-        return controle;
-    }
-}
-  export {CreateControledeAssistenciaTecnicaService};
+export { CreateControledeAssistenciaTecnicaService };

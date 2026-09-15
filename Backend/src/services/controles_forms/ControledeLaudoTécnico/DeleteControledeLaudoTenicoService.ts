@@ -1,28 +1,12 @@
-import prismaClient from "../../../prisma";
-
-interface DeleteControledeLaudoTecnicoRequest {
-  id: string;
-}
+import { LaudoTecnicoRepository, laudoTecnicoRepository } from "../../../repositories/LaudoTecnicoRepository";
 
 class DeleteControledeLaudoTecnicoService {
-  async execute({ id }: DeleteControledeLaudoTecnicoRequest ) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar o controle de assistência técnica.");
-    }
+  constructor(private repository: LaudoTecnicoRepository = laudoTecnicoRepository) {}
 
-    // Verifica se o registro existe antes de deletar
-    const controleExists = await prismaClient.controleDeLaudoTecnico.findUnique({
-      where: { id },
-    });
-
-    if (!controleExists) {
-      throw new Error("Controle de Laudo técnico não encontrado.");
-    }
-
-    await prismaClient.controleDeLaudoTecnico.delete({
-      where: { id },
-    });
-
+  async execute(id: string) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    await this.repository.delete(id);
     return { message: "Controle de Laudo técnico deletado com sucesso." };
   }
 }

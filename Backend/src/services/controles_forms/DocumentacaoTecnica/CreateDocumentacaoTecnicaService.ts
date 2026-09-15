@@ -1,57 +1,23 @@
-import prismaClient from "../../../prisma";
+import { CreateDocumentacaoTecnicaInput } from "../../../schemas/documentacaoTecnica.schema";
+import {
+  DocumentacaoTecnicaRepository,
+  documentacaoTecnicaRepository,
+} from "../../../repositories/DocumentacaoTecnicaRepository";
 
-interface DocumentacaoTecnicaRequest {
-    id: string;
-    titulo: string;
-    descricao: string;
-    
-    cliente_id: string;
-    tecnico_id: string;
-    instituicaoUnidade_id: string
+class CreateDocumentacaoTecnicaService {
+  constructor(private repository: DocumentacaoTecnicaRepository = documentacaoTecnicaRepository) {}
+
+  async execute(data: CreateDocumentacaoTecnicaInput) {
+    return this.repository.create({
+      titulo: data.titulo,
+      descricao: data.descricao,
+      tecnico: { connect: { id: data.tecnico_id } },
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+    });
+  }
 }
 
-class CreateDocumentacaoTecnicaService{
-    async execute({
-        id,
-        titulo,
-        descricao,
-        cliente_id,
-        tecnico_id,
-        instituicaoUnidade_id,
-    }: DocumentacaoTecnicaRequest){
-        if (!titulo || titulo.trim() === ""){
-            throw new Error ("Insira um titulo para sua documentação!")
-        }
-
-      const controle = await prismaClient.documentacaoTecnica.create({
-        data:{
-            id,
-            titulo,
-            descricao,
-            cliente_id,
-            tecnico_id,
-            instituicaoUnidade_id,
-        },
-        include:{
-            tecnico:{
-                select:{
-                    name: true
-                }
-            },
-            cliente:{
-                select:{
-                    name: true
-                }
-            },
-            instituicaoUnidade:{
-                select:{
-                    name: true
-                }
-            }
-        }
-      }) 
-      return controle; 
-    }
-}
-
-export {CreateDocumentacaoTecnicaService}
+export { CreateDocumentacaoTecnicaService };
