@@ -10,7 +10,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 ✅ **Fechado por completo:** item 2 (RBAC/CASL, incluindo os 4 recursos com ownership **e** o achado novo em `user/update`), item 4 (tratamento de erros global, incluindo `UnauthorizedError` novo), item 6 (cache), item 8 (TSC + Linter), item 9 (Docker, build real validado).
 
-🟡 **Piloto em 2 módulos agora, rollout pendente nos outros ~98:** item 1 (Repository pattern em OrdemdeServico + `user`), item 3 (Zod em OrdemdeServico + `user`, ~9 rotas de ~100+), item 4 (o `try/catch` ainda existe em **36 arquivos**).
+🟡 **Piloto em 2 módulos agora, rollout pendente nos outros ~98:** item 1 (Repository pattern em OrdemdeServico + `user`), item 3 (Zod em OrdemdeServico + `user`, ~9 rotas de ~100+), item 4 (o `try/catch` antigo ainda existe em **28 arquivos** — ver item 4 abaixo pro porquê esse número mudou de 36 pra 28).
 
 ⬜ **Ainda em zero:** item 7 (testes de integração, TestContainers, E2E, `coverage` no `vitest.config.ts`). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
 
@@ -46,7 +46,19 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ `AppError` / `ValidationError` / `NotFoundError` / `ConflictError` / `UnauthorizedError` (novo, 15/09) em `src/errors/AppError.ts`.
 - ✅ Middleware global `errorHandler` (`src/Middleware/errorHandler.ts`), plugado uma vez em `server.ts` — trata `ZodError`, `AppError` e erros conhecidos do Prisma (`P2002`→409, `P2025`→404, `P2003`→400), resto vira 500 padronizado.
 - ✅ `try/catch` removido dos controllers já refatorados (Create/Update de OrdemdeServico, Create/Update/Auth de `user`) — erro sobe sozinho via `express-async-errors`. Bug real corrigido no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade.
-- ⬜ Continua pendente **apenas** nos ~98 controllers que ainda não passaram pelo item 3 — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir". Hoje: **36 arquivos** ainda com `try/catch` manual.
+- ⬜ Continua pendente **apenas** nos controllers que ainda não passaram pelo item 3 — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir".
+
+**Correção 15/09 (revisão do próprio número):** o `grep "try {"` que eu tinha usado antes contava **36** arquivos, mas isso incluía try/catch que já é código bom, não dívida — o retry de `numeroOS` em `CreateOrdemdeServicoController.ts`, o `JSON.parse` de `atividades_ids` em `UpdateOrdemdeServicoService.ts`, e o fallback do Redis nos 4 services de cache (`ListOrdemdeServicoService.ts`, `ListTecnicoService.ts`, `CreateTecnicoService.ts`, `RemoveTecnicoService.ts`). Nenhum desses tem `res.status()` dentro do `catch` — eles relançam o erro ou só logam, que é o padrão certo. Contando só quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), o número real é **28 arquivos**, agrupados assim:
+
+| Grupo | Arquivos | Módulos |
+|---|---|---|
+| `controles_forms` — 5 módulos sem Zod ainda | 10 | Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaodeCompras (Update+Delete cada) |
+| `controles_forms` — 3 módulos técnicos (já têm ownership, falta Zod) | 6 | AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica (Update+Delete cada) |
+| OrdemdeServico — rotas fora do piloto Create/Update | 7 | 3 `ListBy*Controller`, `time/TimeOrdemdeServicoController`, 3 de assinatura (`CreateAssinatura`, `GetAssinatura`, `saveAssinatura`) |
+| `status_categorias` — entidades reais | 3 | `equipamento`, `informacoessetor`, `tipodeInstituicaoUnidade` (Update) |
+| Misc | 2 | `Eventos/EventosControllers.ts`, `fotoController.ts` (métodos `delete`/`listByOrdem` — só `handle` foi refeito pra fila) |
+
+Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 juntos) — bate com a análise de prioridade do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
