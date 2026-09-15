@@ -11,6 +11,7 @@ import { authorizeOwnership } from "./Middleware/authorizeOwnership";
 import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
 import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema } from "./schemas/ordemdeServico.schema";
+import { createUserSchema, updateUserSchema, authUserSchema } from "./schemas/user.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -138,9 +139,9 @@ const upload = multer(uploadConfig.upload());
 
 //1  - ROTAS DE LOGIN/CADASTRO DE USUÁRIO --
 // Cadastro público: usado pelas páginas signup_instituicao e signup_empresa do Frontend
-publicRouter.post('/users', new CreateUserController().handle)
+publicRouter.post('/users', validate(createUserSchema), new CreateUserController().handle)
 // Login
-publicRouter.post('/session', new AuthUserController().handle)
+publicRouter.post('/session', validate(authUserSchema), new AuthUserController().handle)
 
 // Listas usadas pelas telas de signup público, sem PII de usuário
 publicRouter.get('/listcliente', new ListClienteController().handle)
@@ -168,7 +169,17 @@ privateRouter.post("/ai/chat", aiChatController.handle);
 // Listar todos os usuários — expõe nome/e-mail/role de todo mundo, só ADMIN
 privateRouter.get('/listusers', can(['ADMIN']), new ListUserController().handle)
 privateRouter.get('/users/detail', new DetailUserController().handle)
-privateRouter.patch('/user/update/:id', new UpdateUserController().handle)
+// Achado 15/09: essa rota não tinha can() nem ownership nenhum — qualquer
+// usuário autenticado trocava a senha/email/instituição de QUALQUER outro
+// usuário, só sabendo o id. A tela que usa isso (EditUsuariosForm.tsx) é de
+// gestão de usuários, só ADMIN deveria acessar — mesma regra de /listusers.
+privateRouter.patch(
+  '/user/update/:id',
+  can(['ADMIN']),
+  validate(idParamSchema, 'params'),
+  validate(updateUserSchema),
+  new UpdateUserController().handle
+)
 
 //---> CATEGORIAS <---
 

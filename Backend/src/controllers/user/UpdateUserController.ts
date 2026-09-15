@@ -1,40 +1,14 @@
 import { Request, Response } from "express";
 import { UpdateUserService } from "../../services/user/UpdateUSerService";
+import { UpdateUserInput } from "../../schemas/user.schema";
 
 class UpdateUserController {
+  constructor(private service: UpdateUserService = new UpdateUserService()) {}
+
   async handle(req: Request, res: Response) {
-  
-    const { id } = req.params; 
-
-    const { 
-      name, 
-      email, 
-      password, 
-      cliente_id, 
-      setor_id, 
-      instituicaoUnidade_id,
-      tecnico_id
-    } = req.body;
-
-    const updateUserService = new UpdateUserService();
-
-    try {
-
-      const user = await updateUserService.execute({
-        user_id: id, 
-        name,
-        email,
-        password,
-        cliente_id,
-        setor_id,
-        tecnico_id,
-        instituicaoUnidade_id
-      });
-
-      return res.json(user);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
-    }
+    const { id } = req.params;
+    const user = await this.service.execute(id, req.body as UpdateUserInput);
+    return res.json(user);
   }
 }
 

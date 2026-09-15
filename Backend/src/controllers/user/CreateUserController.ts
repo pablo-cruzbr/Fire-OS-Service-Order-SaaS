@@ -1,24 +1,14 @@
-import {Request, response, Response } from "express";
+import { Request, Response } from "express";
 import { CreateUserService } from "../../services/user/CreateUserService";
+import { CreateUserInput } from "../../schemas/user.schema";
 
- class CreateUserController{
-    async handle(req: Request, res: Response) {
-        const {name, email, password, cliente_id, setor_id, tecnico_id, instituicaoUnidade_id} = req.body;
+class CreateUserController {
+  constructor(private service: CreateUserService = new CreateUserService()) {}
 
-        const createUserService = new CreateUserService();
+  async handle(req: Request, res: Response) {
+    const user = await this.service.execute(req.body as CreateUserInput);
+    return res.json({ user });
+  }
+}
 
-        const user = await createUserService.execute({
-            name,
-            email,
-            password,
-            cliente_id,
-            setor_id,
-            tecnico_id,
-            instituicaoUnidade_id
-        });
-
-        return res.json({user})
-    }
- }
-
- export {CreateUserController}
+export { CreateUserController };
