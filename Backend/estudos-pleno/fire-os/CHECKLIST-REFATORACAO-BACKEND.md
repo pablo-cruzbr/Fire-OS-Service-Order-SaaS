@@ -12,7 +12,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 🟡 **Piloto em 11 módulos agora, rollout pendente nos outros ~89:** item 1 (Repository pattern em OrdemdeServico, `user`, os 8 módulos de `controles_forms`, e agora Equipamento + InformacoesSetor), item 3 (Zod nesses mesmos 11), item 4 (o `try/catch` antigo caiu de 12 pra **10 arquivos**).
 
-⬜ **Ainda em zero:** item 7 (testes de integração, TestContainers, E2E, `coverage` no `vitest.config.ts`). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
+⬜ **Ainda em zero:** item 7, só a parte cara (testes de integração, TestContainers, E2E) — `coverage` já está configurado (ver abaixo). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
 
 ⚠️ **Achado sem decisão tomada:** o 3º módulo desse grupo (rotulado "tipodeInstituicaoUnidade" na tabela antiga) é na verdade o Update de `InstituicaoUnidade`, misplaced na pasta `tipodeInsituicaoUnidade/` — e é **código morto**: sem rota em `routes.ts`, sem chamada nenhuma no Frontend. Decisão de produto pendente: ligar a rota (nova funcionalidade) ou apagar o código morto?
 
@@ -83,7 +83,7 @@ Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 ju
 - ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
 - ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
 - ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
-- ⬜ `coverage` configurado no `vitest.config.ts` com piso mínimo (ex. 60%) e número exposto no README.
+- ✅ **`coverage` configurado (15/09)** — `@vitest/coverage-v8`, piso de hoje (30-45% dependendo da métrica, não 60% — a maioria dos ~89 controllers fora do rollout ainda tem zero teste, um piso aspiracional travaria o CI por dívida antiga). Número real (211 testes, ~31%) exposto no README raiz. Achado no caminho: a pasta `coverage/` gerada pelo relatório HTML estava sendo lintada como se fosse código do projeto — ignorada no `eslint.config.mjs`, mesmo raciocínio do `@prisma/**`.
 
 ## 8. TSC + Linter
 
