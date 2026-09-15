@@ -1,19 +1,11 @@
-import prismaClient from "../../../prisma"
+import { EquipamentoRepository, equipamentoRepository } from "../../../repositories/EquipamentoRepository";
 
-interface equipamentoRequest{
-    equipamento_id: string;
+class RemoveEquipamentoService {
+  constructor(private repository: EquipamentoRepository = equipamentoRepository) {}
+
+  async execute(id: string) {
+    return this.repository.delete(id);
+  }
 }
 
-class RemoveEquipamentoService{
-    async execute({equipamento_id}: equipamentoRequest){
-        const equipamento = prismaClient.equipamento.delete({
-            where:{
-                id: equipamento_id,
-            }
-        })
-
-        return equipamento
-    }
-}
-
-export {RemoveEquipamentoService}
+export { RemoveEquipamentoService };

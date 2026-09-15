@@ -1,52 +1,30 @@
-import prismaClient from "../../../prisma";
-
-interface EquipamentoUpdateRequest {
-  id: string;
-  name: string;
-  patrimonio: string;
-  instituicaoUnidade_id?: string; 
-}
+import { UpdateEquipamentoInput } from "../../../schemas/equipamento.schema";
+import { EquipamentoRepository, equipamentoRepository } from "../../../repositories/EquipamentoRepository";
+import { ConflictError } from "../../../errors/AppError";
 
 class UpdateEquipamentoService {
-  async execute({ id, name, patrimonio, instituicaoUnidade_id }: EquipamentoUpdateRequest) {
-    if (!id) {
-      throw new Error('ID do equipamento é obrigatório para atualização!');
-    }
+  constructor(private repository: EquipamentoRepository = equipamentoRepository) {}
 
-    const equipamentoExists = await prismaClient.equipamento.findUnique({
-      where: { id }
-    });
-
-    if (!equipamentoExists) {
-      throw new Error('Equipamento não encontrado!');
-    }
-
-    if (patrimonio !== equipamentoExists.patrimonio) {
-      const patrimonioDuplicado = await prismaClient.equipamento.findFirst({
-        where: { patrimonio }
-      });
-
-      if (patrimonioDuplicado) {
-        throw new Error('Este número de patrimônio já está em uso por outro equipamento!');
+  async execute(id: string, data: UpdateEquipamentoInput) {
+    if (data.patrimonio) {
+      const patrimonioEmUso = await this.repository.findByPatrimonio(data.patrimonio);
+      if (patrimonioEmUso && patrimonioEmUso.id !== id) {
+        throw new ConflictError("Este número de patrimônio já está em uso por outro equipamento!");
       }
     }
 
-    const equipamento = await prismaClient.equipamento.update({
-      where: { id },
-      data: {
-        name,
-        patrimonio,
-        instituicaoUnidade_id,
-      },
-      select: {
-        id: true,
-        name: true,
-        patrimonio: true,
-        instituicaoUnidade_id: true,
-      }
+    // Sem checagem manual de existência do id — se não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    return this.repository.update(id, {
+      name: data.name,
+      patrimonio: data.patrimonio,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+      tipodeEquipamento: data.tipodeEquipamento_id
+        ? { connect: { id: data.tipodeEquipamento_id } }
+        : undefined,
     });
-
-    return equipamento;
   }
 }
 

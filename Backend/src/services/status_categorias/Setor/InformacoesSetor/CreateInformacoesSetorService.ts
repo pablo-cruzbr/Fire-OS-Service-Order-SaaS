@@ -1,86 +1,42 @@
 import prismaClient from "../../../../prisma";
-
-interface InformacoesRequest {
-  setorId: string;
-  usuario: string;
-  andar: string;
-  ramal: string;
-  clienteId?: string | null;
-  instituicaoUnidadeId?: string | null;
-}
+import { CreateInformacoesSetorInput } from "../../../../schemas/informacoesSetor.schema";
+import {
+  InformacoesSetorRepository,
+  informacoesSetorRepository,
+} from "../../../../repositories/InformacoesSetorRepository";
 
 class CreateInformacoesSetorService {
-  async execute({
-    setorId,
-    usuario,
-    andar,
-    ramal,
-    clienteId,
-    instituicaoUnidadeId,
-  }: InformacoesRequest) {
-   
-    let validClienteId: string | null = null;
-    if (clienteId) {
-      const cliente = await prismaClient.cliente.findUnique({ where: { id: clienteId } });
-      if (cliente) {
-        validClienteId = cliente.id;
-      } else {
-        console.warn(`Cliente com id ${clienteId} não encontrado. Será usado null.`);
-      }
-    }
+  constructor(private repository: InformacoesSetorRepository = informacoesSetorRepository) {}
 
-  
-    let validInstituicaoId: string | null = null;
-    if (instituicaoUnidadeId) {
-      const instituicao = await prismaClient.instituicaoUnidade.findUnique({ where: { id: instituicaoUnidadeId } });
-      if (instituicao) {
-        validInstituicaoId = instituicao.id;
-      } else {
-        console.warn(`Instituição/Unidade com id ${instituicaoUnidadeId} não encontrada. Será usado null.`);
-      }
-    }
+  async execute(data: CreateInformacoesSetorInput) {
+    const validClienteId = data.clienteId ? await this.validarCliente(data.clienteId) : null;
+    const validInstituicaoId = data.instituicaoUnidadeId
+      ? await this.validarInstituicao(data.instituicaoUnidadeId)
+      : null;
 
-    const info = await prismaClient.informacoesSetor.create({
-      data: {
-        setorId,
-        usuario,
-        andar,
-        ramal,
-        cliente_id: validClienteId,
-        instituicaoUnidade_id: validInstituicaoId,
-      },
-      select: {
-        id: true,
-        usuario: true,
-        andar: true,
-        ramal: true,
-        setor: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        instituicaoUnidade: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true,
-          },
-        },
-        cliente: {
-          select: {
-            id: true,
-            name: true,
-            cnpj: true,
-            endereco: true,
-          },
-        },
-      },
+    return this.repository.create({
+      setorId: data.setorId,
+      usuario: data.usuario,
+      andar: data.andar,
+      ramal: data.ramal,
+      cliente_id: validClienteId,
+      instituicaoUnidade_id: validInstituicaoId,
     });
+  }
 
-  
+  // Cliente/InstituicaoUnidade não são o "dono" deste Repository — é só um
+  // lookup auxiliar. Regra de negócio já existia antes do Zod: um id que não
+  // existe mais vira null em vez de travar o cadastro inteiro.
+  private async validarCliente(clienteId: string) {
+    const cliente = await prismaClient.cliente.findUnique({ where: { id: clienteId } });
+    return cliente ? cliente.id : null;
+  }
 
-    return info;
+  private async validarInstituicao(instituicaoUnidadeId: string) {
+    const instituicao = await prismaClient.instituicaoUnidade.findUnique({
+      where: { id: instituicaoUnidadeId },
+    });
+    return instituicao ? instituicao.id : null;
   }
 }
 
