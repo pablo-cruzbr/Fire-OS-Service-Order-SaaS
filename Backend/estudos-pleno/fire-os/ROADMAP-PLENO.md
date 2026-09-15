@@ -204,7 +204,7 @@ Você já não está começando do zero — existem 4 arquivos de teste (`AuthUs
 
 - [ ] Cobrir `can.ts` e `isAuthenticated.ts` (middlewares nunca testados, ver item 1).
 - [ ] Testar pelo menos 1 fluxo de erro real de negócio por módulo grande (`OrdemdeServico`, `controles_forms`) além de "criou com sucesso" — hoje os testes existentes são majoritariamente caminho feliz + validação simples.
-- [ ] Configurar `coverage` no `vitest.config.ts` com um piso mínimo (ex. 60% para começar) e mostrar o número no README — "tenho testes" convence menos que "78% de cobertura no módulo de auth".
+- [x] Configurar `coverage` no `vitest.config.ts` com um piso mínimo e mostrar o número no README. **Feito em 15/09** — piso de 30-45% (o número real de hoje, não os 60% "aspiracionais" cogitados aqui antes de medir: boa parte dos controllers ainda não tem teste, então 60% travaria o CI por dívida antiga, não por regressão de verdade). Sobe conforme o rollout de Zod/Repository avança.
 - [ ] Testes de integração tocando o Postgres real do Docker (não só mock do Prisma) para pelo menos o fluxo de autenticação — mocks provam que a função roda, não que o contrato com o banco está certo.
 
 **Estudar:** pirâmide de testes (unitário vs. integração vs. e2e); por que mockar tudo dá falso verde.
