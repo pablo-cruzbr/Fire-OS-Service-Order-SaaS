@@ -1,15 +1,19 @@
-import { Response, Request } from "express";
-import { CreateTipodeEquipamentoService } from "../../../services/status_categorias/tipodeEquipamento/CreateTipodeEquipamentoService";
+import { Request, Response } from "express";
+import { CreateLookupCategoriaService } from "../../../services/status_categorias/CreateLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
+import { CreateLookupCategoriaInput } from "../../../schemas/lookupCategoria.schema";
+
 class CreatetipodeEquipamentoController {
-    async handle(req: Request, res: Response){
-        const {name} = req.body;
+  constructor(
+    private service: CreateLookupCategoriaService = new CreateLookupCategoriaService(
+      new LookupCategoriaRepository("tipodeEquipamento")
+    )
+  ) {}
 
-        const  createTipodeEquipamentoService  = new  CreateTipodeEquipamentoService ();
-        const status = await createTipodeEquipamentoService.execute(name);
-
-        return res.json(status);
-
-    }
+  async handle(req: Request, res: Response) {
+    const status = await this.service.execute(req.body as CreateLookupCategoriaInput);
+    return res.json(status);
+  }
 }
 
-export {CreatetipodeEquipamentoController}
+export { CreatetipodeEquipamentoController };

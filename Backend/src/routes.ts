@@ -22,6 +22,7 @@ import { createMaquinasPendentesOroSchema, updateMaquinasPendentesOroSchema } fr
 import { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema } from "./schemas/solicitacaoCompras.schema";
 import { createEquipamentoSchema, updateEquipamentoSchema } from "./schemas/equipamento.schema";
 import { createInformacoesSetorSchema, updateInformacoesSetorSchema } from "./schemas/informacoesSetor.schema";
+import { createLookupCategoriaSchema, deleteStatusOrdemdeServicoQuerySchema } from "./schemas/lookupCategoria.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -35,6 +36,7 @@ import { CreateStatusOrdemdeServicoController } from "./controllers/status_categ
 import { ListStatusOrdemdeServicoController } from "./controllers/status_categorias/statusOrdemdeServico/ListStatusOrdemdeServicoController";
 import { RemoveStatusOrdemServicoController } from "./controllers/status_categorias/statusOrdemdeServico/RemoveStatusOrdemServicoController";
 import { CreatetipodeChamadoController } from "./controllers/status_categorias/tipodeChamado/CreatetipodeChamadoController";
+import { ListtipodeEquipamentoController } from "./controllers/status_categorias/tipodeEquipamento/ListtipodeEquipamentoController";
 import { ListtipodeChamadoService } from "./services/status_categorias/tipodeChamado/ListtipodeChamadoService";
 import { CreateTecnicoController } from "./controllers/status_categorias/tecnico/CreateTecnicoController";
 import { ListTecnicoController } from "./controllers/status_categorias/tecnico/ListTecnicoController";
@@ -221,10 +223,18 @@ privateRouter.post('/categoryintituicao', new CreateInstituicaoUnidadeController
 privateRouter.delete('/deleteinstituicao', can(['ADMIN']), new RemoveInstituicaoUnidadeController().handle)
 
 // tipodeInstituicaoUnidade
-privateRouter.post('/tipodeinstituicaounidade', new CreatetipodeInstituicaoUnidadeController().handle)
+privateRouter.post('/tipodeinstituicaounidade', validate(createLookupCategoriaSchema), new CreatetipodeInstituicaoUnidadeController().handle)
 
 //4 - Tipo de Solicitação (Solicitação, Chamado Tecnico)
-privateRouter.post('/tipodechamado', new CreatetipodeChamadoController().handle)
+privateRouter.post('/tipodechamado', validate(createLookupCategoriaSchema), new CreatetipodeChamadoController().handle)
+
+// Achado ao converter esse módulo pro padrão genérico: o Frontend já chama
+// GET /list/tipo/equipamento (EditEquipamentoForm.tsx) pra popular o dropdown
+// de "Tipo de Equipamento", mas essa rota nunca existiu aqui — 404 sempre,
+// silenciado por um .catch() que já vinha com o comentário "404 provável na
+// Vercel". O dropdown nunca mostrou nenhuma opção em produção. Adicionada
+// agora com o path exato que o Frontend espera.
+privateRouter.get('/list/tipo/equipamento', new ListtipodeEquipamentoController().handle)
 
 // 5 - Tecnico
 privateRouter.post('/tecnico', new CreateTecnicoController().handle)
@@ -244,37 +254,41 @@ privateRouter.patch(
 
 
 // 7 - StatusOrdemdeServicoService
-privateRouter.post('/statusordemdeservico', new CreateStatusOrdemdeServicoController().handle)
+privateRouter.post('/statusordemdeservico', validate(createLookupCategoriaSchema), new CreateStatusOrdemdeServicoController().handle)
 privateRouter.get('/liststatusordemdeservico', new ListStatusOrdemdeServicoController().handle)
-privateRouter.delete('/removestatusordemdeservico', new RemoveStatusOrdemServicoController().handle)
+privateRouter.delete(
+  '/removestatusordemdeservico',
+  validate(deleteStatusOrdemdeServicoQuerySchema, 'query'),
+  new RemoveStatusOrdemServicoController().handle
+)
 
 // 8 - StatusMaquinasPendentesLab (Pendentes ORO, Substituta)
-privateRouter.post('/statusMaquinasPendentesLab', new CreatestatusMaquinasPendentesController().handle)
+privateRouter.post('/statusMaquinasPendentesLab', validate(createLookupCategoriaSchema), new CreatestatusMaquinasPendentesController().handle)
 
 privateRouter.get('/liststatusMaquinasPendentesLab', new ListMaquinasPendentesLabController().handle)
 
 // 9 - StatusMaquinasPendentesOro (DISPONIVEL, INSTALADA, AGUARDANDO RETIRADA, EM MANUTENÇÃO, RESERVADA, DESCARTADA)
-privateRouter.post('/statusMaquinasPendentesOro', new CreatestatusMaquinasPendentesOroController().handle)
+privateRouter.post('/statusMaquinasPendentesOro', validate(createLookupCategoriaSchema), new CreatestatusMaquinasPendentesOroController().handle)
 privateRouter.get('/liststatusMaquinasPendentesOro', new ListMaquinasPendentesOroController().handle);
 
 // 10 - StatusControllerdeMaquinasLaboratorio (AGUARDANDO CONSERTO, AGUARDANDO O.S DE LABORATORIO, AGUARDANDO DEVOLUÇÃO, CONCLUIDO)
-privateRouter.post('/statuscontrolledeLaboratorio', new CreatestatusControlledeLaboratorioController().hadle)
+privateRouter.post('/statuscontrolledeLaboratorio', validate(createLookupCategoriaSchema), new CreatestatusControlledeLaboratorioController().handle)
 privateRouter.get('/listcontrolledeLaboratorio', new ListstatusControlleLaboratioController().handle)
 
 //12 - StatusCompras (AGUARDANDO, AGUARDANDO ENTREGA, COMPRA FINALIZADA)
-privateRouter.post('/statuscompras', new CreateStatusComprasController().handle)
+privateRouter.post('/statuscompras', validate(createLookupCategoriaSchema), new CreateStatusComprasController().handle)
 privateRouter.get('/liststatuscompras', new ListStatusComprasController().handle)
 
 //13 - StatusReparo (AGUARDANDO REPARO, REPARO FINALIZADO)
 
-privateRouter.post('/statusreparo', new CreateStatusReparoController().handle)
+privateRouter.post('/statusreparo', validate(createLookupCategoriaSchema), new CreateStatusReparoController().handle)
 privateRouter.get('/liststatusreparo', new ListstatusReparoController().handle)
 
 // - Atividade Padrao
 privateRouter.get('/listatividade', new ListAtividadePadraoController().handle)
 
 //14 - Urgência
-privateRouter.post('/statusurgencia', new CreateStatusUrgenciaController().handle)
+privateRouter.post('/statusurgencia', validate(createLookupCategoriaSchema), new CreateStatusUrgenciaController().handle)
 privateRouter.get('/liststatusurgencia', new ListStatusUrgenciaController().handle)
 
 //---> FORMULARIOS <---
@@ -396,11 +410,11 @@ privateRouter.post('/foto', new fotoController().handle);
 privateRouter.delete('/foto/:id', new fotoController().delete);
 
 //STATUS ESTABILIZADORES
-privateRouter.post("/status/estabilizadores", new CreateStatusEstabilizadoresController().handle);
+privateRouter.post("/status/estabilizadores", validate(createLookupCategoriaSchema), new CreateStatusEstabilizadoresController().handle);
 
 privateRouter.get("/liststatus/estabilizadores", new ListStatusEstabilizadoresController().handle)
 
-privateRouter.post('/statustarefa', new CreateStatusTarefaController().handle)
+privateRouter.post('/statustarefa', validate(createLookupCategoriaSchema), new CreateStatusTarefaController().handle)
 privateRouter.get("/liststatustarefa", new ListStatusTarefaController().handle)
 
 //ESTABILIZADORES
@@ -439,7 +453,7 @@ privateRouter.patch("/assinatura/:id", AssinaturaController.atualizar);
 privateRouter.get("/assinatura/:ordemId", AssinaturaController.buscar);
 
 //TipodeOrdemdeServico
-privateRouter.post("/tipodeordemdeservico", new CreatetipodeOrdemdeServicoController().handle)
+privateRouter.post("/tipodeordemdeservico", validate(createLookupCategoriaSchema), new CreatetipodeOrdemdeServicoController().handle)
 
 //Excel
 privateRouter.get('/ordens/exportar', (req, res) => new ExportOrdemdeServicoController().handle(req, res));
