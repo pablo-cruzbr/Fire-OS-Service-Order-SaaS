@@ -32,4 +32,11 @@ class ConflictError extends AppError {
   }
 }
 
-export { AppError, ValidationError, NotFoundError, ConflictError };
+class UnauthorizedError extends AppError {
+  constructor(message = "Não autorizado.") {
+    super(message, 401);
+    this.name = "UnauthorizedError";
+  }
+}
+
+export { AppError, ValidationError, NotFoundError, ConflictError, UnauthorizedError };

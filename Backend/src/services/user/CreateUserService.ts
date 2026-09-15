@@ -1,76 +1,32 @@
-import prismaclient from "../../prisma";
 import { hash } from "bcryptjs";
-
-interface UserRequest {
-    name: string;
-    email: string;
-    password: string;
-    cliente_id?: string;       
-    setor_id?: string;          
-    tecnico_id?: string;        
-    instituicaoUnidade_id?: string; 
-}
+import { CreateUserInput } from "../../schemas/user.schema";
+import { ConflictError } from "../../errors/AppError";
+import { UserRepository, userRepository } from "../../repositories/UserRepository";
 
 class CreateUserService {
-    async execute({ name, email, password, cliente_id, setor_id, instituicaoUnidade_id, tecnico_id }: UserRequest) {
-        
-        // 1 - Verificar se já existe um e-mail no banco
-        if (!email) {
-            throw new Error("Email Incorreto !")
-        }
+  constructor(private repository: UserRepository = userRepository) {}
 
-        const userAlreadyExists = await prismaclient.user.findFirst({
-            where: {
-                email: email
-            }
-        })
+  async execute(data: CreateUserInput) {
+    const userAlreadyExists = await this.repository.findByEmail(data.email);
 
-        if (userAlreadyExists) {
-            throw new Error("Esse email já existe !")
-        }
-
-        const passwordHash = await hash(password, 8);
-
-        const user = await prismaclient.user.create({
-            data: {
-                name: name,
-                email: email,
-                password: passwordHash,
-                cliente_id: cliente_id,
-                tecnico_id: tecnico_id, 
-                setor_id: setor_id,
-                instituicaoUnidade_id: instituicaoUnidade_id
-            },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                tecnico_id: true, 
-                instituicaoUnidade: {
-                    select: {
-                        id: true,
-                        name: true,
-                        endereco: true
-                    }
-                },
-                cliente: {
-                    select: {
-                        id: true,
-                        name: true,
-                        endereco: true
-                    }
-                },
-                setor: {
-                    select: {
-                        id: true,
-                        name: true,
-                    }
-                }
-            }
-        })
-
-        return user;
+    if (userAlreadyExists) {
+      throw new ConflictError("Esse email já existe.");
     }
+
+    const passwordHash = await hash(data.password, 8);
+
+    return this.repository.create({
+      name: data.name,
+      email: data.email,
+      password: passwordHash,
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
+      setor: data.setor_id ? { connect: { id: data.setor_id } } : undefined,
+      tecnico: data.tecnico_id ? { connect: { id: data.tecnico_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+    });
+  }
 }
 
-export { CreateUserService }
+export { CreateUserService };

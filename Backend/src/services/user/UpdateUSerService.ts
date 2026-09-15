@@ -1,85 +1,31 @@
-import prismaclient from "../../prisma";
 import { hash } from "bcryptjs";
-
-interface UserRequest {
-    user_id: string; 
-    name?: string;
-    email?: string;
-    password?: string;
-    cliente_id?: string;
-    setor_id?: string;
-    instituicaoUnidade_id?: string; 
-    tecnico_id?: string; 
-}
+import { UpdateUserInput } from "../../schemas/user.schema";
+import { UserRepository, userRepository } from "../../repositories/UserRepository";
 
 class UpdateUserService {
-    async execute({ 
-        user_id, 
-        name, 
-        email, 
-        password, 
-        cliente_id, 
-        setor_id, 
-        instituicaoUnidade_id,
-        tecnico_id 
-    }: UserRequest) {
-        
-        const userExists = await prismaclient.user.findUnique({
-            where: { id: user_id }
-        });
+  constructor(private repository: UserRepository = userRepository) {}
 
-        if (!userExists) {
-            throw new Error("Usuário não encontrado!");
-        }
+  async execute(id: string, data: UpdateUserInput) {
+    const updateData: any = {
+      name: data.name,
+      email: data.email,
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
+      setor: data.setor_id ? { connect: { id: data.setor_id } } : undefined,
+      tecnico: data.tecnico_id ? { connect: { id: data.tecnico_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+    };
 
-        const data: any = {
-            name,
-            email,
-            cliente_id,
-            setor_id,
-            instituicaoUnidade_id,
-            tecnico_id
-        };
-
-        if (password) {
-            data.password = await hash(password, 8);
-        }
-
-        const user = await prismaclient.user.update({
-            where: {
-                id: user_id
-            },
-            data: data,
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                tecnico_id: true, 
-                instituicaoUnidade: {
-                    select: {
-                        id: true,
-                        name: true,
-                        endereco: true
-                    }
-                },
-                cliente: {
-                    select: {
-                        id: true,
-                        name: true,
-                        endereco: true
-                    }
-                },
-                setor: {
-                    select: {
-                        id: true,
-                        name: true,
-                    }
-                }
-            }
-        });
-
-        return user;
+    if (data.password) {
+      updateData.password = await hash(data.password, 8);
     }
+
+    // Sem checagem manual de existência antes — se o id não existir, o
+    // Prisma lança P2025 e o errorHandler global já traduz pra 404, mesmo
+    // padrão do UpdateOrdemdeServicoService.ts.
+    return this.repository.update(id, updateData);
+  }
 }
 
 export { UpdateUserService };

@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const uuid = z.string().uuid({ message: "ID inválido." });
+import { uuid, idParamSchema } from "./common.schema";
 
 const createOrdemdeServicoSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório."),
@@ -22,10 +21,6 @@ const createOrdemdeServicoSchema = z.object({
   solucao: z.string().optional(),
   bannerassinatura: z.string().optional(),
   informacoesSetorId: uuid.optional(),
-});
-
-const idParamSchema = z.object({
-  id: uuid,
 });
 
 const updateOrdemdeServicoSchema = z.object({

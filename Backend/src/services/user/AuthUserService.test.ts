@@ -1,13 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../prisma', () => ({
-  default: {
-    user: {
-      findFirst: vi.fn(),
-    },
-  },
-}))
-
 vi.mock('bcryptjs', () => ({
   compare: vi.fn(),
 }))
@@ -16,9 +8,17 @@ vi.mock('jsonwebtoken', () => ({
   sign: vi.fn(() => 'token-de-teste'),
 }))
 
-import prismaClient from '../../prisma'
 import { compare } from 'bcryptjs'
 import { AuthUserService } from './AuthUserService'
+import { UserRepository } from '../../repositories/UserRepository'
+
+function makeFakeRepository() {
+  return {
+    findByEmail: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  } as unknown as UserRepository
+}
 
 const usuarioFalso = {
   id: 'uuid-123',
@@ -27,11 +27,6 @@ const usuarioFalso = {
   password: 'hash-no-banco',
   role: 'ADMIN' as const,
   tecnico_id: null,
-  cliente_id: null,
-  setor_id: null,
-  instituicaoUnidade_id: null,
-  updated_at: new Date(),
-  created_at: new Date(),
 }
 
 describe('AuthUserService', () => {
@@ -40,10 +35,11 @@ describe('AuthUserService', () => {
   })
 
   it('deve retornar token e dados do usuário quando credenciais estão corretas', async () => {
-    vi.mocked(prismaClient.user.findFirst).mockResolvedValue(usuarioFalso)
+    const repository = makeFakeRepository()
+    vi.mocked(repository.findByEmail).mockResolvedValue(usuarioFalso as any)
     vi.mocked(compare).mockResolvedValue(true as never)
 
-    const service = new AuthUserService()
+    const service = new AuthUserService(repository)
     const resultado = await service.execute({
       email: 'pablo@allti.com',
       password: '123456',
@@ -55,21 +51,23 @@ describe('AuthUserService', () => {
     expect(resultado.role).toBe('ADMIN')
   })
 
-  it('deve lançar erro quando o usuário não existe no banco', async () => {
-    vi.mocked(prismaClient.user.findFirst).mockResolvedValue(null)
+  it('lança UnauthorizedError quando o usuário não existe no banco', async () => {
+    const repository = makeFakeRepository()
+    vi.mocked(repository.findByEmail).mockResolvedValue(null)
 
-    const service = new AuthUserService()
+    const service = new AuthUserService(repository)
 
     await expect(
       service.execute({ email: 'naoexiste@email.com', password: '123456' })
     ).rejects.toThrow('usuário ou senha está incorreta')
   })
 
-  it('deve lançar erro quando a senha estiver incorreta', async () => {
-    vi.mocked(prismaClient.user.findFirst).mockResolvedValue(usuarioFalso)
+  it('lança UnauthorizedError quando a senha estiver incorreta', async () => {
+    const repository = makeFakeRepository()
+    vi.mocked(repository.findByEmail).mockResolvedValue(usuarioFalso as any)
     vi.mocked(compare).mockResolvedValue(false as never)
 
-    const service = new AuthUserService()
+    const service = new AuthUserService(repository)
 
     await expect(
       service.execute({ email: 'pablo@allti.com', password: 'senha-errada' })

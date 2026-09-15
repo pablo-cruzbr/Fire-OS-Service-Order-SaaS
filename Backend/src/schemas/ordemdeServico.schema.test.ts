@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema } from './ordemdeServico.schema'
+import { createOrdemdeServicoSchema, updateOrdemdeServicoSchema } from './ordemdeServico.schema'
 
 describe('createOrdemdeServicoSchema', () => {
   it('aceita o payload mínimo válido', () => {
@@ -27,16 +27,6 @@ describe('createOrdemdeServicoSchema', () => {
       user_id: '22222222-2222-4222-8222-222222222222',
     })
     expect(result.success).toBe(false)
-  })
-})
-
-describe('idParamSchema', () => {
-  it('aceita um uuid válido', () => {
-    expect(idParamSchema.safeParse({ id: '11111111-1111-4111-8111-111111111111' }).success).toBe(true)
-  })
-
-  it('rejeita um id que não é uuid', () => {
-    expect(idParamSchema.safeParse({ id: 'abc123' }).success).toBe(false)
   })
 })
 
