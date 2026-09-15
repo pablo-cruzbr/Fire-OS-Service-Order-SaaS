@@ -8,41 +8,77 @@ Dá para chegar em 10 meses de experiência com um projeto de nível pleno — o
 
 ---
 
-## Glossário — os 6 termos, com exemplo prático do próprio Fire OS
+## Glossário — os termos, com exemplo prático do próprio Fire OS
 
-Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada termo abaixo tem: a definição simples + onde ele aparece (ou deveria aparecer) no seu código.
+Antes de aplicar cada item do checklist, entenda o conceito por trás. Cada termo abaixo tem: a definição simples + onde ele aparece (ou deveria aparecer) no seu código. A ordem segue o `CHECKLIST-REFATORACAO-BACKEND.md`, item por item, pra você conseguir ir direto no termo que precisa revisar.
 
-### 1. RBAC (Role-Based Access Control)
+### 1. Repository Pattern (e a separação Controller → Service → Repository)
+
+**O que é:** uma camada fininha entre o Service (a regra de negócio) e o banco, que esconde o ORM (o Prisma) atrás de métodos com nome de negócio — `create`, `update` — pra ninguém mais no projeto precisar saber que existe um Prisma ali dentro. O ganho prático não é só organização: o teste do Service passa a receber um repository **fake** no lugar do banco de verdade, em vez de mockar o módulo inteiro do Prisma.
+
+**No Fire OS:** `src/repositories/OrdemdeServicoRepository.ts` é o único repository que existe hoje — isola `prismaClient.ordemdeServico.create/update`. `CreateOrdemServicoService` e `UpdateOrdemdeServicoService` recebem esse repository pelo construtor (isso é **injeção de dependência**: quem usa o Service decide o que entregar, em produção é o repository de verdade, no teste é um `{ create: vi.fn(), update: vi.fn() }`). Os outros ~100 services do projeto ainda chamam o Prisma direto — é o item 1 do checklist, ainda pendente de replicar.
+
+### 2. RBAC (Role-Based Access Control)
 
 **O que é:** controlar o que cada usuário pode *fazer* depois que o sistema já sabe *quem ele é*. São duas perguntas separadas — "quem é você" (autenticação) e "o que você pode fazer" (autorização) — e o erro comum é resolver só a primeira e achar que resolveu as duas.
 
-**No Fire OS:** o `schema.prisma` já define um enum `Role { ADMIN TECNICO USER }` no model `User`, e existe um middleware pronto em `src/Middleware/can.ts` que recebe uma lista de roles permitidas e bloqueia quem não tem (`403`). O problema: `isAuthenticated.ts` só confirma *quem* é o usuário (token válido) e injeta a role na request — ele nunca decide se essa role pode acessar a rota. E `can()` nunca é importado em `routes.ts`. Resultado: hoje um `TECNICO` autenticado consegue chamar a mesma rota de deletar cliente que só `ADMIN` deveria acessar.
+**No Fire OS:** o `schema.prisma` já define um enum `Role { ADMIN TECNICO USER }` no model `User`, e existe um middleware pronto em `src/Middleware/can.ts` que recebe uma lista de roles permitidas e bloqueia quem não tem (`403`). `can()` já está ligado em `routes.ts` desde 17/08 nas rotas admin-only (`DELETE /deletecliente`, `GET /listusers`, etc.) — o gap que existia (nenhuma rota usar o middleware) já foi fechado.
 
-### 2. Validação de entrada (Zod)
+### 3. CASL / Autorização por dono do recurso (ownership)
+
+**O que é:** o degrau acima do RBAC puro. RBAC só olha a *role* — "é ADMIN, é TECNICO?" — mas não sabe se **esse recurso específico** pertence a quem está pedindo. CASL resolve isso com permissão condicional: "TECNICO pode editar OrdemdeServico, mas só a que tem `tecnico_id` igual ao dele".
+
+**No Fire OS:** `src/permissions/ability.ts` define, por role, o que cada um pode fazer com cada recurso (`defineAbilityFor`), e `src/Middleware/authorizeOwnership.ts` (generalizado em 15/09 a partir do `authorizeOrdemdeServico.ts` original, que só cobria OrdemdeServico) busca o registro, monta a ability do usuário logado, e barra com `403` se a condição não bater. Hoje cobre 4 recursos: OrdemdeServico e os 3 módulos técnicos (assistência, laudo, documentação) — o achado real foi que um `TECNICO` conseguia editar o registro de **outro** técnico só sabendo o `id`, corrigido igual nos 4.
+
+### 4. Validação de entrada (Zod)
 
 **O que é:** garantir que o dado que chega de fora (`req.body`, query params, upload) tem o formato esperado *antes* dele entrar na regra de negócio — em vez de descobrir que estava errado quando o banco já quebrou ou o bcrypt já tentou rodar em cima de algo inválido.
 
-**No Fire OS:** `CreateUserController.ts:6` faz `const {name, email, password, ...} = req.body` direto, sem checar nada. Se alguém mandar um POST sem `password`, o `bcrypt.hash(undefined, 8)` roda mesmo assim e o erro que volta pro cliente é um 500 genérico do Node, não um "senha é obrigatória" claro. Um schema Zod na entrada dessa rota resolveria isso com uma mensagem de erro útil e um 400, antes de qualquer lógica rodar.
+**No Fire OS:** `CreateUserController.ts:6` faz `const {name, email, password, ...} = req.body` direto, sem checar nada. Se alguém mandar um POST sem `password`, o `bcrypt.hash(undefined, 8)` roda mesmo assim e o erro que volta pro cliente é um 500 genérico do Node, não um "senha é obrigatória" claro. O piloto (`createOrdemdeServicoSchema`, `updateOrdemdeServicoSchema`) já resolve isso pra OrdemdeServico via `validate()` — os outros ~100 controllers, incluindo esse de `user`, ainda não passaram pelo rollout.
 
-### 3. Pirâmide de testes
+### 5. Tratamento de erros global (error-handling middleware)
+
+**O que é:** em vez de cada controller ter seu próprio `try/catch` decidindo o status HTTP na mão, uma peça central captura qualquer erro que "sobe" sem ser tratado antes, e decide o formato da resposta baseada no *tipo* do erro — sem repetir a mesma lógica de decisão em cada arquivo.
+
+**No Fire OS:** `src/Middleware/errorHandler.ts`, plugado uma vez em `server.ts`, distingue `ZodError`/`ValidationError` (422), `NotFoundError` (404), `ConflictError` (409), erros conhecidos do Prisma (`P2002` unique →409, `P2025` not found →404, `P2003` FK inválida →400) e qualquer outra coisa (500 genérico, sem vazar detalhe pro cliente). As classes de erro customizadas moram em `src/errors/AppError.ts`. Só os 2 controllers já refatorados (Create/Update de OrdemdeServico) não têm mais `try/catch` nenhum — o resto do projeto ainda captura erro na mão, mesmo a infraestrutura já estando pronta pra eles.
+
+### 6. Fila / Mensageria (BullMQ + Redis)
+
+**O que é:** em vez do código fazer um trabalho demorado (ex.: subir uma foto pro Cloudinary) *dentro* do request, ele só anota "isso precisa ser feito" numa fila e responde na hora — um processo separado (o **worker**) processa essa fila no próprio tempo dele, sem o usuário esperar.
+
+**No Fire OS:** `fotoController.handle` enfileira (`uploadQueue.add("upload-foto-os", ...)`) e responde `202` em vez de subir a foto pro Cloudinary dentro do request; `uploadWorker.ts` (processo separado, `npm run worker`) processa cada job, com retry automático (3 tentativas, backoff exponencial) se o Cloudinary falhar. Ligado ao fluxo real em 14/09 — detalhe completo, em pedaços pequenos: `GUIA-FILA-BULLMQ.md`.
+
+### 7. Cache (Redis, cache-aside)
+
+**O que é:** guardar a resposta de um cálculo caro numa "gaveta rápida" (o Redis, que vive na RAM em vez do disco), pra não recalcular a mesma coisa toda vez que alguém pede — aceitando que a resposta pode ficar levemente desatualizada por um tempo (o **TTL**, time to live).
+
+**No Fire OS:** `ListOrdemdeServicoService.getTotais()` guarda os 8 `count()` de status por 30s; `ListTecnicoService` guarda a lista de técnicos por 60s, com **invalidação ativa** no create/remove (apaga a chave na hora, em vez de esperar o TTL). Os dois têm fallback — se o Redis cair, a rota volta a calcular direto no banco, em vez de quebrar. Detalhe completo: `GUIA-CACHE-REDIS.md`.
+
+### 8. Pirâmide de testes
 
 **O que é:** a ideia de que você deve ter *muitos* testes unitários (rápidos, isolados, testam uma função sozinha), *alguns* testes de integração (testam a função conversando com peça real, tipo o banco), e *poucos* testes end-to-end (simulam o usuário real, do início ao fim). Mockar tudo demais te dá um teste que passa mesmo se a integração real estiver quebrada.
 
-**No Fire OS:** `CreateUserService.test.ts` usa `vi.mock('../../prisma', ...)` — ele finge que o Prisma existe e sempre responde o que você mandou ele responder. Isso é um teste **unitário**: prova que a lógica de "se o email já existe, lança erro" está certa, mas não prova que a query realmente funciona contra um Postgres de verdade (ex.: se o campo `email` tem `@unique` no schema, isso só quebra de verdade contra o banco real). Falta a camada de integração — um teste que sobe o Postgres do `docker-compose.yml` e testa contra ele.
+**No Fire OS:** `CreateUserService.test.ts` usa `vi.mock('../../prisma', ...)` — ele finge que o Prisma existe e sempre responde o que você mandou ele responder. Isso é um teste **unitário**: prova que a lógica de "se o email já existe, lança erro" está certa, mas não prova que a query realmente funciona contra um Postgres de verdade (ex.: se o campo `email` tem `@unique` no schema, isso só quebra de verdade contra o banco real). 79 testes unitários passam hoje — a camada de integração (subir o Postgres do `docker-compose.yml` de verdade) ainda não existe.
 
-### 4. CI/CD (Integração e Entrega Contínua)
+### 9. CI/CD (Integração e Entrega Contínua)
 
 **O que é:** automatizar a verificação (CI) e a entrega (CD) do código a cada mudança, em vez de confiar que "testei na minha máquina antes de commitar".
 
-**No Fire OS:** você já tem `.github/workflows/test.yml` — ele roda `npm run test` automaticamente a cada push ou PR pra `main`. Isso é CI. **Atualizado em 14/09:** `tsc --noEmit` e lint (ESLint, instalado nesse dia) viraram steps separados, antes do teste — relato completo, em pedaços pequenos, em `GUIA-CI-LINT.md`. O que ainda falta: não existe um CD explícito no repo (o deploy provavelmente acontece direto pelo pipeline da Vercel, fora do GitHub Actions) — o `GUIA-CI-LINT.md` também compara isso com o CD planejado no `../projeto-encurtador/PROJETO-ENCURTADOR.md` (Serverless Framework).
+**No Fire OS:** `.github/workflows/test.yml` roda `npm run test` automaticamente a cada push ou PR pra `main`. Isso é CI. Desde 14/09, `tsc --noEmit` e lint viraram steps separados, antes do teste (fail-fast) — relato completo em `GUIA-CI-LINT.md`. O que ainda falta: não existe um CD explícito no repo (o deploy provavelmente acontece direto pelo pipeline da Vercel, fora do GitHub Actions) — o `GUIA-CI-LINT.md` também compara isso com o CD planejado no `../projeto-encurtador/PROJETO-ENCURTADOR.md` (Serverless Framework).
 
-### 5. Docker
+### 10. Linter (ESLint)
+
+**O que é:** uma ferramenta que *lê* o código sem rodar ele, e aponta padrão suspeito — uma variável criada e nunca usada, um `import` que sobrou de um código já apagado, um jeito de escrever que o time decidiu evitar. Não sabe se a lógica está certa (isso é trabalho do teste); só sabe se o código está "arrumado".
+
+**No Fire OS:** `eslint.config.mjs`, instalado em 14/09 — a primeira rodada devolveu mais de 1400 "erros", mas quase todos eram o *client* do Prisma gerado dentro do repo (`@prisma/**`), não código do projeto; ignorando essa pasta sobraram 36 avisos reais (`no-unused-vars`), deixados como aviso e não erro de propósito, pra não travar o CI por dívida antiga que ainda não teve a vez de ser paga. Roda como step separado no CI, antes do teste. Detalhe completo, incluindo o "gotcha" do achado: `GUIA-CI-LINT.md`.
+
+### 11. Docker
 
 **O que é:** empacotar uma aplicação (ou banco) com tudo que ela precisa pra rodar, isolada da sua máquina. **Imagem** é a receita/blueprint (ex.: `postgres:15-alpine`); **container** é a instância rodando daquela receita (ex.: `fireos_postgres_container`).
 
-**No Fire OS:** o `docker-compose.yml` já sobe o Postgres isolado — você não precisa ter Postgres instalado direto no Windows, só o container. Falta a outra metade: um `Dockerfile` pra própria API (`Backend/`), pra que ela também rode em container, igual em qualquer máquina — hoje só o banco está dockerizado, a API roda direto no seu Node local via `ts-node-dev`.
+**No Fire OS:** o `docker-compose.yml` sobe Postgres, Redis, a API (`Dockerfile` multi-stage) e o worker da fila, todos isolados — você não precisa ter nada disso instalado direto no Windows. Build real validado em 15/09 (`docker compose build fireos-api` completou sem erro).
 
-### 6. System Design
+### 12. System Design
 
 **O que é:** raciocinar sobre a arquitetura de um sistema — como as peças se conectam, por que cada escolha foi feita, e o que quebraria primeiro se o uso crescesse. Não é sobre desenhar bonito, é sobre justificar trade-off de arquitetura.
 
@@ -119,7 +155,7 @@ Com isso, esquecer de proteger uma rota nova deixa de ser possível por padrão 
 
 **Revisão 14/09/2026 — esse checkbox estava marcado como feito, mas o mapeamento nunca tinha sido escrito. Achado: o mesmo bug de OrdemdeServico (item 5 abaixo) continua aberto em 3 módulos** (`UpdateAssistenciaTecnicaService.ts`, `UpdateControledeLaudoTecnicoService.ts`, `UpdateDocumentacaoTecnicaService.ts`) — qualquer `TECNICO` edita/apaga registro de outro técnico, só sabendo o `id`. Detalhe completo em `GUIA-RBAC-CASL.md`, seção "Revisão 14/09/2026".
 
-- [ ] **Prioridade máxima do checklist:** generalizar `authorizeOrdemdeServico` (ou criar 3 equivalentes) pros 3 módulos acima.
+- [x] Generalizar `authorizeOrdemdeServico` (ou criar 3 equivalentes) pros 3 módulos acima. **Feito em 15/09** — novo `authorizeOwnership.ts` genérico, aplicado nos 3 módulos. Detalhe completo em `GUIA-RBAC-CASL.md`.
 
 ### O que foi implementado (RBAC básico + CASL) — 17/08/2026
 
