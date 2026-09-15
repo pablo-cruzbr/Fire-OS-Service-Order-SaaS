@@ -4,19 +4,19 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 **Legenda:** ✅ feito e testado · 🟡 piloto/parcial (funciona, mas não cobre tudo ainda) · ⬜ pendente
 
-## Estado atual, resumo (atualizado 15/09/2026, depois de Equipamento + InformacoesSetor)
+## Estado atual, resumo (atualizado 15/09/2026, depois de generalizar as 13 tabelas de lookup)
 
-**Ainda não está tudo terminado** — mas o rollout de Zod/Repository já cobre **8 módulos de `controles_forms` inteiros**, `user`, e agora **2 das 3 "entidades reais" de `status_categorias`** (Equipamento, InformacoesSetor). No caminho, achei e corrigi **3 bugs reais em produção**: 2 rotas de Update que o Frontend já chamava mas não existiam em `routes.ts` (404 silencioso) e 1 delete de equipamento que nunca funcionou (lia o id do lugar errado). Detalhe completo em `GUIA-ZOD-REPOSITORY.md`, seção "Sétimo passo".
+**Ainda não está tudo terminado** — mas o rollout de Zod/Repository já cobre **8 módulos de `controles_forms` inteiros**, `user`, **Equipamento + InformacoesSetor**, e agora **as 13 tabelas de lookup de `status_categorias`** (via 1 schema + 1 Repository + 2 Services genéricos, em vez de 13 conjuntos quase idênticos). No caminho, achei e corrigi bugs reais em produção — 2 rotas de Update e 1 de List que o Frontend já chamava mas não existiam em `routes.ts` (404 silencioso), 1 delete de equipamento que nunca funcionou, e um método de controller com typo que só não quebrava porque a rota chamava com o mesmo typo. Detalhe completo em `GUIA-ZOD-REPOSITORY.md`, seções "Sétimo passo" e "Oitavo passo".
 
 ✅ **Fechado por completo:** item 2 (RBAC/CASL, incluindo os 4 recursos com ownership **e** o achado em `user/update`), item 4 (tratamento de erros global, incluindo `UnauthorizedError` novo), item 6 (cache), item 8 (TSC + Linter), item 9 (Docker, build real validado).
 
-🟡 **Piloto em 11 módulos agora, rollout pendente nos outros ~89:** item 1 (Repository pattern em OrdemdeServico, `user`, os 8 módulos de `controles_forms`, e agora Equipamento + InformacoesSetor), item 3 (Zod nesses mesmos 11), item 4 (o `try/catch` antigo caiu de 12 pra **10 arquivos**).
+🟡 **24 módulos cobertos agora, rollout pendente nos outros ~76:** item 1 (Repository pattern em OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento, InformacoesSetor, e os 13 de lookup via o Repository genérico), item 3 (Zod nesses mesmos 24). Item 4 (`try/catch` antigo) **continua em 10 arquivos** — esse grupo de 13 nunca teve o padrão antigo pra começar (só faltava Zod, não tratamento de erro), então generalizar não mexeu nessa contagem. *Correção registrada: o commit desse passo chegou a afirmar "de 10 pra 3", número errado — ver `GUIA-ZOD-REPOSITORY.md`, "Oitavo passo", pra o relato completo do engano e da correção.*
 
-⬜ **Ainda em zero:** item 7, só a parte cara (testes de integração, TestContainers, E2E) — `coverage` já está configurado (ver abaixo). Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
+⬜ **Ainda em zero:** item 7, só a parte cara (testes de integração, TestContainers, E2E) — `coverage` já está configurado. Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
 
-⚠️ **Achado sem decisão tomada:** o 3º módulo desse grupo (rotulado "tipodeInstituicaoUnidade" na tabela antiga) é na verdade o Update de `InstituicaoUnidade`, misplaced na pasta `tipodeInsituicaoUnidade/` — e é **código morto**: sem rota em `routes.ts`, sem chamada nenhuma no Frontend. Decisão de produto pendente: ligar a rota (nova funcionalidade) ou apagar o código morto?
+⚠️ **2 achados de código morto, decisão de produto pendente:** `UpdateInstituicaoUnidadeController.ts` (Update de InstituicaoUnidade, misplaced na pasta `tipodeInsituicaoUnidade/`) e `CreateTipodeEquipamentoController.ts` (Create de TipodeEquipamento) — ambos sem rota em `routes.ts`, sem chamada nenhuma no Frontend. Ligar as rotas (funcionalidade nova) ou apagar o código morto?
 
-**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~89 controllers restantes (majoritariamente as ~15 tabelas de lookup de `status_categorias`) — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+**Maior item que falta, em uma frase:** replicar Controller-fino + Service + Repository + Zod + "deixa o erro subir" pros ~76 controllers restantes (o que sobra de `status_categorias` fora do que já foi fechado, e o resto do projeto fora desse grupo) — análise de qual módulo priorizar (e por quê) já está em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ---
 
@@ -24,9 +24,9 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 > Resposta da pergunta "existe uma forma mais pleno de reorganizar isso?": sim — ver `ROADMAP-PLENO.md`, item 2, seção "O que foi implementado".
 
-- 🟡 Piloto aplicado em **OrdemdeServico**, **`user`**, os **8 módulos de `controles_forms`**, e agora **Equipamento + InformacoesSetor** (15/09) — Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
-- ✅ Repository pattern implementado — 12 repositories no total (`OrdemdeServicoRepository`, `UserRepository`, um por módulo de `controles_forms`, e agora `EquipamentoRepository` + `InformacoesSetorRepository`) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
-- ⬜ Replicar esse padrão (Controller fino + Service + Repository + Zod) pros outros ~89 controllers restantes — concentrados nas ~15 tabelas de lookup de `status_categorias` agora que Equipamento/InformacoesSetor estão fechados — módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
+- 🟡 Piloto aplicado em **OrdemdeServico**, **`user`**, os **8 módulos de `controles_forms`**, **Equipamento + InformacoesSetor**, e agora **as 13 tabelas de lookup de `status_categorias`** (15/09) — Controller virou camada fina (só fala com Express), Service só recebe dado e devolve resultado — sem `req`/`res` dentro da lógica de negócio.
+- ✅ Repository pattern implementado — 13 repository classes no total (`OrdemdeServicoRepository`, `UserRepository`, um por módulo de `controles_forms`, `EquipamentoRepository`, `InformacoesSetorRepository`, e o novo `LookupCategoriaRepository` genérico, parametrizado pelo model do Prisma e reaproveitado pelos 13 módulos de lookup) — isola as chamadas `prismaClient.*`, injetado via construtor no Service. Testes agora usam um repository fake em vez de mockar o módulo do Prisma.
+- ⬜ Replicar esse padrão pros outros ~76 controllers restantes — módulo por módulo (decidido: um de cada vez, com check-in antes de seguir pro próximo — confirmado de novo em 31/08). Análise de prioridade (quais módulos primeiro, e por quê) em `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`.
 
 ## 2. RBAC / Autorização
 
@@ -42,7 +42,8 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ **`user` fechado (15/09)** — `createUserSchema`, `updateUserSchema`, `authUserSchema` aplicados em `POST /users`, `PATCH /user/update/:id` e `POST /session`.
 - ✅ **8 módulos de `controles_forms` fechados (15/09)** — um schema por módulo (`assistenciaTecnica`, `laudoTecnico`, `documentacaoTecnica`, `estabilizadores`, `laboratorio`, `maquinasPendentesLab`, `maquinasPendentesOro`, `solicitacaoCompras`), incluindo `idParamSchema` agora também no Delete de todos eles (antes não validava `:id` nenhum). Achado ao comparar os schemas: `MaquinasPendentesLab` e `MaquinasPendentesOro` parecem o mesmo módulo mas `instituicaoUnidade_id` é opcional num e obrigatório no outro — só apareceu checando o `schema.prisma` de cada um, não pelo nome.
 - ✅ **Equipamento + InformacoesSetor fechados (15/09)** — `equipamento.schema.ts`, `informacoesSetor.schema.ts`. Achado mais sério que "falta Zod": as rotas `PATCH /equipamento/:id` e `PATCH /informacoessetor/:id` **não existiam em `routes.ts`**, mesmo com o Frontend já chamando as duas (`EditEquipamentoForm.tsx`, `EditRamalSetorForm,.tsx`) — ou seja, editar um equipamento ou um ramal/setor sempre devolvia 404 em produção. Corrigido junto com o rollout. Detalhe completo em `GUIA-ZOD-REPOSITORY.md`, seção "Sétimo passo".
-- ⬜ Replicar pro restante de `status_categorias`: as ~15 tabelas de lookup (`statuscategoria` e afins), onde compensa mais um schema/Repository genérico do que módulo-a-módulo.
+- ✅ **13 tabelas de lookup de `status_categorias` fechadas (15/09)** — em vez de 13 schemas quase idênticos, um só (`lookupCategoria.schema.ts`), reaproveitado nas 13 rotas de Create. Achado no caminho: `GET /list/tipo/equipamento` nunca existiu em `routes.ts`, mas o Frontend já chamava — dropdown de "Tipo de Equipamento" nunca mostrou opção nenhuma em produção. Detalhe completo em `GUIA-ZOD-REPOSITORY.md`, seção "Oitavo passo".
+- ⬜ Replicar pro restante de `status_categorias` e pro resto do projeto (~76 controllers).
 - ⬜ Validar variáveis de ambiente no boot com um schema Zod (`DATABASE_URL`, `JWT_SECREATE`, `CLOUDINARY_*`) — falha de config aparecer no start, não em runtime.
 
 ## 4. Tratamento de erros global
@@ -52,7 +53,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 - ✅ `try/catch` removido de todos os controllers já refatorados (OrdemdeServico Create/Update, `user` Create/Update/Auth, os 8 módulos de `controles_forms`, e agora Equipamento + InformacoesSetor) — erro sobe sozinho via `express-async-errors`. Bugs reais corrigidos no caminho: login com senha errada devolvia `500` (o `Error` genérico não caía em nenhum tipo que o `errorHandler` reconhecia) — com `UnauthorizedError`, agora devolve `401` de verdade; conflito de patrimônio duplicado em Equipamento também devolvia `500` pelo mesmo motivo — corrigido com `ConflictError` (409).
 - ⬜ Continua pendente **apenas** nos controllers que ainda não passaram pelo item 3 (hoje, o restante de `status_categorias` e alguns extras de OrdemdeServico) — a infraestrutura já está pronta pra eles, só falta trocar o `try/catch` de cada um por "deixa subir".
 
-**Contagem (atualizada 15/09, depois de Equipamento + InformacoesSetor):** só conta quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), não try/catch legítimo (retry, fallback de Redis). Hoje: **10 arquivos**:
+**Contagem (revisada 15/09, depois de generalizar as 13 tabelas de lookup):** só conta quem realmente tem o padrão antigo (`catch (error) { return res.status(400)... }`), não try/catch legítimo (retry, fallback de Redis). Hoje: **10 arquivos, sem mudança neste passo** — os 13 módulos de lookup nunca tiveram esse padrão pra começar (só faltava Zod, não tratamento de erro), então generalizá-los fechou o item 1/3, mas não o item 4. *Isso corrige uma afirmação errada no commit desse passo ("de 10 pra 3") — detalhe do engano em `GUIA-ZOD-REPOSITORY.md`, "Oitavo passo".*
 
 | Grupo | Arquivos | Módulos |
 |---|---|---|
@@ -60,9 +61,9 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 | Misc | 2 | `Eventos/EventosControllers.ts`, `fotoController.ts` (métodos `delete`/`listByOrdem` — só `handle` foi refeito pra fila) |
 | Código morto, fora da contagem de rollout | 1 | `UpdateInstituicaoUnidadeController.ts` (rotulado antes como "tipodeInstituicaoUnidade") — sem rota, sem chamada no Frontend; decisão de produto pendente (ligar ou apagar) |
 
-~~`controles_forms` — todos os 8 módulos~~ — ✅ fechado (15/09). ~~`status_categorias` — equipamento, informacoessetor~~ — ✅ fechados (15/09), saíram da tabela.
+~~`controles_forms` — todos os 8 módulos~~ — ✅ fechado (15/09). ~~`status_categorias` — equipamento, informacoessetor, 13 tabelas de lookup~~ — ✅ fechados (15/09), saíram da tabela (o Zod/Repository deles, não o try/catch — eles nunca estiveram nessa tabela).
 
-Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 juntos) — bate com a análise de prioridade do `GUIA-PRIORIZACAO-PROXIMOS-PASSOS.md`. Próximo candidato natural: as ~15 tabelas de lookup de `status_categorias` (módulos "só nome"), onde vale a pena um padrão genérico em vez de módulo-a-módulo.
+Essa tabela é literalmente a lista de próximos alvos do rollout de tratamento de erro (item 4) — não se confunde mais com o rollout de Zod/Repository (item 1/3), que agora está bem mais adiantado (24 módulos) do que essa tabela específica sugere.
 
 ## 5. Filas — BullMQ + Redis (+ AWS)
 
@@ -79,7 +80,7 @@ Essa tabela é literalmente a lista de próximos alvos do rollout (item 1/3/4 ju
 
 ## 7. Testes automatizados
 
-- ✅ 211 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update/Delete de OrdemdeServico, `user`, os 8 módulos de `controles_forms`, e agora Equipamento + InformacoesSetor (todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas novos.
+- ✅ 221 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update/Delete de OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento + InformacoesSetor, e o Repository/Service genéricos de lookup (todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas novos. `coverage` configurado com piso de 30-45% (número real de hoje).
 - ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
 - ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
 - ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
@@ -216,3 +217,21 @@ Antes de escrever qualquer schema, conferi se as rotas de Update desses 3 módul
 - 211 testes passando (29 novos), `tsc`/`eslint` limpos.
 
 Detalhe completo: `GUIA-ZOD-REPOSITORY.md`, seção "Sétimo passo".
+
+---
+
+## Atualização 15/09/2026 — `coverage` configurado + as 13 tabelas de lookup generalizadas
+
+Duas peças menores desse dia, na ordem que o esforço mandava (mais rápido primeiro):
+
+**1. `coverage` configurado no `vitest.config.ts`.** Piso de 30-45% (o número real de hoje), não 60% "aspiracional" — a maioria dos ~89 controllers fora do rollout ainda tinha zero teste, e travar o CI por dívida que já existia (em vez de por uma regressão de verdade) não ajudaria ninguém. `npm run test` agora roda com `--coverage`, então o `test.yml` já falha se a cobertura cair. Achado no caminho: a pasta `coverage/` gerada pelo relatório HTML estava sendo lintada como código do projeto — ignorada no `eslint.config.mjs`.
+
+**2. As 13 tabelas de lookup de `status_categorias` generalizadas** — em vez de repetir o rollout módulo por módulo mais 13 vezes, 1 schema + 1 Repository genérico (parametrizado pelo model) + 2 Services cobrem todas. 14 arquivos de Service antigos apagados de vez (não deixados como código morto). Achados no caminho: um método de controller com typo (`hadle`) que só não quebrava porque a rota chamava com o mesmo erro; e uma rota (`GET /list/tipo/equipamento`) que o Frontend já chamava, nunca existiu no backend, e o próprio dev do Frontend já desconfiava disso (comentário no `.catch()`: "404 provável na Vercel").
+
+**Correção sobre o próprio processo, registrada aqui pra não repetir:** o commit desse segundo item afirmou que o `try/catch` antigo caiu "de 10 pra 3 arquivos" — **isso está errado**. Os 13 controllers de lookup nunca tiveram o padrão antigo de `try/catch` (só faltava Zod, que é um problema diferente) — a contagem de try/catch continua em **10**, sem mudança. O erro aconteceu por não rodar o script de contagem de novo antes de escrever o número no commit — daqui pra frente, sempre recontar antes de afirmar, não assumir que "mexi nesses arquivos" implica "mudei essa métrica específica".
+
+- 13 controllers reescritos, 14 Services antigos apagados, 1 schema/1 repository/2 services genéricos novos.
+- 10 testes novos (221 total) — poucos de propósito: o objetivo de generalizar é 1 implementação bem testada cobrir 13 módulos, não 13 arquivos de teste quase idênticos.
+- Achado adicional de código morto: `CreateTipodeEquipamentoController.ts` (Create de TipodeEquipamento) também não tem rota nem chamada no Frontend — mesma decisão pendente do `InstituicaoUnidade`.
+
+Detalhe completo: `GUIA-ZOD-REPOSITORY.md`, seção "Oitavo passo".

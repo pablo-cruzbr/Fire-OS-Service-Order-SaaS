@@ -194,4 +194,32 @@ Com `controles_forms` inteiro fechado, entrei no próximo grupo do rollout: as 3
 
 ---
 
+## Oitavo passo: generalizando as 13 tabelas de lookup de `status_categorias` — 15/09/2026
+
+Depois de Equipamento e InformacoesSetor, sobrava o grupo grande: ~15 módulos de `status_categorias` que só existem pra dar nome a um status/categoria (`statusCompras`, `tarefa`, `tipodeChamado`, etc.). Antes de repetir o rollout módulo por módulo mais 13 vezes, conferi o `schema.prisma` de cada um — e são **literalmente o mesmo model**: `{ id, name, created_at?, updated_at?, uma relação reversa }`, sem nenhuma FK própria pra validar. Repetir o padrão 13 vezes seria copiar-colar disfarçado de trabalho.
+
+**A decisão de pleno aqui não foi "aplicar o padrão", foi "não aplicar o padrão 13 vezes".** Em vez de 13 schemas + 13 repositories + 13 services quase idênticos, escrevi um de cada:
+
+- `src/schemas/lookupCategoria.schema.ts` — um schema só (`{ name: string }`), reaproveitado nas 13 rotas de Create.
+- `src/repositories/LookupCategoriaRepository.ts` — um Repository só, parametrizado pelo **nome do model** no construtor (`new LookupCategoriaRepository("tarefa")`). Por dentro ele acessa `prismaClient[nomeDoModel]` — só funciona porque todos os 13 models têm exatamente a mesma forma de `create`/`delete`.
+- `src/services/status_categorias/CreateLookupCategoriaService.ts` e `DeleteLookupCategoriaService.ts` — dois Services só, cada Controller passando o Repository já configurado com o model certo.
+
+Resultado: 13 controllers ficaram finos (a única diferença entre eles agora é **qual model** passam pro Repository), e os 14 Services antigos (13 Create + 1 Remove) foram apagados de vez — não deixei nenhum arquivo morto pra trás, porque nada mais os referenciava.
+
+**Achados no caminho, sem relação direta com Zod/Repository:**
+
+- `CreatestatusControlledeLaboratorioController` tinha um método `hadle` (typo) — e `routes.ts` chamava `.hadle()` na mesma grafia errada. Funcionava só porque os dois lados combinavam; teria quebrado silenciosamente na próxima pessoa que "corrigisse" um dos dois lados sem notar o outro. Corrigido nos dois ao mesmo tempo.
+- **`GET /list/tipo/equipamento` nunca existiu em `routes.ts`, mas o Frontend já chama exatamente essa rota** (`EditEquipamentoForm.tsx`, pra popular o dropdown de "Tipo de Equipamento" no formulário de editar equipamento) — e quem escreveu esse código no Frontend **já desconfiava**: o `.catch()` da chamada tem o comentário `"Rota de tipos não encontrada ou erro (404 provável na Vercel)"`. Ou seja, o dropdown nunca mostrou nenhuma opção em produção, e a pessoa que escreveu already sabia que provavelmente não funcionava, só não chegou a confirmar nem consertar. Corrigido: rota adicionada com o path exato que o Frontend espera.
+- A rota de Create desse mesmo módulo (`tipodeEquipamento`) não tem nenhum caller no Frontend — deixada sem rota de propósito, mesma lógica do achado do `InstituicaoUnidade` no passo anterior: não inventar rota nova sem alguém ter pedido.
+
+**Sobre a contagem de `try/catch` antigo — uma correção do próprio processo, não só do número:** o commit desse passo registrou "de 10 pra 3 arquivos", mas isso está **errado** — conferindo de novo, nenhum dos 13 controllers desse grupo tinha o padrão antigo de `try/catch` pra começar (eram só `const {name} = req.body` direto, sem captura de erro nenhuma). A contagem de `try/catch` **continua em 10** depois deste passo — o que mudou aqui foi Zod/Repository, não tratamento de erro. Isso só apareceu porque, dessa vez, não rodei o mesmo script de contagem de outras vezes antes de escrever o commit — lição registrada pra não repetir: sempre rodar a contagem de novo antes de afirmar um número, não assumir que "mexi nesses arquivos" implica "mudei a contagem".
+
+**Resultado:** 221 testes passando (10 novos — bem menos que os rounds anteriores, porque o objetivo de generalizar é justamente esse: 1 schema + 1 repository + 2 services bem testados cobrem os 13 módulos, em vez de 13 arquivos de teste quase idênticos), `tsc --noEmit` limpo, `eslint` sem erro (28 avisos, caiu de 40 porque os 14 arquivos apagados levaram avisos de `no-unused-vars` junto).
+
+**Preenchendo o molde da narrativa:**
+
+> Encontrei 13 módulos de `status_categorias` com o mesmo formato exato de model — só `name`. Em vez de aplicar o rollout de Zod/Repository 13 vezes (a opção "óbvia", só copiar o que já tinha funcionado nos módulos anteriores), escrevi uma versão genérica: um schema, um Repository parametrizado pelo nome do model, dois Services. O trade-off foi um pouco mais de abstração (o Repository não sabe de antemão qual model vai receber) em troca de eliminar ~26 arquivos que seriam só repetição. No caminho, achei uma rota que o Frontend já chamava e nunca existiu no backend — outro 404 silencioso, dessa vez com o desenvolvedor original já desconfiando no próprio comentário do código.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
