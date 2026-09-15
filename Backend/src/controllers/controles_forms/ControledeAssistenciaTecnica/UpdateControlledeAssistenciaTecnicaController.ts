@@ -1,49 +1,14 @@
 import { Request, Response } from "express";
-import { UpdateAssistenciaTecnicaRequest, UpdateAssistenciaTecnicaService } from "../../../services/controles_forms/ControledeAssistenciaTecnica/UpdateAssistenciaTecnicaService";
+import { UpdateAssistenciaTecnicaService } from "../../../services/controles_forms/ControledeAssistenciaTecnica/UpdateAssistenciaTecnicaService";
+import { UpdateAssistenciaTecnicaInput } from "../../../schemas/assistenciaTecnica.schema";
+
 class UpdateAssistenciaTecnicaController {
+  constructor(private service: UpdateAssistenciaTecnicaService = new UpdateAssistenciaTecnicaService()) {}
+
   async handle(req: Request, res: Response) {
     const { id } = req.params;
-
-    // Desestrutura os dados do body
-    const {
-        name,
-        mesAno, 
-        idChamado,
-        assistencia,
-        observacoes,
-        osDaAssistencia,
-        dataDeRetirada,
-        cliente_id,
-        tecnico_id,
-        instituicaoUnidade_id,
-        equipamento_id,
-        statusReparo_id
-    } = req.body;
-
-    // Monta o objeto do tipo UpdateAssistenciaTecnicaRequest
-    const data: UpdateAssistenciaTecnicaRequest = {
-        id, 
-        name,
-        mesAno, 
-        idChamado,
-        assistencia,
-        observacoes,
-        osDaAssistencia,
-        dataDeRetirada,
-        cliente_id,
-        tecnico_id,
-        instituicaoUnidade_id,
-        equipamento_id,
-        statusReparo_id
-    };
-
-    try {
-      const service = new UpdateAssistenciaTecnicaService();
-      const result = await service.execute(data);
-      return res.json(result);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
-    }
+    const result = await this.service.execute(id, req.body as UpdateAssistenciaTecnicaInput);
+    return res.json(result);
   }
 }
 

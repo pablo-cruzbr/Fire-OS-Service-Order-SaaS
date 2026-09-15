@@ -1,42 +1,13 @@
 import { Response, Request } from "express";
-import {CreateControledeAssistenciaTecnicaService } from "../../../services/controles_forms/ControledeAssistenciaTecnica/CreateControledeAssistenciaTecnicaService";
+import { CreateControledeAssistenciaTecnicaService } from "../../../services/controles_forms/ControledeAssistenciaTecnica/CreateControledeAssistenciaTecnicaService";
+import { CreateAssistenciaTecnicaInput } from "../../../schemas/assistenciaTecnica.schema";
 
 class CreateControledeAssistenciaTecnicaController {
+  constructor(private service: CreateControledeAssistenciaTecnicaService = new CreateControledeAssistenciaTecnicaService()) {}
+
   async handle(req: Request, res: Response) {
-   
-      const {
-        name, 
-        mesAno, 
-        idChamado,
-        assistencia,
-        observacoes,
-        osDaAssistencia,
-        dataDeRetirada,
-        equipamento_id,
-        statusReparo_id,
-        instituicaoUnidade_id,
-        tecnico_id,
-        cliente_id,
-      } = req.body;
-
-      const createControledeAssistenciaTecnicaService = new CreateControledeAssistenciaTecnicaService();
-
-      const controle = await createControledeAssistenciaTecnicaService.execute({
-        name,
-        mesAno,
-        idChamado,
-        assistencia,
-        observacoes,
-        osDaAssistencia,
-        dataDeRetirada,
-        equipamento_id,
-        statusReparo_id,
-        instituicaoUnidade_id,
-        tecnico_id,
-        cliente_id,
-      });
-
-      return res.json(controle);
+    const controle = await this.service.execute(req.body as CreateAssistenciaTecnicaInput);
+    return res.json(controle);
   }
 }
 

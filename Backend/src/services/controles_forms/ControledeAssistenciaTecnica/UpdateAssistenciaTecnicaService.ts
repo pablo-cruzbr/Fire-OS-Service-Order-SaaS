@@ -1,109 +1,34 @@
-import prismaClient from "../../../prisma";
-
-export interface UpdateAssistenciaTecnicaRequest {
-    id: string;
-    name: string;
-    mesAno: Date;
-    idChamado: string;
-    assistencia: string;
-    observacoes: string;
-    osDaAssistencia: string;
-    dataDeRetirada: Date;
-    
-    cliente_id: string;
-    tecnico_id: string;
-    instituicaoUnidade_id: string;
-    equipamento_id: string;
-    statusReparo_id: string;   
-}
+import { UpdateAssistenciaTecnicaInput } from "../../../schemas/assistenciaTecnica.schema";
+import {
+  AssistenciaTecnicaRepository,
+  assistenciaTecnicaRepository,
+} from "../../../repositories/AssistenciaTecnicaRepository";
 
 class UpdateAssistenciaTecnicaService {
-  async execute({ 
-    id, 
-    name,
-    mesAno, 
-    idChamado,
-    assistencia,
-    observacoes,
-    osDaAssistencia,
-    dataDeRetirada,
-    cliente_id,
-    tecnico_id,
-    instituicaoUnidade_id,
-    equipamento_id,
-    statusReparo_id
+  constructor(private repository: AssistenciaTecnicaRepository = assistenciaTecnicaRepository) {}
 
-    }: UpdateAssistenciaTecnicaRequest  ) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar o card Assistencia Tecnica.");
-    }
-
-    // Verifica se o registro existe antes de atualizar
-    const controle = await prismaClient.controleDeAssistenciaTecnica.findUnique({
-      where: { id },
+  async execute(id: string, data: UpdateAssistenciaTecnicaInput) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    const controle = await this.repository.update(id, {
+      name: data.name,
+      mesAno: data.mesAno,
+      idChamado: data.idChamado,
+      assistencia: data.assistencia,
+      observacoes: data.observacoes,
+      osDaAssistencia: data.osDaAssistencia,
+      dataDeRetirada: data.dataDeRetirada,
+      equipamento: data.equipamento_id ? { connect: { id: data.equipamento_id } } : undefined,
+      statusReparo: data.statusReparo_id ? { connect: { id: data.statusReparo_id } } : undefined,
+      tecnico: data.tecnico_id ? { connect: { id: data.tecnico_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
     });
 
-    if (!controle) {
-      throw new Error("Controle de Assistencia tecnica não encontrada.");
-    }
-
-    await prismaClient.controleDeAssistenciaTecnica.update({
-      where: { id },
-    data:{
-        name,
-        mesAno,
-        idChamado,
-        assistencia,
-        observacoes,
-        osDaAssistencia,
-        dataDeRetirada,
-        
-        cliente_id,
-        tecnico_id,
-        instituicaoUnidade_id,
-        equipamento_id,
-        statusReparo_id
-      },
-    });
-
-     const status = await prismaClient.controleDeAssistenciaTecnica.findUnique({
-      where: { id },
-      include: {
-        cliente: {  
-          select: {
-            name: true,
-          },
-        },
-
-        tecnico:{
-          select:{
-            name: true,
-          },
-        },
-
-        instituicaoUnidade:{
-          select:{
-            name: true,
-            endereco: true
-          }
-        },
-        equipamento:{
-            select:{
-                name: true,
-                patrimonio: true
-            }
-        },
-        statusReparo:{
-            select:{
-                name: true
-            }
-        }
-        
-      }
-    });
-
-    return { message: "Controle de Assistencia Técnica Atualizado com sucesso.", controle, status};
+    return { message: "Controle de Assistencia Técnica Atualizado com sucesso.", controle };
   }
 }
 
-export {UpdateAssistenciaTecnicaService };
+export { UpdateAssistenciaTecnicaService };

@@ -2,18 +2,12 @@ import { Request, Response } from "express";
 import { DeleteControledeAssistenciaTecnicaService } from "../../../services/controles_forms/ControledeAssistenciaTecnica/DeleteControledeAssistenciaTecnicaService";
 
 class DeleteControledeAssistenciaTecnicaController {
+  constructor(private service: DeleteControledeAssistenciaTecnicaService = new DeleteControledeAssistenciaTecnicaService()) {}
+
   async handle(req: Request, res: Response) {
     const { id } = req.params;
-
-    try {
-      const service = new DeleteControledeAssistenciaTecnicaService();
-      await service.execute({ id });
-      
-      return res.json({ message: "Registro deletado com sucesso!" });
-      
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
-    }
+    const result = await this.service.execute(id);
+    return res.json(result);
   }
 }
 

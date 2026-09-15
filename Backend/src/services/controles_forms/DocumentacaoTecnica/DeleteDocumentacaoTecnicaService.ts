@@ -1,28 +1,15 @@
-import prismaClient from "../../../prisma";
-
-interface DeleteDocumentacaoTecnicaRequest {
-  id: string;
-}
+import {
+  DocumentacaoTecnicaRepository,
+  documentacaoTecnicaRepository,
+} from "../../../repositories/DocumentacaoTecnicaRepository";
 
 class DeleteDocumentacaoTecnicaService {
-  async execute({ id }: DeleteDocumentacaoTecnicaRequest  ) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar a Documentação técnica.");
-    }
+  constructor(private repository: DocumentacaoTecnicaRepository = documentacaoTecnicaRepository) {}
 
-    // Verifica se o registro existe antes de deletar
-    const controleExists = await prismaClient.documentacaoTecnica.findUnique({
-      where: { id },
-    });
-
-    if (!controleExists) {
-      throw new Error("Controle de Documentação técnica não encontrado.");
-    }
-
-    await prismaClient.documentacaoTecnica.delete({
-      where: { id },
-    });
-
+  async execute(id: string) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    await this.repository.delete(id);
     return { message: "Controle de Documentação técnica deletado com sucesso." };
   }
 }

@@ -1,78 +1,27 @@
-import prismaClient from "../../../prisma";
-
-export interface UpdateDocumentacaoTecnicaRequest {
-  id: string;
-  titulo: string;
-  descricao: string;
- 
- 
-  cliente_id: string;
-  tecnico_id: string;
-  instituicaoUnidade_id: string
-}
+import { UpdateDocumentacaoTecnicaInput } from "../../../schemas/documentacaoTecnica.schema";
+import {
+  DocumentacaoTecnicaRepository,
+  documentacaoTecnicaRepository,
+} from "../../../repositories/DocumentacaoTecnicaRepository";
 
 class UpdateDocumentacaoTecnicaService {
-  async execute({ 
-    id, 
-    titulo,
-    descricao, 
-    cliente_id,
-    tecnico_id,
-    instituicaoUnidade_id
+  constructor(private repository: DocumentacaoTecnicaRepository = documentacaoTecnicaRepository) {}
 
-    }: UpdateDocumentacaoTecnicaRequest  ) {
-    if (!id) {
-      throw new Error("ID obrigatório para deletar a Solicitacao de Compras.");
-    }
-
-    // Verifica se o registro existe antes de atualizar
-    const controle = await prismaClient.documentacaoTecnica.findUnique({
-      where: { id },
+  async execute(id: string, data: UpdateDocumentacaoTecnicaInput) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    const controle = await this.repository.update(id, {
+      titulo: data.titulo,
+      descricao: data.descricao,
+      tecnico: data.tecnico_id ? { connect: { id: data.tecnico_id } } : undefined,
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
     });
 
-    if (!controle) {
-      throw new Error("Controle de Solicitacao de Compras não encontrada.");
-    }
-
-    await prismaClient.documentacaoTecnica.update({
-      where: { id },
-      data:{
-        titulo,
-        descricao,
-        
-        cliente_id,
-        tecnico_id,
-        instituicaoUnidade_id
-      },
-    });
-
-     const status = await prismaClient.documentacaoTecnica.findUnique({
-      where: { id },
-      include: {
-        cliente: {  
-          select: {
-            name: true,
-          },
-        },
-
-        tecnico:{
-          select:{
-            name: true,
-          },
-        },
-
-        instituicaoUnidade:{
-          select:{
-            name: true,
-            endereco: true
-          }
-        },
-        
-      }
-    });
-
-    return { message: "Controle de Documentação Técnica Atualizado com sucesso.", controle, status};
+    return { message: "Controle de Documentação Técnica Atualizado com sucesso.", controle };
   }
 }
 
-export {UpdateDocumentacaoTecnicaService };
+export { UpdateDocumentacaoTecnicaService };

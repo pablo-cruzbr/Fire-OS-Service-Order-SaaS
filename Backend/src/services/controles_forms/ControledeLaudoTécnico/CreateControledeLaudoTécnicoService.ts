@@ -1,48 +1,19 @@
-import prismaClient from "../../../prisma";
+import { CreateLaudoTecnicoInput } from "../../../schemas/laudoTecnico.schema";
+import { LaudoTecnicoRepository, laudoTecnicoRepository } from "../../../repositories/LaudoTecnicoRepository";
 
-interface ControledeLTRequest{
-    descricaodoProblema: string;
-    mesAno: string | Date;
-    osLab: string;
+class CreateControledeLaudoTecnicoService {
+  constructor(private repository: LaudoTecnicoRepository = laudoTecnicoRepository) {}
 
-    instituicaoUnidade_id: string;
-    tecnico_id: string;
-    equipamento_id: string;
-}
-
-class CreateControledeLaudoTecnicoService{
-    async execute({
-        descricaodoProblema,mesAno, osLab, instituicaoUnidade_id, tecnico_id, equipamento_id
-    }: ControledeLTRequest){
-         if (!descricaodoProblema || descricaodoProblema.trim() === "") {
-      throw new Error("Insira a descrição do Problema!");
-    }
-
-const controle = await prismaClient.controleDeLaudoTecnico.create({
-  data: {
-    descricaodoProblema,
-    mesAno: new Date(mesAno),
-    osLab,
-    instituicaoUnidade_id,
-    equipamento_id,
-    tecnico_id,
-  },
-  include: {
-    equipamento: {
-      select: { 
-        name: true,
-      patrimonio: true, }
-    },
-    tecnico: {
-      select: { name: true }
-    },
-    instituicaoUnidade: {
-      select: { name: true }
-    }
+  async execute(data: CreateLaudoTecnicoInput) {
+    return this.repository.create({
+      descricaodoProblema: data.descricaodoProblema,
+      mesAno: data.mesAno,
+      osLab: data.osLab,
+      instituicaoUnidade: { connect: { id: data.instituicaoUnidade_id } },
+      equipamento: { connect: { id: data.equipamento_id } },
+      tecnico: { connect: { id: data.tecnico_id } },
+    });
   }
-});
-        return controle;
-    }
 }
 
-export {CreateControledeLaudoTecnicoService}
+export { CreateControledeLaudoTecnicoService };
