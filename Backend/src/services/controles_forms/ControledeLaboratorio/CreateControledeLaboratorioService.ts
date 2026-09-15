@@ -1,79 +1,25 @@
-import prismaClient from "../../../prisma";
-interface ControledeLaboratorioRequest {
-  nomedoEquipamento: string;
-  defeito: string;
-  marca: string;
-  osDeAbertura: string;
-  osDeDevolucao: string;
-  data_de_Chegada: Date;
-  data_de_Finalizacao: Date;
-
-  instituicaoUnidade_id: string;
-  cliente_id: string;
-  equipamento_id: string;
-  statusControledeLaboratorio_id: string;
-}
+import { CreateLaboratorioInput } from "../../../schemas/laboratorio.schema";
+import { LaboratorioRepository, laboratorioRepository } from "../../../repositories/LaboratorioRepository";
 
 class CreateControledeLaboratorioService {
-  async execute({
-    nomedoEquipamento,
-    defeito,
-    marca,
-    osDeAbertura,
-    osDeDevolucao,
-    data_de_Chegada,
-    data_de_Finalizacao,
-    instituicaoUnidade_id,
-    cliente_id,
-    equipamento_id,
-    statusControledeLaboratorio_id,
-  }: ControledeLaboratorioRequest) {
-    if (!nomedoEquipamento || nomedoEquipamento.trim() === "") {
-      throw new Error("Insira o nome!");
-    }
+  constructor(private repository: LaboratorioRepository = laboratorioRepository) {}
 
-    const controle = await prismaClient.controleDeLaboratorio.create({
-      data: {
-        nomedoEquipamento,
-        defeito,
-        marca,
-        osDeAbertura,
-        osDeDevolucao,
-        data_de_Chegada,
-        data_de_Finalizacao,
-
-        statusControledeLaboratorio: {
-          connect: { id: statusControledeLaboratorio_id },
-        },
-        equipamento: {
-          connect: { id: equipamento_id },
-        },
-        cliente: {
-          connect: { id: cliente_id },
-        },
-         instituicaoUnidade: { connect: { id: instituicaoUnidade_id } },
-      },
-      include: {
-        equipamento: {
-          select: { 
-            name: true,
-            patrimonio: true },
-        },
-        cliente: {
-          select: { name: true },
-        },
-         instituicaoUnidade:{
-            select: {
-              name: true,
-              endereco: true}
-        },
-        statusControledeLaboratorio: {
-          select: { name: true },
-        },
-      },
+  async execute(data: CreateLaboratorioInput) {
+    return this.repository.create({
+      nomedoEquipamento: data.nomedoEquipamento,
+      defeito: data.defeito,
+      marca: data.marca,
+      osDeAbertura: data.osDeAbertura,
+      osDeDevolucao: data.osDeDevolucao,
+      data_de_Chegada: data.data_de_Chegada,
+      data_de_Finalizacao: data.data_de_Finalizacao,
+      statusControledeLaboratorio: { connect: { id: data.statusControledeLaboratorio_id } },
+      equipamento: data.equipamento_id ? { connect: { id: data.equipamento_id } } : undefined,
+      cliente: data.cliente_id ? { connect: { id: data.cliente_id } } : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
     });
-
-    return controle;
   }
 }
 

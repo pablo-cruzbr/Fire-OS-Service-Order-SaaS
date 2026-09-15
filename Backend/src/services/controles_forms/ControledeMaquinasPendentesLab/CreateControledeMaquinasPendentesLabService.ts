@@ -1,61 +1,25 @@
-import prismaClient from "../../../prisma";
+import { CreateMaquinasPendentesLabInput } from "../../../schemas/maquinasPendentesLab.schema";
+import {
+  MaquinasPendentesLabRepository,
+  maquinasPendentesLabRepository,
+} from "../../../repositories/MaquinasPendentesLabRepository";
 
-interface ControledeMPLRequest{
-    numeroDeSerie: string;
-    ssd: string;
-    idDaOs: string;
-    obs: string;
+class CreateControledeMaquinasPendentesLabService {
+  constructor(private repository: MaquinasPendentesLabRepository = maquinasPendentesLabRepository) {}
 
-    equipamento_id: string;
-    statusMaquinasPendentesLab_id: string;
-    instituicaoUnidade_id: string;
+  async execute(data: CreateMaquinasPendentesLabInput) {
+    return this.repository.create({
+      numeroDeSerie: data.numeroDeSerie,
+      ssd: data.ssd,
+      idDaOs: data.idDaOs,
+      obs: data.obs,
+      equipamento: { connect: { id: data.equipamento_id } },
+      statusMaquinasPendentesLab: { connect: { id: data.statusMaquinasPendentesLab_id } },
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
+    });
+  }
 }
 
-class CreateControledeMaquinasPendentesLabService{
-    async execute({
-        numeroDeSerie,
-        ssd,
-        idDaOs,
-        obs,
-        equipamento_id,
-        statusMaquinasPendentesLab_id,
-        instituicaoUnidade_id
-    }: ControledeMPLRequest){
-        if(!numeroDeSerie || numeroDeSerie.trim() === " " ){
-            throw new Error ("Insira o numero de serie!")
-        }
-
-        const controle = await prismaClient.controleDeMaquinasPendentesLaboratorio.create({
-            data:{
-                numeroDeSerie,
-                ssd,
-                idDaOs,
-                obs,
-                
-                equipamento_id,
-                statusMaquinasPendentesLab_id,
-                instituicaoUnidade_id
-            },
-            include:{
-                equipamento:{
-                    select:{
-                        name: true,
-                        patrimonio: true,
-                    }
-                },
-                statusMaquinasPendentesLab:{
-                    select:{name: true}
-                },
-                instituicaoUnidade:{
-                    select:{
-                        name: true,
-                        endereco: true
-                    }
-                }
-            }
-        })
-        return controle;
-    }
-}
-
-export {CreateControledeMaquinasPendentesLabService}
+export { CreateControledeMaquinasPendentesLabService };

@@ -1,82 +1,30 @@
-import prismaClient from "../../../prisma";
-
-type UpdateMaquinasPendentesLabRequest = {
-  id: string; 
-  numeroDeSerie: string;
-  ssd: string;
-  idDaOs: string;
-  obs: string;
-  equipamento_id: string;
-  statusMaquinasPendentesLab_id: string;
-  instituicaoUnidade_id: string;
-};
+import { UpdateMaquinasPendentesLabInput } from "../../../schemas/maquinasPendentesLab.schema";
+import {
+  MaquinasPendentesLabRepository,
+  maquinasPendentesLabRepository,
+} from "../../../repositories/MaquinasPendentesLabRepository";
 
 class UpdateControledeMaquinasPendentesLabService {
-  async execute({
-    id,
-    numeroDeSerie,
-    ssd,
-    idDaOs,
-    obs,
-    equipamento_id,
-    statusMaquinasPendentesLab_id,
-    instituicaoUnidade_id
-  }: UpdateMaquinasPendentesLabRequest) {
-    if (!id) {
-      throw new Error("ID obrigatório para atualizar o card de Máquinas Pendentes no Laboratório.");
-    }
+  constructor(private repository: MaquinasPendentesLabRepository = maquinasPendentesLabRepository) {}
 
-    const checkExists = await prismaClient.controleDeMaquinasPendentesLaboratorio.findUnique({
-      where: { id },
+  async execute(id: string, data: UpdateMaquinasPendentesLabInput) {
+    // Sem checagem manual de existência — se o id não existir, o Prisma
+    // lança P2025 e o errorHandler global já traduz pra 404.
+    const controle = await this.repository.update(id, {
+      numeroDeSerie: data.numeroDeSerie,
+      ssd: data.ssd,
+      idDaOs: data.idDaOs,
+      obs: data.obs,
+      equipamento: data.equipamento_id ? { connect: { id: data.equipamento_id } } : undefined,
+      statusMaquinasPendentesLab: data.statusMaquinasPendentesLab_id
+        ? { connect: { id: data.statusMaquinasPendentesLab_id } }
+        : undefined,
+      instituicaoUnidade: data.instituicaoUnidade_id
+        ? { connect: { id: data.instituicaoUnidade_id } }
+        : undefined,
     });
 
-    if (!checkExists) {
-      throw new Error("Registro não encontrado.");
-    }
-
-    await prismaClient.controleDeMaquinasPendentesLaboratorio.update({
-      where: { id },
-      data: {
-        numeroDeSerie,
-        ssd,
-        idDaOs,
-        obs,
-        equipamento_id,
-        statusMaquinasPendentesLab_id,
-        instituicaoUnidade_id
-      },
-    });
-
-    const controle = await prismaClient.controleDeMaquinasPendentesLaboratorio.findUnique({
-      where: { id },
-      include: {
-        instituicaoUnidade: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true,
-          },
-        },
-        equipamento: {
-          select: {
-            id: true,
-            name: true,
-            patrimonio: true,
-          },
-        },
-        statusMaquinasPendentesLab: { // corrigido nome da relação
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    return {
-      message: "Controle de Máquinas Pendentes atualizado com sucesso.",
-      controle,
-    };
+    return { message: "Controle de Máquinas Pendentes atualizado com sucesso.", controle };
   }
 }
 

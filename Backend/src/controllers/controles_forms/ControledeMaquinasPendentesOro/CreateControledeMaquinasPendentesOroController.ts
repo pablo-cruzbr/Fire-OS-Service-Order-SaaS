@@ -1,30 +1,14 @@
 import { Response, Request } from "express";
 import { CreateControledeMaquinasPendentesOroService } from "../../../services/controles_forms/ControledeMaquinasPendentesOro/CreateControledeMaquinasPendentesOroService";
+import { CreateMaquinasPendentesOroInput } from "../../../schemas/maquinasPendentesOro.schema";
 
-class CreateControledeMaquinasPendentesOroController{
-    async handle(req: Request, res: Response) {
-        const {
-             datadaInstalacao,
-             osInstalacao,
-             osRetirada,
-             equipamento_id,
-             statusMaquinasPendentesOro_id,
-             instituicaoUnidade_id
-        } = req.body
+class CreateControledeMaquinasPendentesOroController {
+  constructor(private service: CreateControledeMaquinasPendentesOroService = new CreateControledeMaquinasPendentesOroService()) {}
 
-        const createControledeMaquinasPendentesOroService = new CreateControledeMaquinasPendentesOroService();
-
-        const controle = await createControledeMaquinasPendentesOroService.execute({
-            datadaInstalacao,
-             osInstalacao,
-             osRetirada,
-             equipamento_id,
-             statusMaquinasPendentesOro_id,
-             instituicaoUnidade_id, 
-        });
-
-        return res.json(controle);
-    }
+  async handle(req: Request, res: Response) {
+    const controle = await this.service.execute(req.body as CreateMaquinasPendentesOroInput);
+    return res.json(controle);
+  }
 }
 
-export { CreateControledeMaquinasPendentesOroController};
+export { CreateControledeMaquinasPendentesOroController };
