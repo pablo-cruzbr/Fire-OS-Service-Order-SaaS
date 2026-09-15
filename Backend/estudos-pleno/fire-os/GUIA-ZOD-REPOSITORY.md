@@ -222,4 +222,17 @@ Resultado: 13 controllers ficaram finos (a única diferença entre eles agora é
 
 ---
 
+## Nono passo: fechando os 2 achados de código morto — 15/09/2026
+
+Os 2 controllers sem rota do passo anterior (`UpdateInstituicaoUnidadeController.ts`, `CreateTipodeEquipamentoController.ts`) não eram meus pra decidir sozinho — é decisão de produto (ligar uma rota nova é adicionar funcionalidade, não só corrigir bug). Perguntei direto, opção por opção (ligar / apagar / deixar como está), pros dois separadamente. Resposta pros dois: **ligar**.
+
+- **TipodeEquipamento (Create):** trivial — o controller já tinha sido convertido pro `CreateLookupCategoriaService` genérico no passo anterior, só faltava a linha `privateRouter.post('/tipodeequipamento', ...)` em `routes.ts`.
+- **InstituicaoUnidade (Update):** precisou do tratamento completo, porque esse módulo não fazia parte do grupo de lookup (tem FK própria — `tipodeInstituicaoUnidade_id`). Schema novo (`instituicaoUnidade.schema.ts`), Repository novo (`InstituicaoUnidadeRepository.ts`), e o arquivo **movido** de `controllers/status_categorias/tipodeInsituicaoUnidade/` (onde nunca fez sentido morar) pra `controllers/status_categorias/instituicaoUnidade/`, ao lado do Create/List/Remove que já existiam ali. Protegido com `can(['ADMIN'])` — mesmo nível do Remove, porque editar os dados de uma instituição é sensibilidade parecida com apagar uma.
+
+**Por que confirmar "ao vivo" antes de dar como fechado:** `tsc`/`eslint`/testes provam que o código compila e a lógica unitária está certa, mas não provam que a rota está de fato acessível pelo Express. Subi o servidor (`ts-node-dev`) e bati nas duas rotas sem token — as duas devolveram `401` (bloqueadas pelo `isAuthenticated`, que só roda se a rota **existir**), não um `404` de rota inexistente. É a diferença entre "o TypeScript não reclamou" e "eu testei que funciona".
+
+**Resultado:** 227 testes passando (6 novos), `tsc --noEmit` limpo, `eslint` sem erro novo. Com isso, `status_categorias` não tem mais nenhum achado de código morto pendente de decisão — o que resta do grupo é só rollout normal (Zod/Repository nos módulos que ainda faltam).
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
