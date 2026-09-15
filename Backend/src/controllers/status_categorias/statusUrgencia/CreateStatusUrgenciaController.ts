@@ -1,17 +1,19 @@
 import { Request, Response } from "express";
-import { CreateStatusPrioridadeService } from "../../../services/status_categorias/statusUrgencia/CreateStatusPrioridadeService";
+import { CreateLookupCategoriaService } from "../../../services/status_categorias/CreateLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
+import { CreateLookupCategoriaInput } from "../../../schemas/lookupCategoria.schema";
 
-class CreateStatusUrgenciaController{
-    async handle(req:Request, res: Response){
-        const {name} = req.body;
+class CreateStatusUrgenciaController {
+  constructor(
+    private service: CreateLookupCategoriaService = new CreateLookupCategoriaService(
+      new LookupCategoriaRepository("prioridade")
+    )
+  ) {}
 
-        const createStatusPrioridadeService = new CreateStatusPrioridadeService();
-
-        const category = await createStatusPrioridadeService.execute(name);
-
-        return res.json(category);
-
-    }
+  async handle(req: Request, res: Response) {
+    const category = await this.service.execute(req.body as CreateLookupCategoriaInput);
+    return res.json(category);
+  }
 }
 
-export {CreateStatusUrgenciaController}
+export { CreateStatusUrgenciaController };

@@ -1,17 +1,19 @@
-import { Response, Request } from "express";
-import { RemoveStatusOrdemServicoService } from "../../../services/status_categorias/statusOrdemdeServico/RemoveStatusOrdemServicoService";
+import { Request, Response } from "express";
+import { DeleteLookupCategoriaService } from "../../../services/status_categorias/DeleteLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
 class RemoveStatusOrdemServicoController {
-    async handle(req: Request, res: Response){
-        const statusOrdem_id = req.query.statusOrdem_id as string;
+  constructor(
+    private service: DeleteLookupCategoriaService = new DeleteLookupCategoriaService(
+      new LookupCategoriaRepository("statusOrdemdeServico")
+    )
+  ) {}
 
-        const removeStatusOrdemServicoService = new RemoveStatusOrdemServicoService();
-
-        const status = await removeStatusOrdemServicoService.execute({
-            statusOrdem_id
-        });
-        return res.json(status);
-    }
+  async handle(req: Request, res: Response) {
+    const { statusOrdem_id } = req.query as { statusOrdem_id: string };
+    const status = await this.service.execute(statusOrdem_id);
+    return res.json(status);
+  }
 }
 
-export {RemoveStatusOrdemServicoController}
+export { RemoveStatusOrdemServicoController };

@@ -1,15 +1,22 @@
-import { Response, Request } from "express";
-import { CreateControlledeLaboratorioService } from "../../../services/status_categorias/statusControlledeLaboratorio/CreatestatusControlledeLaboratorioService";
+import { Request, Response } from "express";
+import { CreateLookupCategoriaService } from "../../../services/status_categorias/CreateLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
+import { CreateLookupCategoriaInput } from "../../../schemas/lookupCategoria.schema";
 
-class CreatestatusControlledeLaboratorioController{
-    async hadle(req: Request, res: Response){
-        const {name} = req.body;
-        const createControlledeLaboratorioService = new CreateControlledeLaboratorioService();
+class CreatestatusControlledeLaboratorioController {
+  constructor(
+    private service: CreateLookupCategoriaService = new CreateLookupCategoriaService(
+      new LookupCategoriaRepository("statusControledeLaboratorio")
+    )
+  ) {}
 
-        const status = await createControlledeLaboratorioService.execute(name);
-
-        return res.json(status);
-    }
+  // Antes era "hadle" (typo, mas coerente com o "new ...Controller().hadle"
+  // em routes.ts — os dois lados combinavam, então funcionava). Corrigido
+  // pro nome padrão junto com a rota, no mesmo commit.
+  async handle(req: Request, res: Response) {
+    const status = await this.service.execute(req.body as CreateLookupCategoriaInput);
+    return res.json(status);
+  }
 }
 
-export {CreatestatusControlledeLaboratorioController}
+export { CreatestatusControlledeLaboratorioController };

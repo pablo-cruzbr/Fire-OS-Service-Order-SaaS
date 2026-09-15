@@ -1,15 +1,19 @@
 import { Request, Response } from "express";
-import { CreatestatusMaquinasPendentesService } from "../../../services/status_categorias/statusMaquinasPendentes/CreatestatusMaquinasPendentesService";
+import { CreateLookupCategoriaService } from "../../../services/status_categorias/CreateLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
+import { CreateLookupCategoriaInput } from "../../../schemas/lookupCategoria.schema";
 
-class CreatestatusMaquinasPendentesController{
-    async handle(req: Request, res:Response){
-        const {name} = req.body
-        const createstatusMaquinasPendentesService = new CreatestatusMaquinasPendentesService();
+class CreatestatusMaquinasPendentesController {
+  constructor(
+    private service: CreateLookupCategoriaService = new CreateLookupCategoriaService(
+      new LookupCategoriaRepository("statusMaquinasPendentesLab")
+    )
+  ) {}
 
-        const status = await createstatusMaquinasPendentesService.execute(name);
-
-        return res.json(status)
-    }
+  async handle(req: Request, res: Response) {
+    const status = await this.service.execute(req.body as CreateLookupCategoriaInput);
+    return res.json(status);
+  }
 }
 
-export {CreatestatusMaquinasPendentesController}
+export { CreatestatusMaquinasPendentesController };

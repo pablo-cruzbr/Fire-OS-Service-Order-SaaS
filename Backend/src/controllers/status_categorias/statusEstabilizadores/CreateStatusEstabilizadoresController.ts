@@ -1,14 +1,19 @@
-import { Response, Request } from "express";
-import { CreateStatusEstabilizadoresService } from "../../../services/status_categorias/statusEstabilizadores/CreateStatusEstabilizadoresService";
-class CreateStatusEstabilizadoresController{
-    async handle(req: Request, res: Response){
-        const {name} = req.body;
-        const createStatusEstabilizadoresService = new CreateStatusEstabilizadoresService();
+import { Request, Response } from "express";
+import { CreateLookupCategoriaService } from "../../../services/status_categorias/CreateLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
+import { CreateLookupCategoriaInput } from "../../../schemas/lookupCategoria.schema";
 
-        const status = await createStatusEstabilizadoresService.execute(name);
+class CreateStatusEstabilizadoresController {
+  constructor(
+    private service: CreateLookupCategoriaService = new CreateLookupCategoriaService(
+      new LookupCategoriaRepository("statusEstabilizadores")
+    )
+  ) {}
 
-        return res.json(status);
-    }
+  async handle(req: Request, res: Response) {
+    const status = await this.service.execute(req.body as CreateLookupCategoriaInput);
+    return res.json(status);
+  }
 }
 
-export {CreateStatusEstabilizadoresController}
+export { CreateStatusEstabilizadoresController };
