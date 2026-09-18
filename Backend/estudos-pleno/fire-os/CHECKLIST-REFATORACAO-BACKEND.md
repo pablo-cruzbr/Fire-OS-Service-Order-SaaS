@@ -4,7 +4,9 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 **Legenda:** ✅ feito e testado · 🟡 piloto/parcial (funciona, mas não cobre tudo ainda) · ⬜ pendente
 
-## Estado atual, resumo (atualizado 15/09/2026, depois de generalizar as 13 tabelas de lookup)
+## Estado atual, resumo (atualizado 18/09/2026, depois dos testes de integração/E2E)
+
+🔴 **Achado mais grave do projeto até agora:** o primeiro teste E2E de verdade (login via HTTP) descobriu que **48 controllers** — praticamente todo o rollout de Zod/Repository feito até aqui, desde o primeiro piloto — devolviam **500** sempre que a rota era chamada de verdade (passando pelo Express real), porque `new Controller().handle` perde o `this` quando o Express extrai o método. Nenhum teste unitário pegava isso, porque todos chamavam `handle` já vinculado à instância. **Já corrigido nos 48 arquivos**, com teste de regressão pra impedir volta. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
 
 **Ainda não está tudo terminado** — mas o rollout de Zod/Repository já cobre **8 módulos de `controles_forms` inteiros**, `user`, **Equipamento + InformacoesSetor**, e agora **as 13 tabelas de lookup de `status_categorias`** (via 1 schema + 1 Repository + 2 Services genéricos, em vez de 13 conjuntos quase idênticos). No caminho, achei e corrigi bugs reais em produção — 2 rotas de Update e 1 de List que o Frontend já chamava mas não existiam em `routes.ts` (404 silencioso), 1 delete de equipamento que nunca funcionou, e um método de controller com typo que só não quebrava porque a rota chamava com o mesmo typo. Detalhe completo em `GUIA-ZOD-REPOSITORY.md`, seções "Sétimo passo" e "Oitavo passo".
 
@@ -12,7 +14,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 🟡 **25 módulos cobertos agora, rollout pendente nos outros ~75:** item 1 (Repository pattern em OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento, InformacoesSetor, os 13 de lookup via o Repository genérico, e InstituicaoUnidade), item 3 (Zod nesses mesmos 25). Item 4 (`try/catch` antigo) **continua em 10 arquivos** — esse grupo de 13 nunca teve o padrão antigo pra começar (só faltava Zod, não tratamento de erro), então generalizar não mexeu nessa contagem. *Correção registrada: o commit desse passo chegou a afirmar "de 10 pra 3", número errado — ver `GUIA-ZOD-REPOSITORY.md`, "Oitavo passo", pra o relato completo do engano e da correção.*
 
-⬜ **Ainda em zero:** item 7, só a parte cara (testes de integração, TestContainers, E2E) — `coverage` já está configurado. Fora do checklist mas ainda pendente no `ROADMAP-PLENO.md`: `.env.example` não existe, `JWT_SECREATE` continua com o nome torto.
+🟡 **Item 7 avançou: testes de integração/E2E existem agora, só pro fluxo de auth** — TestContainers (Postgres efêmero, nunca toca o banco real do `.env`) + supertest batendo no Express de verdade. `coverage` já estava configurado. Falta ainda: TestContainers/E2E pros outros fluxos, e `.env.example`/`JWT_SECREATE` continuam pendentes fora do checklist.
 
 ✅ **2 achados de código morto, decididos e fechados (15/09):** perguntei, e a decisão pros 2 foi "ligar a rota" — `PATCH /instituicaounidade/update/:id` (Zod + Repository novos, `can(['ADMIN'])`, arquivo movido da pasta errada `tipodeInsituicaoUnidade/` pra `instituicaoUnidade/`) e `POST /tipodeequipamento` (já usava o Service genérico de lookup, só faltava a rota). Confirmado ao vivo: as duas devolvem 401 sem token (rota existe, não é 404).
 
@@ -81,11 +83,10 @@ Essa tabela é literalmente a lista de próximos alvos do rollout de tratamento 
 
 ## 7. Testes automatizados
 
-- ✅ 227 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update/Delete de OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento + InformacoesSetor, o Repository/Service genéricos de lookup, e InstituicaoUnidade (todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), e os schemas novos. `coverage` configurado com piso de 30-45% (número real de hoje).
-- ⬜ Testes de integração reais (Postgres do Docker, não só mock do Prisma) — pelo menos no fluxo de autenticação pra começar.
-- ⬜ TestContainers — subir Postgres em container isolado por rodada de teste, sem depender do Docker Compose local já estar de pé.
-- ⬜ E2E (ponta a ponta, API real respondendo a requests HTTP de verdade).
-- ✅ **`coverage` configurado (15/09)** — `@vitest/coverage-v8`, piso de hoje (30-45% dependendo da métrica, não 60% — a maioria dos ~89 controllers fora do rollout ainda tem zero teste, um piso aspiracional travaria o CI por dívida antiga). Número real (211 testes, ~31%) exposto no README raiz. Achado no caminho: a pasta `coverage/` gerada pelo relatório HTML estava sendo lintada como se fosse código do projeto — ignorada no `eslint.config.mjs`, mesmo raciocínio do `@prisma/**`.
+- ✅ 228 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update/Delete de OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento + InformacoesSetor, o Repository/Service genéricos de lookup, InstituicaoUnidade (todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), os schemas novos, e um teste estrutural novo (`controllerHandleBinding.test.ts`) que impede a regressão do bug de `this` (ver abaixo).
+- ✅ **Testes de integração + TestContainers + E2E implementados (18/09), pro fluxo de autenticação** — `vitest.integration.config.ts` separado, `globalSetup` sobe um Postgres efêmero via TestContainers (nunca toca o banco real do `.env`, que aponta pro Neon), roda `prisma db push`, e supertest bate no Express de verdade (`POST /session`). 7 testes passando. Falta ainda replicar pra outros fluxos além de auth.
+- 🔴 **Achado crítico no processo:** o primeiro teste E2E revelou que **48 controllers** (praticamente todo o rollout de Zod/Repository até aqui) devolviam 500 sempre que a rota era chamada de verdade — `new Controller().handle` perde o `this` quando o Express extrai o método do prototype. Nenhum teste unitário pegava isso (todos chamam `handle` já vinculado à instância). Corrigido nos 48 arquivos (`handle` virou arrow function como campo de classe) + teste de regressão que garante que não volta. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
+- ✅ **`coverage` configurado (15/09)** — `@vitest/coverage-v8`, piso de hoje (30-45% dependendo da métrica, não 60% — a maioria dos ~75 controllers fora do rollout ainda tem zero teste, um piso aspiracional travaria o CI por dívida antiga). Número real exposto no README raiz. Achado no caminho: a pasta `coverage/` gerada pelo relatório HTML estava sendo lintada como se fosse código do projeto — ignorada no `eslint.config.mjs`, mesmo raciocínio do `@prisma/**`.
 
 ## 8. TSC + Linter
 
@@ -250,3 +251,33 @@ Perguntei diretamente: pros 2 controllers sem rota (`UpdateInstituicaoUnidadeCon
 227 testes passando (6 novos), `tsc`/`eslint` limpos.
 
 Com isso, os dois achados de código morto do rollout de `status_categorias` estão fechados — não sobra nenhuma pendência de decisão de produto nesse grupo.
+
+---
+
+## Atualização 18/09/2026 — testes de integração/E2E implementados, e o bug mais grave do projeto encontrado no processo
+
+Pedido: "pode fazer testes de Integração E2E". Montei a infraestrutura (TestContainers + supertest, ver `GUIA-TESTES-INTEGRACAO-E2E.md` pro relato completo) e escrevi o primeiro teste real: login via HTTP.
+
+**O primeiro teste E2E já nasceu vermelho — e não por causa de bug no login.** Todo controller "fino" deste projeto (o padrão usado desde o primeiro piloto de OrdemdeServico, semanas atrás) tem essa forma:
+
+```ts
+class XController {
+  constructor(private service = new XService()) {}
+  async handle(req, res) {
+    const result = await this.service.execute(...); // <- this
+    ...
+  }
+}
+```
+
+E é registrado em `routes.ts` como `new XController().handle`. O problema: isso extrai o método `handle` da instância — vira uma função solta. O Express chama ela como `handle(req, res, next)`, **nunca** `instancia.handle(...)`. Dentro do método, `this` fica `undefined`, e `this.service.execute(...)` lança `TypeError: Cannot read properties of undefined`. Confirmei isso com uma reprodução isolada (Express puro, sem nenhum código do projeto) antes de mexer em qualquer arquivo, só pra ter certeza que não era um problema da minha config de teste.
+
+**Alcance real:** rodei a mesma busca em todo `src/controllers` e `src/services` — **48 arquivos** tinham exatamente esse problema. Não é bug desta sessão: inclui o pilotão original (`UpdateOrdemdeServicoController`, `UpdateUserController`), o rollout inteiro de `controles_forms`, Equipamento/InformacoesSetor, os 13 de lookup, e o `InstituicaoUnidade`. **Todo o rollout de Zod/Repository feito até hoje estava devolvendo 500 sempre que uma rota fosse chamada de verdade** (passando pelo Express, não só testada em isolamento) — e nenhum teste unitário pegava isso, porque todos chamam `handle` já vinculado à instância (`controller.handle(req, res)`, não `handle(req, res)` solto).
+
+**Corrigido nos 48 arquivos** — `async handle(req, res) {` virou `handle = async (req, res) => {` (arrow function como campo de classe, fecha sobre o `this` do construtor em vez de depender de quem chama). Escrevi um teste estrutural (`controllerHandleBinding.test.ts`) que varre todo Controller do projeto e falha se esse padrão perigoso reaparecer — validado reintroduzindo o bug de propósito e vendo o teste falhar antes de desfazer.
+
+- 228 testes unitários passando (1 novo: a guarda estrutural), 7 testes de integração/E2E passando.
+- `npm run test:integration` também ligado no CI (`test.yml`) — os runners do GitHub Actions já vêm com Docker.
+- `tsc`/`eslint` limpos.
+
+Detalhe completo, incluindo o passo a passo da investigação: `GUIA-TESTES-INTEGRACAO-E2E.md`.

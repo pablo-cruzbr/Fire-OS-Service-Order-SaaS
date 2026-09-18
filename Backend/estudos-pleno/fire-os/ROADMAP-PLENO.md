@@ -72,7 +72,9 @@ Pensa assim: o Fire OS tem quase 100 "gavetas" de controller (cliente, equipamen
 
 **O que é:** a ideia de que você deve ter *muitos* testes unitários (rápidos, isolados, testam uma função sozinha), *alguns* testes de integração (testam a função conversando com peça real, tipo o banco), e *poucos* testes end-to-end (simulam o usuário real, do início ao fim). Mockar tudo demais te dá um teste que passa mesmo se a integração real estiver quebrada.
 
-**No Fire OS:** `CreateUserService.test.ts` usa `vi.mock('../../prisma', ...)` — ele finge que o Prisma existe e sempre responde o que você mandou ele responder. Isso é um teste **unitário**: prova que a lógica de "se o email já existe, lança erro" está certa, mas não prova que a query realmente funciona contra um Postgres de verdade (ex.: se o campo `email` tem `@unique` no schema, isso só quebra de verdade contra o banco real). 79 testes unitários passam hoje — a camada de integração (subir o Postgres do `docker-compose.yml` de verdade) ainda não existe.
+**No Fire OS:** `CreateUserService.test.ts` usa `vi.mock('../../prisma', ...)` — ele finge que o Prisma existe e sempre responde o que você mandou ele responder. Isso é um teste **unitário**: prova que a lógica de "se o email já existe, lança erro" está certa, mas não prova que a query realmente funciona contra um Postgres de verdade (ex.: se o campo `email` tem `@unique` no schema, isso só quebra de verdade contra o banco real).
+
+**Exemplo real e concreto de "mockar demais dá falso verde" — não hipotético, aconteceu neste projeto (18/09):** 228 testes unitários passavam, `tsc`/`eslint` limpos, e mesmo assim **48 controllers devolviam 500 sempre que a rota fosse chamada de verdade** — `new Controller().handle` perde o `this` quando o Express extrai o método (a instância nunca é lembrada, só a função solta). Todo teste unitário chamava `controller.handle(req, res)` — já vinculado à instância, `this` sempre certo — então nenhum deles via o problema. Só o primeiro teste **E2E** (`supertest(app).post('/session')`, batendo no Express de verdade, não chamando o Service direto) reproduziu o jeito real como a rota é invocada em produção, e revelou o bug na hora. Detalhe completo, incluindo o mecanismo exato e a correção: `GUIA-TESTES-INTEGRACAO-E2E.md`. Testes de integração (TestContainers, Postgres efêmero) e E2E (supertest) já existem pro fluxo de auth — 228 testes unitários + 7 de integração/E2E passam hoje.
 
 ### 9. CI/CD (Integração e Entrega Contínua)
 
@@ -204,9 +206,10 @@ Você já não está começando do zero — existem 4 arquivos de teste (`AuthUs
 - [ ] Cobrir `can.ts` e `isAuthenticated.ts` (middlewares nunca testados, ver item 1).
 - [ ] Testar pelo menos 1 fluxo de erro real de negócio por módulo grande (`OrdemdeServico`, `controles_forms`) além de "criou com sucesso" — hoje os testes existentes são majoritariamente caminho feliz + validação simples.
 - [x] Configurar `coverage` no `vitest.config.ts` com um piso mínimo e mostrar o número no README. **Feito em 15/09** — piso de 30-45% (o número real de hoje, não os 60% "aspiracionais" cogitados aqui antes de medir: boa parte dos controllers ainda não tem teste, então 60% travaria o CI por dívida antiga, não por regressão de verdade). Sobe conforme o rollout de Zod/Repository avança.
-- [ ] Testes de integração tocando o Postgres real do Docker (não só mock do Prisma) para pelo menos o fluxo de autenticação — mocks provam que a função roda, não que o contrato com o banco está certo.
+- [x] Testes de integração + E2E pra pelo menos o fluxo de autenticação. **Feito em 18/09** — TestContainers (Postgres efêmero, não o Docker Compose local nem o banco real do `.env`) + supertest batendo no Express de verdade. Achado no processo: um bug crítico presente desde o primeiro piloto (48 controllers devolvendo 500 sempre que a rota fosse chamada de verdade) — só apareceu porque esse era o primeiro teste que realmente passava pelo Express, não pelo Service direto. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
+- [ ] Replicar testes de integração/E2E pros outros fluxos além de auth (ex.: criar/atualizar OrdemdeServico).
 
-**Estudar:** pirâmide de testes (unitário vs. integração vs. e2e); por que mockar tudo dá falso verde.
+**Estudar:** pirâmide de testes (unitário vs. integração vs. e2e); por que mockar tudo dá falso verde — ver o exemplo real disso no glossário, item 8.
 
 ---
 
