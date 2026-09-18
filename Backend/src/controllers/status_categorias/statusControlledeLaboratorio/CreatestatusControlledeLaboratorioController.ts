@@ -13,7 +13,7 @@ class CreatestatusControlledeLaboratorioController {
   // Antes era "hadle" (typo, mas coerente com o "new ...Controller().hadle"
   // em routes.ts — os dois lados combinavam, então funcionava). Corrigido
   // pro nome padrão junto com a rota, no mesmo commit.
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const status = await this.service.execute(req.body as CreateLookupCategoriaInput);
     return res.json(status);
   }

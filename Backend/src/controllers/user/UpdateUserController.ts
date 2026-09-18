@@ -5,7 +5,7 @@ import { UpdateUserInput } from "../../schemas/user.schema";
 class UpdateUserController {
   constructor(private service: UpdateUserService = new UpdateUserService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const user = await this.service.execute(id, req.body as UpdateUserInput);
     return res.json(user);

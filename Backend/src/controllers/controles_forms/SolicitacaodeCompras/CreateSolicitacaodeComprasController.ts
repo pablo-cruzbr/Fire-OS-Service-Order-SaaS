@@ -5,7 +5,7 @@ import { CreateSolicitacaoComprasInput } from "../../../schemas/solicitacaoCompr
 class CreateSolicitacaodeComprasController {
   constructor(private service: CreateSolicitacaodeComprasService = new CreateSolicitacaodeComprasService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const controle = await this.service.execute(req.body as CreateSolicitacaoComprasInput);
     return res.json(controle);
   }

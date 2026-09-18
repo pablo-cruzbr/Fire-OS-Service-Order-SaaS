@@ -4,7 +4,7 @@ import { RemoveEquipamentoService } from "../../../services/status_categorias/Eq
 class RemoveEquipamentoController {
   constructor(private service: RemoveEquipamentoService = new RemoveEquipamentoService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const equipamento = await this.service.execute(id);
     return res.json(equipamento);

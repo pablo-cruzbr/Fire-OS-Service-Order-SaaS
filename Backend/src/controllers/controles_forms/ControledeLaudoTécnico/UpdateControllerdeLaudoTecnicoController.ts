@@ -5,7 +5,7 @@ import { UpdateLaudoTecnicoInput } from "../../../schemas/laudoTecnico.schema";
 class UpdateControllerdeLaudoTecnicoController {
   constructor(private service: UpdateControledeLaudoTecnicoService = new UpdateControledeLaudoTecnicoService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await this.service.execute(id, req.body as UpdateLaudoTecnicoInput);
     return res.json(result);

@@ -4,7 +4,7 @@ import { DeleteControledeAssistenciaTecnicaService } from "../../../services/con
 class DeleteControledeAssistenciaTecnicaController {
   constructor(private service: DeleteControledeAssistenciaTecnicaService = new DeleteControledeAssistenciaTecnicaService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await this.service.execute(id);
     return res.json(result);

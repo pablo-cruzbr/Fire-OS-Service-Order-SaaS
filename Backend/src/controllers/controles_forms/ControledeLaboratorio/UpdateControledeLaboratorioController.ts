@@ -5,7 +5,7 @@ import { UpdateLaboratorioInput } from "../../../schemas/laboratorio.schema";
 class UpdateControledeLaboratorioController {
   constructor(private service: UpdateControledeLaboratorioService = new UpdateControledeLaboratorioService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await this.service.execute(id, req.body as UpdateLaboratorioInput);
     return res.json(result);

@@ -5,7 +5,7 @@ import { UpdateMaquinasPendentesLabInput } from "../../../schemas/maquinasPenden
 class UpdateControledeMaquinasPendentesLabController {
   constructor(private service: UpdateControledeMaquinasPendentesLabService = new UpdateControledeMaquinasPendentesLabService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await this.service.execute(id, req.body as UpdateMaquinasPendentesLabInput);
     return res.json(result);

@@ -9,7 +9,7 @@ class RemoveStatusOrdemServicoController {
     )
   ) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { statusOrdem_id } = req.query as { statusOrdem_id: string };
     const status = await this.service.execute(statusOrdem_id);
     return res.json(status);

@@ -5,7 +5,7 @@ import { AuthUserInput } from "../../schemas/user.schema";
 class AuthUserController {
   constructor(private service: AuthUserService = new AuthUserService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const auth = await this.service.execute(req.body as AuthUserInput);
     return res.json(auth);
   }

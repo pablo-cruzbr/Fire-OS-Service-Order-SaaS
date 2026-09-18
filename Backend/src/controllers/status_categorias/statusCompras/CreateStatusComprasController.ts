@@ -10,7 +10,7 @@ class CreateStatusComprasController {
     )
   ) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const status = await this.service.execute(req.body as CreateLookupCategoriaInput);
     return res.json(status);
   }

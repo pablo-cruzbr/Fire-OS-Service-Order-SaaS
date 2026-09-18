@@ -5,7 +5,7 @@ import { CreateMaquinasPendentesLabInput } from "../../../schemas/maquinasPenden
 class CreateControledeMaquinasPendentesLabController {
   constructor(private service: CreateControledeMaquinasPendentesLabService = new CreateControledeMaquinasPendentesLabService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const controle = await this.service.execute(req.body as CreateMaquinasPendentesLabInput);
     return res.json(controle);
   }
