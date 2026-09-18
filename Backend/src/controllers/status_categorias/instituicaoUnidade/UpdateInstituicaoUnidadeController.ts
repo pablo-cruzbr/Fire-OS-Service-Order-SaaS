@@ -7,7 +7,7 @@ class UpdateInstituicaoUnidadeController {
     private service: UpdateInstituicaoUnidadeService = new UpdateInstituicaoUnidadeService()
   ) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const instituicao = await this.service.execute(id, req.body as UpdateInstituicaoUnidadeInput);
     return res.json(instituicao);

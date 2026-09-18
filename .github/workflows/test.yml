@@ -35,3 +35,10 @@ jobs:
       - name: Run tests
         run: npm run test
         working-directory: ./Backend
+
+      - name: Run integration/E2E tests
+        # Sobe um Postgres efêmero via TestContainers (o runner do GitHub
+        # Actions já vem com Docker) — não usa nem toca o banco real do
+        # .env, só o que o próprio teste cria e derruba sozinho.
+        run: npm run test:integration
+        working-directory: ./Backend

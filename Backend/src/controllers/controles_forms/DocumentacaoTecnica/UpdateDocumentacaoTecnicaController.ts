@@ -5,7 +5,7 @@ import { UpdateDocumentacaoTecnicaInput } from "../../../schemas/documentacaoTec
 class UpdateDocumentacaoTecnicaController {
   constructor(private service: UpdateDocumentacaoTecnicaService = new UpdateDocumentacaoTecnicaService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await this.service.execute(id, req.body as UpdateDocumentacaoTecnicaInput);
     return res.json(result);

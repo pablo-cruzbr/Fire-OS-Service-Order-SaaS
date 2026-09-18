@@ -70,7 +70,7 @@ class CreateOrdemServicoService {
 class CreateOrdemServicoController {
   constructor(private service: CreateOrdemServicoService = new CreateOrdemServicoService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const ordem = await this.service.execute(req.body as CreateOrdemdeServicoInput);
     return res.json(ordem);
   }

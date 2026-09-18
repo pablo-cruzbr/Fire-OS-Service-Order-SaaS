@@ -5,7 +5,7 @@ import { CreateEstabilizadoresInput } from "../../../schemas/estabilizadores.sch
 class CreateControledeEstabilizadoresController {
   constructor(private service: CreateControledeEstabilizadoresService = new CreateControledeEstabilizadoresService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const controle = await this.service.execute(req.body as CreateEstabilizadoresInput);
     return res.json(controle);
   }

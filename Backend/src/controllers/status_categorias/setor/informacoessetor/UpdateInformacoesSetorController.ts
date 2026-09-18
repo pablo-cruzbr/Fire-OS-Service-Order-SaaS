@@ -5,7 +5,7 @@ import { UpdateInformacoesSetorInput } from "../../../../schemas/informacoesSeto
 class UpdateInformacoesSetorController {
   constructor(private service: UpdateInformacoesSetorService = new UpdateInformacoesSetorService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const setorInfo = await this.service.execute(id, req.body as UpdateInformacoesSetorInput);
     return res.json(setorInfo);

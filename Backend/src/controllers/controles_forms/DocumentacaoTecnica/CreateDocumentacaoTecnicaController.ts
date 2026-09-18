@@ -5,7 +5,7 @@ import { CreateDocumentacaoTecnicaInput } from "../../../schemas/documentacaoTec
 class CreateDocumentacaoTecnicaController {
   constructor(private service: CreateDocumentacaoTecnicaService = new CreateDocumentacaoTecnicaService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const controle = await this.service.execute(req.body as CreateDocumentacaoTecnicaInput);
     return res.json(controle);
   }

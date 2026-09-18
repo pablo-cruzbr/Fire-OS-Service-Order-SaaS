@@ -90,7 +90,7 @@ class UpdateOrdemdeServicoService {
 class UpdateOrdemdeServicoController {
   constructor(private service: UpdateOrdemdeServicoService = new UpdateOrdemdeServicoService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const { id } = req.params;
     const file = (req.files as any)?.file as UploadedFile | undefined;
 

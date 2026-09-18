@@ -5,7 +5,7 @@ import { CreateLaudoTecnicoInput } from "../../../schemas/laudoTecnico.schema";
 class CreateControledeLaudoTecnicoController {
   constructor(private service: CreateControledeLaudoTecnicoService = new CreateControledeLaudoTecnicoService()) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const controle = await this.service.execute(req.body as CreateLaudoTecnicoInput);
     return res.json(controle);
   }

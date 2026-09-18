@@ -10,7 +10,7 @@ class CreateStatusUrgenciaController {
     )
   ) {}
 
-  async handle(req: Request, res: Response) {
+  handle = async (req: Request, res: Response) => {
     const category = await this.service.execute(req.body as CreateLookupCategoriaInput);
     return res.json(category);
   }
