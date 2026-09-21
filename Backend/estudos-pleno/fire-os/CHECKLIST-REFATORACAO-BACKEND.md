@@ -4,7 +4,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 **Legenda:** ✅ feito e testado · 🟡 piloto/parcial (funciona, mas não cobre tudo ainda) · ⬜ pendente
 
-## Estado atual, resumo (atualizado 18/09/2026, depois dos testes de integração/E2E)
+## Estado atual, resumo (atualizado 21/09/2026, depois do E2E de OrdemdeServico)
 
 🔴 **Achado mais grave do projeto até agora:** o primeiro teste E2E de verdade (login via HTTP) descobriu que **48 controllers** — praticamente todo o rollout de Zod/Repository feito até aqui, desde o primeiro piloto — devolviam **500** sempre que a rota era chamada de verdade (passando pelo Express real), porque `new Controller().handle` perde o `this` quando o Express extrai o método. Nenhum teste unitário pegava isso, porque todos chamavam `handle` já vinculado à instância. **Já corrigido nos 48 arquivos**, com teste de regressão pra impedir volta. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
 
@@ -14,7 +14,7 @@ Checklist único e vivo do que falta pra deixar o backend do Fire OS num nível 
 
 🟡 **25 módulos cobertos agora, rollout pendente nos outros ~75:** item 1 (Repository pattern em OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento, InformacoesSetor, os 13 de lookup via o Repository genérico, e InstituicaoUnidade), item 3 (Zod nesses mesmos 25). Item 4 (`try/catch` antigo) **continua em 10 arquivos** — esse grupo de 13 nunca teve o padrão antigo pra começar (só faltava Zod, não tratamento de erro), então generalizar não mexeu nessa contagem. *Correção registrada: o commit desse passo chegou a afirmar "de 10 pra 3", número errado — ver `GUIA-ZOD-REPOSITORY.md`, "Oitavo passo", pra o relato completo do engano e da correção.*
 
-🟡 **Item 7 avançou: testes de integração/E2E existem agora, só pro fluxo de auth** — TestContainers (Postgres efêmero, nunca toca o banco real do `.env`) + supertest batendo no Express de verdade. `coverage` já estava configurado. Falta ainda: TestContainers/E2E pros outros fluxos, e `.env.example`/`JWT_SECREATE` continuam pendentes fora do checklist.
+🟡 **Item 7 avançou de novo (21/09): E2E agora cobre OrdemdeServico e `user` inteiros, não só o login** — criação, autenticação obrigatória, ownership/CASL de OrdemdeServico (dono atualiza, não-dono toma 403, id inexistente toma 404), cadastro público de `user`, conflito de email (409), e a prova ponta a ponta do fix do "sequestro de conta" (`user/update` só ADMIN, não-ADMIN toma 403 tentando mexer na conta de outro). 19 testes de integração/E2E passando agora (12 novos desde a última revisão — 6 de OrdemdeServico, 6 de `user`). No caminho, achei e corrigi uma condição de corrida real na própria infra de teste: os arquivos de integração rodavam em paralelo por padrão do Vitest, mas todos compartilham o mesmo Postgres efêmero — o `deleteMany()` de um arquivo podia apagar dado que outro estava usando no meio de uma request (`fileParallelism: false` no `vitest.integration.config.ts` resolveu). Falta ainda: replicar pros outros fluxos (`controles_forms`, lookups), e `.env.example`/`JWT_SECREATE` continuam pendentes fora do checklist.
 
 ✅ **2 achados de código morto, decididos e fechados (15/09):** perguntei, e a decisão pros 2 foi "ligar a rota" — `PATCH /instituicaounidade/update/:id` (Zod + Repository novos, `can(['ADMIN'])`, arquivo movido da pasta errada `tipodeInsituicaoUnidade/` pra `instituicaoUnidade/`) e `POST /tipodeequipamento` (já usava o Service genérico de lookup, só faltava a rota). Confirmado ao vivo: as duas devolvem 401 sem token (rota existe, não é 404).
 
@@ -84,7 +84,10 @@ Essa tabela é literalmente a lista de próximos alvos do rollout de tratamento 
 ## 7. Testes automatizados
 
 - ✅ 228 testes unitários passando (Vitest) — cobrindo auth (`UnauthorizedError` incluso), RBAC/CASL (incluindo os 3 módulos técnicos, 12 testes novos com `it.each`), Create/Update/Delete de OrdemdeServico, `user`, os 8 módulos de `controles_forms`, Equipamento + InformacoesSetor, o Repository/Service genéricos de lookup, InstituicaoUnidade (todos com repository fake em vez de mock do Prisma), a infra de validação/erro, o cache-aside da listagem, a fila (`fotoController.test.ts`, mockando `uploadQueue`), o middleware genérico de ownership (`authorizeOwnership.test.ts`), os schemas novos, e um teste estrutural novo (`controllerHandleBinding.test.ts`) que impede a regressão do bug de `this` (ver abaixo).
-- ✅ **Testes de integração + TestContainers + E2E implementados (18/09), pro fluxo de autenticação** — `vitest.integration.config.ts` separado, `globalSetup` sobe um Postgres efêmero via TestContainers (nunca toca o banco real do `.env`, que aponta pro Neon), roda `prisma db push`, e supertest bate no Express de verdade (`POST /session`). 7 testes passando. Falta ainda replicar pra outros fluxos além de auth.
+- ✅ **Testes de integração + TestContainers + E2E implementados (18/09), pro fluxo de autenticação** — `vitest.integration.config.ts` separado, `globalSetup` sobe um Postgres efêmero via TestContainers (nunca toca o banco real do `.env`, que aponta pro Neon), roda `prisma db push`, e supertest bate no Express de verdade (`POST /session`). 7 testes passando.
+- ✅ **E2E de OrdemdeServico implementado (21/09)** — 6 testes novos (13 no total): criação via HTTP com FKs reais, 422 de Zod, 401 sem token, e o ciclo de ownership/CASL completo (dono atualiza, não-dono toma 403, id inexistente toma 404) — a mesma peça de autorização (`authorizeOwnership`) que fechou o gap de "sequestro de conta" do `user/update`, agora provada passando pelo Express real, não só com a ability mockada em unitário. Achado no processo: `fileParallelism: false` precisou entrar em `vitest.integration.config.ts` — os arquivos de integração compartilham um único Postgres efêmero, e rodando em paralelo (padrão do Vitest) o cleanup de um arquivo corria por baixo do teste de outro.
+- ✅ **E2E de `user` implementado (21/09, mesmo dia)** — 6 testes novos (19 no total): cadastro público sem token, 409 de email duplicado, 422 de senha curta, 401 sem token no update, ADMIN atualizando a conta de outro usuário (senha incluída), e — o teste que mais importa aqui — **usuário não-ADMIN autenticado tomando 403 ao tentar atualizar a conta de outro**, com o banco confirmado intocado depois. É a regressão E2E do achado mais grave do projeto (15/09, sequestro de conta): agora não é só o `can(['ADMIN'])` existir no código, é o Express real recusando a tentativa e o Postgres real provando que nada mudou.
+- Detalhe completo de ambos: `GUIA-TESTES-INTEGRACAO-E2E.md`. Falta ainda replicar pros outros fluxos (`controles_forms`, lookups).
 - 🔴 **Achado crítico no processo:** o primeiro teste E2E revelou que **48 controllers** (praticamente todo o rollout de Zod/Repository até aqui) devolviam 500 sempre que a rota era chamada de verdade — `new Controller().handle` perde o `this` quando o Express extrai o método do prototype. Nenhum teste unitário pegava isso (todos chamam `handle` já vinculado à instância). Corrigido nos 48 arquivos (`handle` virou arrow function como campo de classe) + teste de regressão que garante que não volta. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
 - ✅ **`coverage` configurado (15/09)** — `@vitest/coverage-v8`, piso de hoje (30-45% dependendo da métrica, não 60% — a maioria dos ~75 controllers fora do rollout ainda tem zero teste, um piso aspiracional travaria o CI por dívida antiga). Número real exposto no README raiz. Achado no caminho: a pasta `coverage/` gerada pelo relatório HTML estava sendo lintada como se fosse código do projeto — ignorada no `eslint.config.mjs`, mesmo raciocínio do `@prisma/**`.
 
@@ -281,3 +284,33 @@ E é registrado em `routes.ts` como `new XController().handle`. O problema: isso
 - `tsc`/`eslint` limpos.
 
 Detalhe completo, incluindo o passo a passo da investigação: `GUIA-TESTES-INTEGRACAO-E2E.md`.
+
+---
+
+## Atualização 21/09/2026 — E2E de OrdemdeServico, e uma condição de corrida achada na própria infra de teste
+
+Pedido: continuar o item 7 pra além do login. Escolhi OrdemdeServico por ser a entidade central do sistema e a que primeiro teve ownership/CASL (item 2) — provar essa regra passando pelo Express real, não só com a `ability` mockada em unitário, fecha o mesmo tipo de buraco que o bug do `this` (achado em 18/09) mostrou que só E2E pega.
+
+- **6 testes novos** em `src/test/integration/ordemDeServico.e2e.test.ts`: criação via HTTP com FKs reais (`tipodeChamado`, `statusOrdemdeServico`, `user`), 422 quando falta campo obrigatório (Zod barra antes do Service), 401 sem token, técnico dono atualizando a própria OS, técnico **não-dono** tomando 403 ao tentar mexer na OS de outro (prova end-to-end de `authorizeOwnership` + CASL), e 404 num id que não existe.
+- **Achado no processo, na própria infraestrutura de teste:** a primeira rodada com o arquivo novo falhou com `404` inesperado na criação — não era bug do código, era condição de corrida: os 3 arquivos de integração rodam contra o **mesmo** Postgres efêmero (um container só, subido uma vez no `globalSetup`), mas o Vitest roda arquivos de teste em paralelo por padrão. O `user.deleteMany()` do `userRepository.integration.test.ts` corria por baixo de uma request em andamento no arquivo novo, apagando o usuário que o `create` da OS ia conectar — o Prisma reportava `P2025` (registro do connect não encontrado), que o `errorHandler` mapeia pra 404. Não apareceu antes porque só havia 2 arquivos com pouca sobreposição de tabela; com o terceiro, colidiu. Corrigido com `fileParallelism: false` em `vitest.integration.config.ts` — os arquivos de integração agora rodam em sequência, não em paralelo (só eles; a suíte unitária continua paralela).
+- 13 testes de integração/E2E passando (7 → 13), 228 testes unitários inalterados, `tsc`/`eslint` limpos (mesmos 26 avisos de sempre).
+
+Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`, seção "21/09 — E2E de OrdemdeServico e a corrida entre arquivos".
+
+---
+
+## Atualização 21/09/2026 (mesmo dia) — E2E de `user`, a regressão do achado mais grave
+
+Pedido: continuar o item 7. Depois de OrdemdeServico, o alvo mais valioso era `user` — não pelo volume (só 2 rotas: cadastro e update), mas porque `PATCH /user/update/:id` é exatamente a rota do achado mais grave já feito neste projeto (15/09): sem `can(['ADMIN'])`, qualquer usuário autenticado trocava senha/email de qualquer outro usuário. Até agora essa proteção só tinha prova unitária (`can.test.ts`, testando o middleware isolado); nunca tinha sido provada pelo caminho HTTP completo.
+
+**6 testes novos** (`src/test/integration/user.e2e.test.ts`):
+- `POST /users` (cadastro público, sem token) → 200, senha chega hasheada no banco.
+- `POST /users` com email já existente → 409 (`ConflictError`, não um 500 genérico).
+- `POST /users` com senha curta → 422 (Zod).
+- `PATCH /user/update/:id` sem token → 401.
+- ADMIN atualizando a conta de **outro** usuário, senha inclusive → 200, e o hash novo bate (`compare()` do bcrypt contra o valor gravado).
+- **Usuário TECNICO (não-ADMIN) autenticado tentando atualizar a conta de outro usuário → 403**, com o banco confirmado intocado (senha antiga continua batendo) — a prova de que o gap de 15/09 está mesmo fechado, agora numa forma que quebra se alguém remover o `can(['ADMIN'])` da rota por engano no futuro.
+
+Nenhum achado novo neste passo — só confirmação de que o comportamento documentado em 15/09 se sustenta passando pelo Express real. 19 testes de integração/E2E no total (13 → 19), 228 unitários inalterados, `tsc`/`eslint` limpos.
+
+Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`, seção "21/09 — E2E de `user`".

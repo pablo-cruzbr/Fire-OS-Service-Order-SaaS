@@ -105,4 +105,58 @@ Não bastava corrigir — escrevi um teste (`src/test/structural/controllerHandl
 
 ---
 
+## 21/09 — E2E de OrdemdeServico e a corrida entre arquivos
+
+Depois do login, o próximo alvo natural era OrdemdeServico: é a entidade central do sistema, e a primeira que teve ownership/CASL (item 2) — até aqui, essa regra só tinha sido provada com a `ability` (`defineAbilityFor`) chamada direto em unitário, com o resultado do `findRecord` mockado. Nunca tinha passado pelo Express de verdade: rota → `isAuthenticated` → `authorizeOrdemdeServico` → `authorizeOwnership` → CASL → Controller → Service → Postgres real.
+
+**Os 6 testes novos** (`src/test/integration/ordemDeServico.e2e.test.ts`):
+- Criação via HTTP, conectando em FKs reais (`tipodeChamado`, `statusOrdemdeServico`, `user`) — prova que o `Repository.create` monta os `connect` certos contra um banco de verdade, não um mock do Prisma.
+- 422 quando falta `tipodeChamado_id` — Zod barrando antes do Service.
+- 401 sem token — `isAuthenticated` de fato bloqueando.
+- Técnico dono atualizando a própria OS → 200, e o dado realmente mudou no banco.
+- **Técnico que não é dono tentando atualizar a OS de outro técnico → 403**, e o dado no banco continua intocado. Esse é o teste que realmente prova a regra de ownership ponta a ponta — o mesmo tipo de garantia que faltava no `user/update` antes do achado de 15/09 (sequestro de conta).
+- 404 num id que não existe.
+
+### O achado: condição de corrida entre arquivos de teste de integração
+
+Rodando o arquivo novo pela primeira vez, o teste de criação falhou com `404` — inesperado, porque `POST /ordemdeservico` não tem nenhuma checagem de ownership (só é bloqueada por token ausente, não por dono). Investigando: o `errorHandler` mapeia `P2025` do Prisma (registro esperado por um `connect` não encontrado) pra 404 — então algum dos `connect` (`tipodeChamado`, `statusOrdemdeServico` ou `user`) estava apontando pra um id que não existia mais no banco no instante da query, mesmo tendo sido criado poucas linhas antes, no mesmo teste.
+
+A causa não estava no código do produto — estava na própria infraestrutura de teste. Os 3 arquivos de integração (`auth.e2e.test.ts`, `userRepository.integration.test.ts`, e o novo `ordemDeServico.e2e.test.ts`) batem no **mesmo** Postgres efêmero: o `globalSetup` sobe **um** container só, uma vez, pra toda a rodada de `npm run test:integration` — não um por arquivo. O Vitest, por padrão, roda arquivos de teste diferentes em paralelo (workers concorrentes). Cada arquivo tem seu próprio `beforeEach` fazendo `deleteMany()` nas tabelas que usa — e como os 3 arquivos compartilham a tabela `user`, o `prismaClient.user.deleteMany()` do `userRepository.integration.test.ts` podia rodar exatamente no meio de uma request HTTP em andamento no arquivo de OrdemdeServico, apagando o usuário que o `POST /ordemdeservico` estava no processo de conectar.
+
+Isso não tinha aparecido antes porque só existiam 2 arquivos (`auth.e2e.test.ts` e `userRepository.integration.test.ts`) e a sobreposição de uso era pequena o bastante pra não colidir na prática. Com o terceiro arquivo, e um teste que depende de múltiplas tabelas relacionadas (`tipodeChamado` + `statusOrdemdeServico` + `user`), a janela de corrida ficou grande o bastante pra pegar toda vez.
+
+**O fix:** `fileParallelism: false` em `vitest.integration.config.ts`. Força os arquivos de teste de integração a rodar em sequência, não em paralelo — só essa config, a suíte unitária (`vitest.config.ts`) continua paralela normalmente, porque cada teste unitário usa repository fake, sem estado compartilhado entre arquivos.
+
+```ts
+// vitest.integration.config.ts
+test: {
+  // ...
+  fileParallelism: false,
+}
+```
+
+Confirmado: depois do fix, os 13 testes (7 antigos + 6 novos) passam de forma consistente, rodados várias vezes seguidas.
+
+**O paralelo com o bug do `this`:** dois achados seguidos na mesma trilha (item 7) mostram o mesmo padrão — uma peça que "funciona" em isolamento (um controller chamado direto, um arquivo de teste rodado sozinho) esconde um problema que só aparece na composição real (Express de verdade recebendo a chamada, múltiplos arquivos batendo no mesmo banco ao mesmo tempo). É o motivo de fundo pra investir em integração/E2E além de unitário, mesmo sendo "caro" — não é só testar mais, é testar uma categoria de bug que unitário estruturalmente não consegue ver.
+
+---
+
+## 21/09 — E2E de `user`
+
+Depois de OrdemdeServico, o alvo seguinte foi `user` — só 2 rotas (`POST /users`, `PATCH /user/update/:id`), mas a segunda é a rota do achado mais grave do projeto inteiro (15/09): sem `can(['ADMIN'])`, qualquer usuário autenticado trocava senha/email/instituição de **qualquer outro usuário** — sequestro de conta. A proteção existia e tinha teste unitário do middleware (`can.test.ts`), mas nunca tinha sido exercitada pelo caminho HTTP real, o mesmo tipo de buraco que o bug do `this` (achado no primeiro E2E, 18/09) mostrou que só integração pega.
+
+**Os 6 testes** (`src/test/integration/user.e2e.test.ts`):
+- Cadastro público (`POST /users`, sem token) → 200, e o hash da senha no banco não é o texto puro enviado.
+- Email duplicado → 409, prova que `ConflictError` sai formatado certo pelo `errorHandler`, não um 500 genérico.
+- Senha curta demais → 422, Zod barrando antes do Service.
+- Update sem token → 401.
+- ADMIN atualizando a conta de outro usuário, incluindo senha → 200, com `compare()` do bcrypt confirmando que o hash novo bate com a senha enviada (não só que o campo mudou, mas que a senha certa foi gravada).
+- **TECNICO autenticado tentando atualizar a conta de outro usuário → 403**, com uma segunda leitura do banco confirmando que a senha antiga continua batendo — ou seja, a tentativa não só foi recusada pelo `can(['ADMIN'])`, como não teve efeito nenhum no registro.
+
+Nenhum achado novo neste passo (diferente do de OrdemdeServico, que achou a corrida entre arquivos) — o valor aqui é puramente de regressão: essa suíte quebra se algum dia alguém remover ou enfraquecer o `can(['ADMIN'])` de `PATCH /user/update/:id` sem perceber a gravidade, fechando o loop do achado de 15/09 com uma prova que roda em todo CI, não só uma linha no checklist.
+
+19 testes de integração/E2E no total (13 → 19).
+
+---
+
 Checklist de estado atual: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito de pirâmide de testes: `ROADMAP-PLENO.md`, glossário item 8.
