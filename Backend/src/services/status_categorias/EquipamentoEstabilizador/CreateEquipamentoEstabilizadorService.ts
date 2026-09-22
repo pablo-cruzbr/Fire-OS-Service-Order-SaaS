@@ -1,30 +1,12 @@
-import prismaClient from "../../../prisma";
+import { EstabilizadorRepository, estabilizadorRepository } from "../../../repositories/EstabilizadorRepository";
+import { CreateEquipamentoEstabilizadorInput } from "../../../schemas/equipamentoEstabilizador.schema";
 
-interface estabilizadorRequest{
-    name: string;
-    patrimonio: string;
+class CreateEquipamentoEstabilizadorService {
+  constructor(private repository: EstabilizadorRepository = estabilizadorRepository) {}
+
+  execute(data: CreateEquipamentoEstabilizadorInput) {
+    return this.repository.create(data);
+  }
 }
 
-class CreateEquipamentoEstabilizadorService{
-    async execute(name, patrimonio){
-        if(name === ''){
-            throw new Error('Nome Invalido');
-        }
-
-        const estabilizador = prismaClient.equipamento.create({
-            data:{
-                name: name,
-                patrimonio: patrimonio,
-            },
-            select:{
-                id:true,
-                name: true,
-                patrimonio: true,
-            }
-        
-        })
-        return estabilizador
-    }
-}
-
-export {CreateEquipamentoEstabilizadorService}
+export { CreateEquipamentoEstabilizadorService };

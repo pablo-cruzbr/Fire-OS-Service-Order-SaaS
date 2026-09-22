@@ -27,6 +27,7 @@ import { updateInstituicaoUnidadeSchema } from "./schemas/instituicaoUnidade.sch
 import { createClienteSchema, updateClienteSchema, detailClienteQuerySchema } from "./schemas/cliente.schema";
 import { createSetorSchema, deleteSetorQuerySchema } from "./schemas/setor.schema";
 import { createTecnicoSchema } from "./schemas/tecnico.schema";
+import { createEquipamentoEstabilizadorSchema } from "./schemas/equipamentoEstabilizador.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -119,7 +120,6 @@ import { ListStatusEstabilizadoresController } from "./controllers/status_catego
 import { CreateEquipamentoEstabilizadorController } from "./controllers/status_categorias/EquipamentoEstabilizador/CreateEquipamentoEstabilizadorController";
 import { ListEsquipamentoEstabilizadorController } from "./controllers/status_categorias/EquipamentoEstabilizador/ListEquipamentoEstabilizadorController";
 import { CreateControledeEstabilizadoresController } from "./controllers/controles_forms/ControledeEstabilizadores/CreateControledeEstabilizadoresController";
-import { ListControledeEstabilizadoresService } from "./services/controles_forms/ControledeEstabilizadores/ListControledeEstabilizadoresService";
 import { ListControledeEstabilizadoresController } from "./controllers/controles_forms/ControledeEstabilizadores/ListControledeEstabilizadoresController";
 import { UpdateControledeEstabilizadoresController } from "./controllers/controles_forms/ControledeEstabilizadores/UpdateControledeEstabilizadoresController";
 import { CreatetipodeInstituicaoUnidadeController } from "./controllers/status_categorias/tipodeInsituicaoUnidade/CreatetipodeInstituicaoUnidadeController";
@@ -448,8 +448,16 @@ privateRouter.post('/statustarefa', validate(createLookupCategoriaSchema), new C
 privateRouter.get("/liststatustarefa", new ListStatusTarefaController().handle)
 
 //ESTABILIZADORES
-privateRouter.post("/equipamento/esbilizadores", new CreateEquipamentoEstabilizadorController().handle)
-privateRouter.get("/list/estabilizador", new ListEsquipamentoEstabilizadorController().handle)
+privateRouter.post("/equipamento/esbilizadores", validate(createEquipamentoEstabilizadorSchema), new CreateEquipamentoEstabilizadorController().handle)
+const listEstabilizadorController = new ListEsquipamentoEstabilizadorController();
+privateRouter.get("/list/estabilizador", listEstabilizadorController.handle)
+// Achado no rollout: FormularioControledeEstabilizadores.tsx chama
+// /list/estabilizadores (plural) pra popular o dropdown de "qual
+// estabilizador" ao registrar uma manutenção — rota nunca existiu (só a
+// singular), e como vem dentro de um Promise.all, a falha silenciosa
+// derrubava as 3 listas do formulário de uma vez (catch genérico no
+// Frontend, sem nenhum aviso pro usuário). Mesmo Controller, só o alias.
+privateRouter.get("/list/estabilizadores", listEstabilizadorController.handle)
 
 //CONTROLE DE ESTABILIZADORES
 privateRouter.post("/controledeestabilizadores", validate(createEstabilizadoresSchema), new CreateControledeEstabilizadoresController().handle)

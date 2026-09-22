@@ -1,15 +1,13 @@
-import { Response, Request } from "express";
+import { Request, Response } from "express";
 import { ListEquipamentoEstabilizadorService } from "../../../services/status_categorias/EquipamentoEstabilizador/ListEquipamentoEstabilizadorService";
 
-class ListEsquipamentoEstabilizadorController{
-    async handle(req: Request, res: Response){
-        const listEquipamentoEstabilizadorService = new ListEquipamentoEstabilizadorService();
+class ListEsquipamentoEstabilizadorController {
+  constructor(private service: ListEquipamentoEstabilizadorService = new ListEquipamentoEstabilizadorService()) {}
 
-        const equipamento = await listEquipamentoEstabilizadorService.execute();
-        
-        return res.json(equipamento);
-        
-    }
+  handle = async (req: Request, res: Response) => {
+    const estabilizadores = await this.service.execute();
+    return res.json(estabilizadores);
+  }
 }
 
-export {ListEsquipamentoEstabilizadorController}
+export { ListEsquipamentoEstabilizadorController };
