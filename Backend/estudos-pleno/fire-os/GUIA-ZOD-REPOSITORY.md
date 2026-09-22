@@ -311,4 +311,86 @@ Enquanto conferia os callers de delete de Cliente, apareceu um segundo component
 
 ---
 
+## Décimo terceiro passo: EquipamentoEstabilizador — um bug de dado real, e um Promise.all que escondia o outro — 22/09/2026
+
+Escolhido por ser pequeno (4 arquivos) mas com um achado real reportado por um agente de mapeamento: `CreateEquipamentoEstabilizadorService` gravava em `prismaClient.equipamento.create(...)`, enquanto `ListEquipamentoEstabilizadorService` sempre leu de `prismaClient.estabilizadores.findMany(...)`. Duas tabelas diferentes — o model `Equipamento` (genérico, com `instituicaoUnidade_id`/`tipodeEquipamento_id`) e o model `estabilizadores` (`{ id, name, patrimonio }`, exatamente o formato que o Create já recebia). Um estabilizador cadastrado pelo formulário nunca aparecia na própria listagem, nem ficava disponível como opção no formulário de registrar manutenção (`ControledeEstabilizadores`, que referencia `estabilizadores_id`, uma FK pra essa mesma tabela).
+
+### O segundo bug, achado checando quem chama a rota
+
+Antes de aplicar o fix, conferi no Frontend quem usa `GET /list/estabilizador` — e achei dois componentes diferentes chamando duas rotas diferentes:
+
+```ts
+// EditEstabilizadoresForm.tsx
+api.get('/list/estabilizador', ...) // singular — existe
+
+// FormularioControledeEstabilizadores.tsx
+const [equipRes, statusRes, instRes] = await Promise.all([
+  api.get("/list/estabilizadores", ...), // plural — NUNCA existiu
+  api.get("/liststatus/estabilizadores", ...),
+  api.get("/listinstuicao", ...)
+]);
+```
+
+`GET /list/estabilizadores` (plural) nunca existiu em `routes.ts` — só a versão singular. Como as 3 chamadas estão dentro de um `Promise.all`, e `Promise.all` rejeita inteiro assim que **qualquer uma** das promises rejeita, o 404 da rota inexistente derrubava a resolução das 3 de uma vez — `equipamentos`, `statusEstabilizadores` e `instituicoes` ficavam todos como array vazio, e o único sinal era um `console.error("Erro ao buscar listas:", err)`, sem nada visível pro usuário. Na prática: **abrir a tela de registrar manutenção de estabilizador sempre mostrava os 3 dropdowns vazios**, e como os 3 campos são obrigatórios (`requiredFields` no `handleSubmit`), o formulário nunca conseguia ser preenchido — combinado com o primeiro bug (nada nunca sendo gravado na tabela certa, então a lista estaria vazia de qualquer jeito mesmo se a rota existisse), o recurso de "estabilizadores" como um todo parece ter estado quebrado de ponta a ponta.
+
+**A lição de processo aqui:** o `Promise.all` que falha rápido é exatamente o tipo de padrão que transforma um 404 isolado (uma rota faltando) num sintoma que parece maior e mais confuso do que é (3 listas vazias ao mesmo tempo, sem pista de qual delas é a culpada) — vale lembrar na hora de debugar um "várias coisas pararam de funcionar juntas" no Frontend: às vezes é só uma promise arrastando as outras pro fundo.
+
+### O fix
+
+- `EstabilizadorRepository.ts` novo: `create()` agora grava em `prismaClient.estabilizadores`, não mais `prismaClient.equipamento`.
+- `equipamentoEstabilizador.schema.ts` novo, Zod validando `name`/`patrimonio`.
+- `GET /list/estabilizadores` (plural) adicionado como alias do mesmo `ListEsquipamentoEstabilizadorController` que já respondia a `/list/estabilizador` (singular) — sem duplicar lógica, só a rota extra.
+- 3 testes E2E: um cria e confirma que aparece em `/list/estabilizador`, um confirma que a mesma criação aparece em `/list/estabilizadores` (a rota nova), um cobre a validação (422 sem patrimônio).
+
+Limpeza no caminho: um import morto em `routes.ts` (`ListControledeEstabilizadoresService`, importado direto mas nunca usado ali — o Controller que precisa dele já importa por conta própria, mesmo padrão do achado do `ListtipodeChamadoService` no passo anterior).
+
+227 testes unitários inalterados, `tsc`/`eslint` limpos (16 avisos, caiu de 18).
+
+---
+
+## Décimo quarto passo: os 7 endpoints Detail de `controles_forms` — 22/09/2026
+
+Toda vez que um módulo de `controles_forms` foi migrado (`Quinto passo`, `Sexto passo`), o endpoint de Detail (`GET .../detail?controle_id=`) ficou de fora — não por decisão, só porque o foco era Create/Update/Delete. Ficaram pendurados: 7 controllers, todos no mesmo formato — query string sem `validate()`, Service com um `findUnique` + `include` direto no `prismaClient`, sem `try/catch` (então não contam pro item 4) mas sem Repository nem Zod (contam pro item 1/3).
+
+### O "findUnique fantasma"
+
+Cada um dos 7 módulos já tinha ganhado um Repository nos passos anteriores (`AssistenciaTecnicaRepository`, `LaudoTecnicoRepository`, etc.), e cada Repository já tinha um método `findUnique(id)` — escrito, mas com **zero chamadas em todo o projeto**. Um grep confirmou: nenhum Service, nenhum teste, nada usava esse método. Provavelmente sobrou de quando os Repositories foram criados, pensado pra um caso de uso que nunca chegou a ser escrito.
+
+Isso simplificou o passo: em vez de criar um método novo, só adicionei o mesmo `include` que cada `DetailXService.ts` original já usava dentro desse `findUnique` que já existia:
+
+```ts
+// antes (AssistenciaTecnicaRepository.ts)
+findUnique(id: string) {
+  return prismaClient.controleDeAssistenciaTecnica.findUnique({ where: { id } });
+}
+
+// depois — o include veio direto do DetailAssistenciaTecnicaService.ts original
+findUnique(id: string) {
+  return prismaClient.controleDeAssistenciaTecnica.findUnique({
+    where: { id },
+    include: { statusReparo: true },
+  });
+}
+```
+
+Resposta idêntica a antes — só que agora passando pelo Repository, testável com um fake em vez de mockar o Prisma.
+
+### Um schema só pra 6 dos 7
+
+6 módulos (AssistenciaTecnica, LaudoTecnico, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, DocumentacaoTecnica) usam exatamente `?controle_id=` — schema único, `controleIdQuerySchema`, adicionado em `common.schema.ts` ao lado do `idParamSchema` que já morava lá (mesmo raciocínio: parou de fazer sentido duplicar assim que o segundo módulo precisou). O sétimo, `SolicitacaoCompras`, usa `?compra_id=` — schema próprio (`detailComprasQuerySchema`) no arquivo do módulo.
+
+### Uma decisão que ficou de propósito diferente do resto do projeto
+
+O comportamento de "id não encontrado" nesses 7 endpoints sempre foi `200` com corpo `null` — nunca um `404`. Isso é diferente do padrão adotado no resto do rollout (`NotFoundError` → 404, ver `GetOrdemdeServicoByIdController` por exemplo). Decidi **não mudar isso agora**: alterar o status de resposta é uma mudança de contrato pra quem já consome essas 7 rotas, não uma modernização estrutural — o pedido aqui era aplicar Zod/Repository, não redesenhar comportamento de API sem ninguém ter pedido. Registrado explicitamente aqui (e no checklist) pra ficar claro que é uma decisão, não um esquecimento — se algum dia fizer sentido padronizar, é um passo separado, com o próprio "por que agora" dele.
+
+### Testes: 2 representativos, não 7
+
+Mesmo raciocínio do `Oitavo passo` (generalização dos lookups): os 7 módulos são estruturalmente idênticos, então 2 testes E2E bastam pra provar o padrão — um com relação incluída (AssistenciaTecnica, prova que o `include` sobreviveu à migração) e um com nome de query diferente (SolicitacaoCompras, prova que o schema por-módulo funciona), mais 422 de validação e o "200 com null" preservado.
+
+### Resultado
+
+227 testes unitários inalterados, 67 de integração/E2E no total (63 → 67), `tsc`/`eslint` limpos.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
