@@ -249,4 +249,26 @@ Depois de terminar a cobertura E2E (item 7), voltei pro item 1 — e em vez de a
 
 ---
 
+## Décimo primeiro passo: fechando o item 4 — Eventos e fotoController — 22/09/2026
+
+Últimos 2 arquivos com o `try/catch` antigo no projeto inteiro: `Eventos/EventosControllers.ts` (módulo de calendário, nunca tinha visto Zod) e `fotoController.ts` (o `handle` já tinha passado pelo rollout de fila em 14/09, mas ainda estava com `try/catch` em volta; `listByOrdem`/`delete` nunca foram tocados).
+
+**Eventos, o primeiro achado real do passo:** `Event` (schema.prisma) usa `id Int @id @default(autoincrement())`, não uuid — diferente de todo o resto do projeto. Isso quebra a suposição implícita de reaproveitar `idParamSchema` (que valida uuid) sem checar primeiro — precisou de um schema próprio, `eventoIdParamSchema`, com `z.coerce.number().int().positive()`. Segundo detalhe que só apareceu lendo o controller com atenção: o Update desse módulo (`PUT /events`) recebe o `id` pelo **body**, não por `:id` na URL como todo o resto — mantido assim de propósito (não é bug, é só um contrato diferente que o Frontend já usa) em vez de "corrigir" pra bater com o padrão dos outros módulos.
+
+```ts
+// evento.schema.ts — dois schemas de id diferentes na mesma rota
+const eventoIdParamSchema = z.object({ id: z.coerce.number().int().positive() }); // DELETE /events/:id
+const updateEventoSchema = z.object({ id: z.coerce.number().int().positive(), ... }); // PUT /events (id no body)
+```
+
+`EventoRepository.ts` novo, `EventoService`/`EventosController` viraram classe fina (o Controller antigo exportava 4 funções soltas, cada uma com seu próprio `try { ... } catch { res.status(500)... }` genérico — nenhuma delas diferenciava "não achei o evento" de "erro de banco", tudo virava 500 igual).
+
+**fotoController, o segundo achado — um teste que precisou mudar de forma, não só de asserção:** o `handle` tinha uma checagem "arquivo não enviado" que devolvia `res.status(400)` direto, testada num teste unitário que chama `controller.handle(req, res)` cru (sem passar pelo Express de verdade). Trocar isso por `throw new ValidationError(...)` — o padrão certo, que deixa o `errorHandler` decidir o status — quebra esse teste, porque agora `handle` rejeita a Promise em vez de chamar `res.status`. O teste foi reescrito pra `await expect(controller.handle(...)).rejects.toThrow(...)`. Um segundo teste, que cobria "falta `ordemdeServico_id`", foi **removido** do unitário — essa validação virou responsabilidade do `fotoSchema` (Zod) na rota, e o padrão já estabelecido no resto do projeto é testar validação de payload em E2E (via `validate()`), não simulando a chamada crua ao Controller. Como o fluxo de upload/fila está fora do escopo de E2E por decisão já registrada (custo de infra: precisaria de Redis + worker rodando), esse caminho específico (422 por falta de `ordemdeServico_id`) ficou sem teste automatizado por enquanto — um gap pequeno, mas real, que vale lembrar se algum dia o upload entrar no escopo de E2E.
+
+`FotoOrdemServicoRepository.ts` novo (`findByOrdem`, `findById`, `delete`), `NotFoundError` no lugar do `if (!foto) return res.status(404)` manual em `delete`.
+
+**Resultado:** o item 4 (`try/catch` antigo) está fechado — **zero arquivos** no projeto inteiro com esse padrão, contando desde os 10 do início do dia 15/09. 227 testes unitários (-1 líquido: 1 teste reescrito, 1 removido sem substituto), 54 de integração/E2E inalterados, `tsc` limpo, `eslint` caiu de 24 pra 20 avisos (os `try/catch` removidos também limpavam algumas variáveis `error` não usadas).
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
