@@ -39,6 +39,7 @@ export async function limparBanco() {
   await prismaClient.tipodeEquipamento.deleteMany()
   await prismaClient.tipodeInstituicaoUnidade.deleteMany()
   await prismaClient.estabilizadores.deleteMany()
+  await prismaClient.atividadePadrao.deleteMany()
 }
 
 // Compartilhado por todos os arquivos de integração/E2E que precisam de um
