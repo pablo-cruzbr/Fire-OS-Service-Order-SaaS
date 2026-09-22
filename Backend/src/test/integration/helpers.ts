@@ -12,6 +12,14 @@ import prismaClient from '../../prisma'
 // aqui, numa ordem FK-safe única (filhos antes dos pais), evita esse tipo de
 // corrida entre arquivos — todo `beforeEach` deveria chamar só isto.
 export async function limparBanco() {
+  // 3 filhos de OrdemdeServico achados faltando aqui (22/09, escrevendo o
+  // teste de integração de FotoOrdemServicoRepository): a lista cobria os
+  // filhos de controles_forms, mas não estes 3 — sem eles, um teste que cria
+  // uma foto/atividade/form-técnico anexado a uma OS quebra o `deleteMany()`
+  // de `ordemdeServico` do próximo `beforeEach` com FK constraint.
+  await prismaClient.fotoOrdemServico.deleteMany()
+  await prismaClient.atividadeNoChamado.deleteMany()
+  await prismaClient.formTecnico.deleteMany()
   await prismaClient.ordemdeServico.deleteMany()
   await prismaClient.controleDeAssistenciaTecnica.deleteMany()
   await prismaClient.controleDeLaudoTecnico.deleteMany()
