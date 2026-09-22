@@ -103,10 +103,12 @@ import { UpdateControledeMaquinasPendentesOroController } from "./controllers/co
 import { ListOrdemdeServicoController } from "./controllers/controles_forms/OrdemdeServico/ListOrdemdeServicoController";
 import { ListtipodeChamadoController } from "./controllers/status_categorias/tipodeChamado/ListtipodeChamadoController";
 import { UpdateOrdemdeServicoController } from "./services/controles_forms/OrdemdeServico/UpdateOrdemdeServicoService";
-import { getEventsController, createEventController, updateEventController, deleteEventController } from "../src/controllers/Eventos/EventosControllers";
+import { EventosController } from "./controllers/Eventos/EventosControllers";
+import { createEventoSchema, updateEventoSchema, eventoIdParamSchema } from "./schemas/evento.schema";
 import multer from 'multer';
 
 import { fotoController } from "./services/controles_forms/FotoOrdensTec/fotoController";
+import { fotoSchema } from "./schemas/foto.schema";
 import { ListByStatusTicketsController } from "./controllers/controles_forms/OrdemdeServico/ListByStatusTicketsController";
 import { ListByTecnicosTicketsController } from "./controllers/controles_forms/OrdemdeServico/ListByTecnicosTicketsController";
 import { CreateStatusEstabilizadoresController } from "./controllers/status_categorias/statusEstabilizadores/CreateStatusEstabilizadoresController";
@@ -422,10 +424,9 @@ privateRouter.patch(
   new UpdateOrdemdeServicoController().handle
 );
 const fotoControllerInstance = new fotoController();
-privateRouter.get('/foto/:id', fotoControllerInstance.listByOrdem);
-//router.post('/foto', upload.array('files'),  new fotoController().handle)
-privateRouter.post('/foto', new fotoController().handle);
-privateRouter.delete('/foto/:id', new fotoController().delete);
+privateRouter.get('/foto/:id', validate(idParamSchema, 'params'), fotoControllerInstance.listByOrdem);
+privateRouter.post('/foto', validate(fotoSchema), fotoControllerInstance.handle);
+privateRouter.delete('/foto/:id', validate(idParamSchema, 'params'), fotoControllerInstance.delete);
 
 //STATUS ESTABILIZADORES
 privateRouter.post("/status/estabilizadores", validate(createLookupCategoriaSchema), new CreateStatusEstabilizadoresController().handle);
@@ -449,10 +450,11 @@ privateRouter.get('/statusordemdeServico/ordens', validate(listByStatusQuerySche
 privateRouter.get('/tecnicosordemdeServico/ordens', validate(listByTecnicoQuerySchema, 'query'), new ListByTecnicosTicketsController().handle)
 
 //EVENTOS
-privateRouter.get("/events", getEventsController);
-privateRouter.post("/events", createEventController);
-privateRouter.put("/events", updateEventController);
-privateRouter.delete("/events/:id", deleteEventController);
+const eventosController = new EventosController();
+privateRouter.get("/events", eventosController.list);
+privateRouter.post("/events", validate(createEventoSchema), eventosController.create);
+privateRouter.put("/events", validate(updateEventoSchema), eventosController.update);
+privateRouter.delete("/events/:id", validate(eventoIdParamSchema, 'params'), eventosController.delete);
 
 // --- Controle de Tempo ---
 const timeController = new TimeOrdemdeServicoController();
