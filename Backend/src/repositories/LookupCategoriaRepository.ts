@@ -41,6 +41,10 @@ class LookupCategoriaRepository {
     return this.delegate.create({ data: { name }, select: DEFAULT_SELECT });
   }
 
+  findAll() {
+    return this.delegate.findMany({ select: DEFAULT_SELECT });
+  }
+
   delete(id: string) {
     return this.delegate.delete({ where: { id } });
   }

@@ -1,15 +1,18 @@
-import { Response, Request } from "express";
+import { Request, Response } from "express";
+import { ListLookupCategoriaService } from "../../../services/status_categorias/ListLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
-import { ListStatusUrgenciaService } from "../../../services/status_categorias/statusUrgencia/ListStatusUrgenciaService";
+class ListStatusUrgenciaController {
+  constructor(
+    private service: ListLookupCategoriaService = new ListLookupCategoriaService(
+      new LookupCategoriaRepository("prioridade")
+    )
+  ) {}
 
-class  ListStatusUrgenciaController{
-    async handle (req: Request, res: Response){
-       
-            const listStatusUrgenciaService = new ListStatusUrgenciaService();
-
-            const category = await listStatusUrgenciaService.execute();
-
-            return res.json(category)
-    }
+  handle = async (req: Request, res: Response) => {
+    const status = await this.service.execute();
+    return res.json(status);
+  }
 }
-export {ListStatusUrgenciaController}
+
+export { ListStatusUrgenciaController };

@@ -1,13 +1,18 @@
 import { Request, Response } from "express";
-import { ListMaquinasPendentesOroService } from "../../../services/status_categorias/statusMaquinasPendentesOro/ListstatusMaquinasPendentesOroService";
+import { ListLookupCategoriaService } from "../../../services/status_categorias/ListLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
-class ListMaquinasPendentesOroController{
-    async handle(req: Request, res: Response){
-        const listMaquinasPendentesOroService = new ListMaquinasPendentesOroService();
+class ListMaquinasPendentesOroController {
+  constructor(
+    private service: ListLookupCategoriaService = new ListLookupCategoriaService(
+      new LookupCategoriaRepository("statusMaquinasPendentesOro")
+    )
+  ) {}
 
-        const status = await listMaquinasPendentesOroService.execute();
-
-        return res.json(status);
-    }
+  handle = async (req: Request, res: Response) => {
+    const status = await this.service.execute();
+    return res.json(status);
+  }
 }
-export {ListMaquinasPendentesOroController}
+
+export { ListMaquinasPendentesOroController };
