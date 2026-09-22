@@ -210,7 +210,7 @@ npm install
 
 # Configure as variáveis de ambiente
 cp .env.example .env
-# Edite o .env com suas credenciais do PostgreSQL e JWT_SECRET
+# Edite o .env com suas credenciais do PostgreSQL e JWT_SECREATE
 
 # Rode as migrações do banco
 npx prisma migrate dev
@@ -249,7 +249,7 @@ npx expo start
 | Variável | Onde | Descrição |
 |---|---|---|
 | `DATABASE_URL` | Backend | String de conexão PostgreSQL |
-| `JWT_SECRET` | Backend | Chave secreta para tokens JWT |
+| `JWT_SECREATE` | Backend | Chave secreta para tokens JWT (nome com typo histórico, mantido porque produção já usa esse nome) |
 | `CLOUDINARY_URL` | Backend | Credenciais do Cloudinary |
 | `NEXT_PUBLIC_API_URL` | Frontend | URL base da API |
 

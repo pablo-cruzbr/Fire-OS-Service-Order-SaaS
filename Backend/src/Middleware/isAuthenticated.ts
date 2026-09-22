@@ -24,7 +24,6 @@ export function isAuthenticated(
 
   try {
     // 3. Valida o Token e extrai o Payload
-    // Nota: Verifique se no seu .env está JWT_SECREATE ou JWT_SECRET
     const { sub, role, tecnico_id } = verify(
       token,
       process.env.JWT_SECREATE as string
