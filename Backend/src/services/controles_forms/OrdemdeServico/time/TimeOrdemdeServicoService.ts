@@ -1,5 +1,6 @@
 import prismaClient from "../../../../prisma";
 import { OrdemdeServico } from "@prisma/client";
+import { AppError, NotFoundError } from "../../../../errors/AppError";
 
 interface UpdateTempoInput {
   ordemId: string;
@@ -34,8 +35,8 @@ export const TimeOrdemdeServicoService = {
     where: { id: ordemId },
   }) as OrdemdeServicoComPausa | null;
 
-  if (!ordem) throw new Error("Ordem não encontrada.");
-  if (ordem.startedAt) return ordem; 
+  if (!ordem) throw new NotFoundError("Ordem não encontrada.");
+  if (ordem.startedAt) return ordem;
 
   const statusEmAndamento = await this.getStatusOrThrow("EM ANDAMENTO");
 
@@ -56,14 +57,12 @@ export const TimeOrdemdeServicoService = {
     where: { id: ordemId },
   }) as OrdemdeServicoComPausa | null;
 
-  if (!ordem) throw new Error("Ordem não encontrada.");
+  if (!ordem) throw new NotFoundError("Ordem não encontrada.");
 
   const statusEmAndamentoId = await this.getStatusId("EM ANDAMENTO");
 
   if (ordem.statusOrdemdeServico_id !== statusEmAndamentoId) {
-    console.log("⚠️ Status atual da OS:", ordem.statusOrdemdeServico_id);
-    console.log("🟢 ID esperado (EM ANDAMENTO):", statusEmAndamentoId);
-    throw new Error("A OS não está EM ANDAMENTO e não pode ser pausada.");
+    throw new AppError("A OS não está EM ANDAMENTO e não pode ser pausada.");
   }
 
   const statusPausada = await this.getStatusOrThrow("PAUSADA");
@@ -86,15 +85,15 @@ export const TimeOrdemdeServicoService = {
       where: { id: ordemId },
     }) as OrdemdeServicoComPausa | null;
 
-    if (!ordem) throw new Error("Ordem não encontrada.");
+    if (!ordem) throw new NotFoundError("Ordem não encontrada.");
 
     const statusPausadaId = await this.getStatusId("PAUSADA");
     if (ordem.statusOrdemdeServico_id !== statusPausadaId) {
-      throw new Error("A OS não está PAUSADA e não pode ser retomada.");
+      throw new AppError("A OS não está PAUSADA e não pode ser retomada.");
     }
 
     if (!ordem.pausaIniciadaEm || !ordem.startedAt) {
-      throw new Error(
+      throw new AppError(
         "Não foi possível calcular o tempo de pausa. OS ainda não foi iniciada ou o registro de pausa está incompleto."
       );
     }
@@ -121,8 +120,8 @@ export const TimeOrdemdeServicoService = {
       where: { id: ordemId },
     }) as OrdemdeServicoComPausa | null;
 
-    if (!ordem) throw new Error("Ordem não encontrada.");
-    if (!ordem.startedAt) throw new Error("A OS ainda não foi iniciada.");
+    if (!ordem) throw new NotFoundError("Ordem não encontrada.");
+    if (!ordem.startedAt) throw new AppError("A OS ainda não foi iniciada.");
 
     const now = new Date();
     const duracaoTotal = Math.floor((now.getTime() - ordem.startedAt.getTime()) / 1000);
@@ -146,7 +145,7 @@ export const TimeOrdemdeServicoService = {
       where: { id: ordemId },
     }) as OrdemdeServicoComPausa | null;
 
-    if (!ordem) throw new Error("Ordem não encontrada.");
+    if (!ordem) throw new NotFoundError("Ordem não encontrada.");
 
     let duracaoTotal = 0;
     const start = startedAt ?? ordem.startedAt;
@@ -172,7 +171,7 @@ export const TimeOrdemdeServicoService = {
       select: { startedAt: true, endedAt: true, duracao: true },
     });
 
-    if (!ordem) throw new Error("Ordem não encontrada.");
+    if (!ordem) throw new NotFoundError("Ordem não encontrada.");
     return ordem;
   },
 };

@@ -1,20 +1,25 @@
 import { Request, Response } from "express";
-import { ListOrdemdeServicoStatusService } from "../../../services/controles_forms/OrdemdeServico/ListOrdemdeServicoStatusService";
+import {
+  OrdemdeServicoRepository,
+  ordemdeServicoRepository,
+} from "../../../repositories/OrdemdeServicoRepository";
 
-class ListByStatusTicketsController {
-    async handle(req: Request, res: Response) {
-        try {
-            const statusOrdemdeServico_id = req.query.statusOrdemdeServico_id as string;
+class ListByStatusTicketsService {
+  constructor(private repository: OrdemdeServicoRepository = ordemdeServicoRepository) {}
 
-            const listByStatus = new ListOrdemdeServicoStatusService();
-            const ordens = await listByStatus.execute({ statusOrdemdeServico_id });
-
-            return res.json(ordens);
-        } catch (error) {
-            console.error("Erro ao listar ordens por status:", error);
-            return res.status(500).json({ error: "Erro interno ao buscar ordens" });
-        }
-    }
+  execute(statusOrdemdeServico_id: string) {
+    return this.repository.findByStatus(statusOrdemdeServico_id);
+  }
 }
 
-export { ListByStatusTicketsController };
+class ListByStatusTicketsController {
+  constructor(private service: ListByStatusTicketsService = new ListByStatusTicketsService()) {}
+
+  handle = async (req: Request, res: Response) => {
+    const { statusOrdemdeServico_id } = req.query as { statusOrdemdeServico_id: string };
+    const ordens = await this.service.execute(statusOrdemdeServico_id);
+    return res.json(ordens);
+  }
+}
+
+export { ListByStatusTicketsController, ListByStatusTicketsService };

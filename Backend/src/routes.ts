@@ -10,7 +10,7 @@ import { authorizeOrdemdeServico } from "./Middleware/authorizeOrdemdeServico";
 import { authorizeOwnership } from "./Middleware/authorizeOwnership";
 import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
-import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema } from "./schemas/ordemdeServico.schema";
+import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema, listByStatusQuerySchema, listByTecnicoQuerySchema, atualizarTempoSchema, ordemIdParamSchema, assinaturaSchema } from "./schemas/ordemdeServico.schema";
 import { createUserSchema, updateUserSchema, authUserSchema } from "./schemas/user.schema";
 import { createAssistenciaTecnicaSchema, updateAssistenciaTecnicaSchema } from "./schemas/assistenciaTecnica.schema";
 import { createLaudoTecnicoSchema, updateLaudoTecnicoSchema } from "./schemas/laudoTecnico.schema";
@@ -120,8 +120,6 @@ import { UpdateControledeEstabilizadoresController } from "./controllers/control
 import { CreatetipodeInstituicaoUnidadeController } from "./controllers/status_categorias/tipodeInsituicaoUnidade/CreatetipodeInstituicaoUnidadeController";
 import { ListtipoInsituicaoUnidadeController } from "./controllers/status_categorias/tipodeInsituicaoUnidade/ListtipoInsituicaoUnidadeController";
 import { TimeOrdemdeServicoController } from "./controllers/controles_forms/OrdemdeServico/time/TimeOrdemdeServicoController";
-import { CreateAssinaturaController } from "./controllers/controles_forms/OrdemdeServico/assinatura/CreateAssinaturaController";
-import { SaveAssinaturaController } from "./controllers/controles_forms/OrdemdeServico/assinatura/GetAssinaturaController";
 import { AssinaturaController } from "./controllers/controles_forms/OrdemdeServico/assinatura/saveAssinatura";
 import { CreateInformacoesSetorController } from "./controllers/status_categorias/setor/informacoessetor/CreateInformacoesSetorController";
 import { ListInformacaoesSetoresController } from "./controllers/status_categorias/setor/informacoessetor/ListInformacoesSetorController";
@@ -447,8 +445,8 @@ privateRouter.get("/listcontroledeestabilizadores", new ListControledeEstabiliza
 privateRouter.patch("/update/controledeestabilizadores/:id", validate(idParamSchema, 'params'), validate(updateEstabilizadoresSchema), new UpdateControledeEstabilizadoresController().handle)
 
 //ORDEM DE SERVIÇO POR STATUS
-privateRouter.get('/statusordemdeServico/ordens', new ListByStatusTicketsController().handle)
-privateRouter.get('/tecnicosordemdeServico/ordens', new ListByTecnicosTicketsController().handle)
+privateRouter.get('/statusordemdeServico/ordens', validate(listByStatusQuerySchema, 'query'), new ListByStatusTicketsController().handle)
+privateRouter.get('/tecnicosordemdeServico/ordens', validate(listByTecnicoQuerySchema, 'query'), new ListByTecnicosTicketsController().handle)
 
 //EVENTOS
 privateRouter.get("/events", getEventsController);
@@ -456,21 +454,28 @@ privateRouter.post("/events", createEventController);
 privateRouter.put("/events", updateEventController);
 privateRouter.delete("/events/:id", deleteEventController);
 
-// --- Controle de Tempo (Corrigido para usar a instância timeController) ---
+// --- Controle de Tempo ---
 const timeController = new TimeOrdemdeServicoController();
-// --- Controle de Tempo (Corrigido para usar a instância timeController) ---
-privateRouter.patch("/ordemdeservico/iniciar/:id", (req, res) => timeController.iniciar(req, res));
-privateRouter.patch("/ordemdeservico/concluir/:id", (req, res) => timeController.concluir(req, res));
-privateRouter.patch("/ordemdeservico/pausar/:id", (req, res) => timeController.pausar(req, res));
-privateRouter.patch("/ordemdeservico/retomar/:id", (req, res) => timeController.retomar(req, res));
-privateRouter.patch("/ordemdeservico/atualizar-tempo/:id", (req, res) => timeController.atualizarTempo(req, res));
-privateRouter.get("/ordemdeservico/tempo/:id", (req, res) => timeController.lerTempo(req, res));
+privateRouter.patch("/ordemdeservico/iniciar/:id", validate(idParamSchema, 'params'), timeController.iniciar);
+privateRouter.patch("/ordemdeservico/concluir/:id", validate(idParamSchema, 'params'), timeController.concluir);
+privateRouter.patch("/ordemdeservico/pausar/:id", validate(idParamSchema, 'params'), timeController.pausar);
+privateRouter.patch("/ordemdeservico/retomar/:id", validate(idParamSchema, 'params'), timeController.retomar);
+privateRouter.patch("/ordemdeservico/atualizar-tempo/:id", validate(idParamSchema, 'params'), validate(atualizarTempoSchema), timeController.atualizarTempo);
+privateRouter.get("/ordemdeservico/tempo/:id", validate(idParamSchema, 'params'), timeController.lerTempo);
 
 // ASSINATURA
-privateRouter.patch("/assinatura/:id", AssinaturaController.atualizar);
-
-// GET → buscar assinatura
-privateRouter.get("/assinatura/:ordemId", AssinaturaController.buscar);
+const assinaturaController = new AssinaturaController();
+privateRouter.patch(
+  "/assinatura/:id",
+  validate(idParamSchema, 'params'),
+  validate(assinaturaSchema),
+  assinaturaController.atualizar
+);
+privateRouter.get(
+  "/assinatura/:ordemId",
+  validate(ordemIdParamSchema, 'params'),
+  assinaturaController.buscar
+);
 
 //TipodeOrdemdeServico
 privateRouter.post("/tipodeordemdeservico", validate(createLookupCategoriaSchema), new CreatetipodeOrdemdeServicoController().handle)

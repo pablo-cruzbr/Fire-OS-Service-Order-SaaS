@@ -47,8 +47,40 @@ const updateOrdemdeServicoSchema = z.object({
   agendadoEm: z.string().optional(),
 });
 
+const listByStatusQuerySchema = z.object({
+  statusOrdemdeServico_id: uuid,
+});
+
+const listByTecnicoQuerySchema = z.object({
+  tecnico_id: uuid,
+});
+
+const atualizarTempoSchema = z.object({
+  startedAt: z.string().optional(),
+  endedAt: z.string().optional(),
+});
+
+const ordemIdParamSchema = z.object({
+  ordemId: uuid,
+});
+
+const assinaturaSchema = z.object({
+  assinaturaBase64: z.string().min(1, "Assinatura é obrigatória."),
+});
+
 type CreateOrdemdeServicoInput = z.infer<typeof createOrdemdeServicoSchema>;
 type UpdateOrdemdeServicoInput = z.infer<typeof updateOrdemdeServicoSchema>;
+type AtualizarTempoInput = z.infer<typeof atualizarTempoSchema>;
+type AssinaturaInput = z.infer<typeof assinaturaSchema>;
 
-export { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema };
-export type { CreateOrdemdeServicoInput, UpdateOrdemdeServicoInput };
+export {
+  createOrdemdeServicoSchema,
+  idParamSchema,
+  updateOrdemdeServicoSchema,
+  listByStatusQuerySchema,
+  listByTecnicoQuerySchema,
+  atualizarTempoSchema,
+  ordemIdParamSchema,
+  assinaturaSchema,
+};
+export type { CreateOrdemdeServicoInput, UpdateOrdemdeServicoInput, AtualizarTempoInput, AssinaturaInput };

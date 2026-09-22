@@ -1,74 +1,56 @@
-// src/controllers/AssinaturaController.ts
 import { Request, Response } from "express";
-import prismaClient from "../../../../prisma";
 import { v2 as cloudinary } from "cloudinary";
+import { NotFoundError } from "../../../../errors/AppError";
+import { AssinaturaInput } from "../../../../schemas/ordemdeServico.schema";
+import {
+  OrdemdeServicoRepository,
+  ordemdeServicoRepository,
+} from "../../../../repositories/OrdemdeServicoRepository";
 
-// Service interno para criar/atualizar assinatura
-async function saveAssinatura(ordemId: string, assinaturaBase64: string) {
-  // Verifica se a ordem existe
-  const ordem = await prismaClient.ordemdeServico.findUnique({
-    where: { id: ordemId },
-  });
+class AssinaturaService {
+  constructor(private repository: OrdemdeServicoRepository = ordemdeServicoRepository) {}
 
-  if (!ordem) {
-    throw new Error("Ordem de serviço não encontrada");
+  async atualizar(ordemId: string, assinaturaBase64: string) {
+    const existe = await this.repository.existsById(ordemId);
+    if (!existe) {
+      throw new NotFoundError("Ordem de Serviço não encontrada.");
+    }
+
+    const uploadResult = await cloudinary.uploader.upload(assinaturaBase64, {
+      folder: "assinaturas_ordem",
+      format: "jpg",
+    });
+
+    const ordem = await this.repository.updateAssinatura(ordemId, uploadResult.secure_url);
+    return ordem.assinaturaDigital;
   }
 
-  // Upload da assinatura para Cloudinary
-  const uploadResult = await cloudinary.uploader.upload(assinaturaBase64, {
-    folder: "assinaturas_ordem",
-    format: "jpg",
-  });
+  async buscar(ordemId: string) {
+    const ordem = await this.repository.findAssinatura(ordemId);
+    if (!ordem) {
+      throw new NotFoundError("Ordem de Serviço não encontrada.");
+    }
 
-  // Atualiza a URL da assinatura no banco
-  return prismaClient.ordemdeServico.update({
-    where: { id: ordemId },
-    data: { assinaturaDigital: uploadResult.secure_url },
-  });
+    return ordem.assinaturaDigital;
+  }
 }
 
-// Controller único
-export const AssinaturaController = {
-  // PATCH → criar/atualizar assinatura
-  async atualizar(req: Request, res: Response) {
-    try {
-      const { id } = req.params; // ordemId da URL
-      const { assinaturaBase64 } = req.body; // assinatura em base64
+class AssinaturaController {
+  constructor(private service: AssinaturaService = new AssinaturaService()) {}
 
-      if (!assinaturaBase64) {
-        return res.status(400).json({ error: "Assinatura não fornecida" });
-      }
+  atualizar = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { assinaturaBase64 } = req.body as AssinaturaInput;
 
-      const ordemAtualizada = await saveAssinatura(id, assinaturaBase64);
-      return res.json({ assinatura: ordemAtualizada.assinaturaDigital });
-    } catch (error: any) {
-      console.error("Erro ao atualizar assinatura:", error);
-      return res.status(400).json({ error: error.message });
-    }
-  },
+    const assinatura = await this.service.atualizar(id, assinaturaBase64);
+    return res.json({ assinatura });
+  }
 
-  // GET → buscar assinatura
-  async buscar(req: Request, res: Response) {
-    try {
-      const { ordemId } = req.params;
+  buscar = async (req: Request, res: Response) => {
+    const { ordemId } = req.params;
+    const assinatura = await this.service.buscar(ordemId);
+    return res.json({ assinatura: assinatura || null });
+  }
+}
 
-      if (!ordemId) {
-        return res.status(400).json({ error: "ID da ordem não fornecido" });
-      }
-
-      const ordem = await prismaClient.ordemdeServico.findUnique({
-        where: { id: ordemId },
-        select: { assinaturaDigital: true },
-      });
-
-      if (!ordem) {
-        return res.status(404).json({ error: "Ordem não encontrada" });
-      }
-
-      return res.json({ assinatura: ordem.assinaturaDigital || null });
-    } catch (error) {
-      console.error("Erro ao buscar assinatura:", error);
-      return res.status(500).json({ error: "Erro ao buscar assinatura" });
-    }
-  },
-};
+export { AssinaturaController, AssinaturaService };
