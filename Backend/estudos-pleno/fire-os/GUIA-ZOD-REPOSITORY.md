@@ -271,4 +271,44 @@ const updateEventoSchema = z.object({ id: z.coerce.number().int().positive(), ..
 
 ---
 
+## Décimo segundo passo: Cliente, Setor, Tecnico — 22/09/2026
+
+Escolha do próximo módulo desta vez veio de um agente: pedi um mapeamento de tudo que ainda faltava em `routes.ts` contra o que já tinha sido migrado. Cliente, Setor e Tecnico saíram como o grupo mais parecido entre si — CRUD simples, `prismaClient` direto no Service, sem Zod, sem Repository, sem try/catch (então não pesam no item 4, só no 1/3) — tratados como um lote só, mesmo raciocínio da generalização dos 13 lookups (`Oitavo passo`).
+
+### Dois achados reais, os dois na mesma pergunta de sempre
+
+Antes de escrever schema, a pergunta que já rendeu achado em quase todo passo anterior: "o Frontend chama alguma rota que a gente não tem?" Sim, duas vezes:
+
+**`PATCH /cliente/:id`** — `EditClienteForm.tsx` (componente de editar cliente) chama essa rota há quem sabe quanto tempo, com um `alert()` explícito mostrando o erro pro usuário quando falha (`"Erro ao atualizar: ..."`). A rota nunca existiu em `routes.ts`. O mais interessante: **o código pra atender essa rota já existia pronto** — `UpdateClienteController.ts` e `UpdateClienteService.ts`, completos, com a lógica certa (recebe `id` do path, `name`/`cnpj`/`endereco`/`telefone` do body) — só nunca tinham sido importados nem registrados. Alguém escreveu o Controller e o Service, esqueceu (ou nunca chegou) de adicionar a linha em `routes.ts`. Mesmo formato exato do achado de `InstituicaoUnidade` em 15/09 — só que dessa vez com uma diferença: lá o código morto não tinha caller nenhum no Frontend (decisão de produto, "ligar ou apagar"); aqui o Frontend **já chama**, então não tem decisão pra fazer — é bug, não feature nova, ligar é a única opção sensata.
+
+**`DELETE /deletecliente`** — `ClientesList.tsx` chama `DELETE /deletecliente/${clienteId}` (id no path). A rota só existia como `/deletecliente`, sem `:id`. Express faz *exact path matching* por padrão — uma rota registrada sem `:id` não casa contra `/deletecliente/<qualquer coisa>`, então a requisição nem chegava no Controller: 404 do próprio roteador do Express, antes de qualquer `isAuthenticated`/`can`/lógica de negócio rodar. Corrigido adicionando `:id` na declaração da rota e trocando o Controller de `req.query.cliente_id` pra `req.params.id`.
+
+```ts
+// antes — nunca casava contra /deletecliente/<uuid>
+privateRouter.delete('/deletecliente', can(['ADMIN']), new RemoveClienteController().handle)
+
+// depois
+privateRouter.delete('/deletecliente/:id', can(['ADMIN']), validate(idParamSchema, 'params'), new RemoveClienteController().handle)
+```
+
+Os dois ganharam teste E2E de regressão dedicado (`cliente.e2e.test.ts`) — não só o caminho feliz, mas o cenário exato que estava quebrado (editar de verdade muda o dado no banco; apagar de verdade remove a linha).
+
+### Um quase-achado que a checagem no Frontend descartou
+
+`RemoveTecnicoController` lê `req.query.tecnico_id`, mesmo a rota (`DELETE /removertecnico/:id`) declarando `:id` no path — pareceu, à primeira vista, o mesmo bug do Cliente. Mas checando os 2 lugares que chamam essa rota no Frontend (`TecnicoList.tsx`, `TicketsList.tsx`), os dois mandam o id **nos dois formatos ao mesmo tempo**: no path da URL *e* como `params: { tecnico_id }` do axios (que o axios serializa como query string). Ou seja, `req.query.tecnico_id` sempre recebeu o valor certo — o bug nunca se manifestou na prática, porque o Frontend compensava (provavelmente sem querer — parece sobra de uma versão anterior da chamada, de antes da rota ganhar `:id`) mandando os dois. **A lição aqui não é "não tinha bug, ok, próximo"** — é que a mesma forma de código (rota com `:id`, controller lendo query) pode ou não ser um bug dependendo inteiramente do que o caller manda, e só dá pra saber checando, não só lendo o Backend isolado. Limpei mesmo assim, trocando pra `req.params.id` — mais correto, e não quebra os 2 callers, que já mandam o id no path de qualquer jeito.
+
+### Tecnico manteve o cache, só trocou o que tem por baixo
+
+`ListTecnicoService`/`CreateTecnicoService`/`RemoveTecnicoService` já tinham cache-aside com Redis (item 6, TTL 60s, invalidação ativa em create/remove) — isso não mudou. Só o acesso direto a `prismaClient.tecnico.*` virou `TecnicoRepository` por baixo. Isso quebrou o teste unitário existente (`ListTecnicoService.test.ts`), que mockava `prismaClient` inteiro via `vi.mock('../../../prisma', ...)` — o padrão de antes do Repository pattern existir no projeto. Reescrito pra usar um `TecnicoRepository` fake (objeto plano com os métodos mockados via `vi.fn()`), mesmo padrão usado em todo o resto do rollout desde o `Terceiro passo`.
+
+### Achado fora do Backend, só registrado
+
+Enquanto conferia os callers de delete de Cliente, apareceu um segundo componente de listagem (`ClienteMunicipalList.tsx`, tela diferente de `ClientesList.tsx`) cujo botão de apagar chama `/deletedesolicitacaodecompras/:id` — o endpoint de **outro módulo** (Solicitação de Compras), não o de Cliente. Parece um copy-paste de um componente de compras que esqueceram de ajustar. Essa rota existe e funciona no Backend (é a rota certa pra outra coisa) — não é um bug do Backend, é o Frontend chamando o endpoint errado. Fora do escopo deste repositório pra corrigir, só registrado aqui pra não se perder caso alguém pergunte "por que apagar cliente não funciona nessa tela específica".
+
+### Resultado
+
+3 módulos novos no rollout de Zod/Repository (30 no total). Um import morto a mais removido (`ListtipodeChamadoService`, direto em `routes.ts`, nunca usado lá — o Controller que precisa dele já importa por conta própria). 227 testes unitários (1 arquivo reescrito), 60 de integração/E2E (54 → 60), `tsc` limpo, `eslint` caiu de 20 pra 18 avisos.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
