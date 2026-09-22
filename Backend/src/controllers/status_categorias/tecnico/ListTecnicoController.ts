@@ -1,13 +1,12 @@
-import { Response, Request } from "express";
+import { Request, Response } from "express";
 import { ListTecnicoService } from "../../../services/status_categorias/tecnico/ListTecnicoService";
 
 class ListTecnicoController {
-  async handle(req: Request, res: Response) {
-    const listTecnicoService = new ListTecnicoService();
+  constructor(private service: ListTecnicoService = new ListTecnicoService()) {}
 
-    const { controles, total } = await listTecnicoService.execute();
-
-    return res.json({ controles, total }); 
+  handle = async (req: Request, res: Response) => {
+    const { controles, total } = await this.service.execute();
+    return res.json({ controles, total });
   }
 }
 

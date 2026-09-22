@@ -1,27 +1,11 @@
-import prismaClient from "../../../prisma";
-
-interface SetorRequest {
-  name: string;
-}
+import { SetorRepository, setorRepository } from "../../../repositories/SetorRepository";
+import { CreateSetorInput } from "../../../schemas/setor.schema";
 
 class CreateSetorService {
-  async execute({ name}: SetorRequest) {
-    
-    if (name === "") {
-      throw new Error("Setor inválido");
-    }
+  constructor(private repository: SetorRepository = setorRepository) {}
 
-    const setor = await prismaClient.setor.create({
-      data: {
-        name,
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    return setor;
+  execute(data: CreateSetorInput) {
+    return this.repository.create(data);
   }
 }
 

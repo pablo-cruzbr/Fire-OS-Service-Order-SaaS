@@ -24,10 +24,14 @@ import { createEquipamentoSchema, updateEquipamentoSchema } from "./schemas/equi
 import { createInformacoesSetorSchema, updateInformacoesSetorSchema } from "./schemas/informacoesSetor.schema";
 import { createLookupCategoriaSchema, deleteStatusOrdemdeServicoQuerySchema } from "./schemas/lookupCategoria.schema";
 import { updateInstituicaoUnidadeSchema } from "./schemas/instituicaoUnidade.schema";
+import { createClienteSchema, updateClienteSchema, detailClienteQuerySchema } from "./schemas/cliente.schema";
+import { createSetorSchema, deleteSetorQuerySchema } from "./schemas/setor.schema";
+import { createTecnicoSchema } from "./schemas/tecnico.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
 import { RemoveClienteController } from "./controllers/status_categorias/cliente/RemoveClienteController";
+import { UpdateClienteController } from "./controllers/status_categorias/cliente/UpdateClienteController";
 import { ListSetoresController } from "./controllers/status_categorias/setor/ListSetoresController";
 import { RemoveSetorController } from "./controllers/status_categorias/setor/RemoveSetorController";
 import { CreateInstituicaoUnidadeController } from "./controllers/status_categorias/instituicaoUnidade/CreateInstituicaoUnidadeController";
@@ -40,7 +44,6 @@ import { RemoveStatusOrdemServicoController } from "./controllers/status_categor
 import { CreatetipodeChamadoController } from "./controllers/status_categorias/tipodeChamado/CreatetipodeChamadoController";
 import { ListtipodeEquipamentoController } from "./controllers/status_categorias/tipodeEquipamento/ListtipodeEquipamentoController";
 import { CreatetipodeEquipamentoController } from "./controllers/status_categorias/tipodeEquipamento/CreateTipodeEquipamentoController";
-import { ListtipodeChamadoService } from "./services/status_categorias/tipodeChamado/ListtipodeChamadoService";
 import { CreateTecnicoController } from "./controllers/status_categorias/tecnico/CreateTecnicoController";
 import { ListTecnicoController } from "./controllers/status_categorias/tecnico/ListTecnicoController";
 import { RemoveTecnicoController } from "./controllers/status_categorias/tecnico/RemoveTecnicoController";
@@ -203,13 +206,21 @@ privateRouter.patch(
 //2 - CRIAR,LISTAR E DELETAR CATEGORIAS
 privateRouter.get('/liststatusprioridade', new ListStatusUrgenciaController().handle);
 // 1 - Cliente
-privateRouter.post('/categorycliente', new CreateClienteController().handle)
-privateRouter.delete('/deletecliente', can(['ADMIN']), new RemoveClienteController().handle)
-privateRouter.get('/cliente/detail', new DetailClienteController().handle)
+privateRouter.post('/categorycliente', validate(createClienteSchema), new CreateClienteController().handle)
+// Achado no rollout: o Frontend já chama DELETE /deletecliente/:id (id no
+// path), mas a rota não tinha :id nenhum — Express nunca casava, 404
+// silencioso sempre que alguém tentava apagar um cliente.
+privateRouter.delete('/deletecliente/:id', can(['ADMIN']), validate(idParamSchema, 'params'), new RemoveClienteController().handle)
+privateRouter.get('/cliente/detail', validate(detailClienteQuerySchema, 'query'), new DetailClienteController().handle)
+// Achado no rollout: o Frontend já chama PATCH /cliente/:id (EditClienteForm.tsx),
+// mas essa rota nunca existiu — editar um cliente sempre devolveu 404. O
+// controller/service já existiam prontos (UpdateClienteController/Service),
+// só nunca tinham sido ligados.
+privateRouter.patch('/cliente/:id', validate(idParamSchema, 'params'), validate(updateClienteSchema), new UpdateClienteController().handle)
 
 // 2 - Setor
-privateRouter.post('/categorysetor', new CreateSetorController().handle)
-privateRouter.delete('/deletesetor', can(['ADMIN']), new RemoveSetorController().handle)
+privateRouter.post('/categorysetor', validate(createSetorSchema), new CreateSetorController().handle)
+privateRouter.delete('/deletesetor', can(['ADMIN']), validate(deleteSetorQuerySchema, 'query'), new RemoveSetorController().handle)
 
 // - Informações Setor
 privateRouter.post('/informacoessetor', validate(createInformacoesSetorSchema), new CreateInformacoesSetorController().handle)
@@ -257,9 +268,9 @@ privateRouter.get('/list/tipo/equipamento', new ListtipodeEquipamentoController(
 privateRouter.post('/tipodeequipamento', validate(createLookupCategoriaSchema), new CreatetipodeEquipamentoController().handle)
 
 // 5 - Tecnico
-privateRouter.post('/tecnico', new CreateTecnicoController().handle)
+privateRouter.post('/tecnico', validate(createTecnicoSchema), new CreateTecnicoController().handle)
 privateRouter.get('/listtecnico', new ListTecnicoController().handle)
-privateRouter.delete('/removertecnico/:id', can(['ADMIN']), new RemoveTecnicoController().handle)
+privateRouter.delete('/removertecnico/:id', can(['ADMIN']), validate(idParamSchema, 'params'), new RemoveTecnicoController().handle)
 
 // 6 -  Equipamento
 privateRouter.post('/equipamento', validate(createEquipamentoSchema), new CreateEquipamentoController().handle)

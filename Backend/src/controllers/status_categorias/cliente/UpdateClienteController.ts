@@ -1,22 +1,15 @@
-import { Response, Request } from "express";
+import { Request, Response } from "express";
 import { UpdateClienteService } from "../../../services/status_categorias/Cliente/UpdateClienteService";
+import { UpdateClienteInput } from "../../../schemas/cliente.schema";
 
 class UpdateClienteController {
-    async handle(req: Request, res: Response) {
-        const { id } = req.params;   
-        const { name, endereco, cnpj, telefone } = req.body;
-        const updateClienteService = new UpdateClienteService();
+  constructor(private service: UpdateClienteService = new UpdateClienteService()) {}
 
-        const cliente = await updateClienteService.execute({
-            id: id as string,
-            name,
-            endereco,
-            cnpj,
-            telefone
-        });
-
-        return res.json(cliente);
-    }
+  handle = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const cliente = await this.service.execute(id, req.body as UpdateClienteInput);
+    return res.json(cliente);
+  }
 }
 
 export { UpdateClienteController };

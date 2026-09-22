@@ -1,14 +1,13 @@
-import { Response, Request } from "express";
-import {ListSetoresService } from "../../../services/status_categorias/Setor/ListSetoresService";
+import { Request, Response } from "express";
+import { ListSetoresService } from "../../../services/status_categorias/Setor/ListSetoresService";
 
 class ListSetoresController {
-    async handle (req: Request, res: Response){
-        const listSetoresService = new ListSetoresService();
+  constructor(private service: ListSetoresService = new ListSetoresService()) {}
 
-        const setor = await listSetoresService.execute();
-
-        return res.json(setor)
-    }
+  handle = async (req: Request, res: Response) => {
+    const setor = await this.service.execute();
+    return res.json(setor);
+  }
 }
 
-export {ListSetoresController}
+export { ListSetoresController };

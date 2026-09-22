@@ -1,17 +1,14 @@
-import { Response, Request } from "express";
+import { Request, Response } from "express";
 import { RemoveSetorService } from "../../../services/status_categorias/Setor/RemoveSetorService";
 
 class RemoveSetorController {
-    async handle(req: Request, res: Response){
-        const setor_id = req.query.setor_id as string;
+  constructor(private service: RemoveSetorService = new RemoveSetorService()) {}
 
-        const removeSetorService = new RemoveSetorService();
-
-        const setor = await removeSetorService.execute({
-            setor_id
-        });
-        return res.json(setor)
-    }
+  handle = async (req: Request, res: Response) => {
+    const { setor_id } = req.query as { setor_id: string };
+    const setor = await this.service.execute(setor_id);
+    return res.json(setor);
+  }
 }
 
-export {RemoveSetorController}
+export { RemoveSetorController };

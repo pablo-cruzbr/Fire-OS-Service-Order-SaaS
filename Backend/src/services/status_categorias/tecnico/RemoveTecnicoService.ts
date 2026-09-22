@@ -1,27 +1,21 @@
-import prismaClient from "../../../prisma";
 import redisClient from "../../../redis";
+import { TecnicoRepository, tecnicoRepository } from "../../../repositories/TecnicoRepository";
 import { TECNICOS_CACHE_KEY } from "./ListTecnicoService";
 
-interface TecnicoRequest{
-    tecnico_id: string;
-}
+class RemoveTecnicoService {
+  constructor(private repository: TecnicoRepository = tecnicoRepository) {}
 
-class RemoveTecnicoService{
-    async execute({tecnico_id}: TecnicoRequest){
-        const tecnico = await prismaClient.tecnico.delete({
-            where:{
-                id: tecnico_id,
-            }
-        })
+  async execute(id: string) {
+    const tecnico = await this.repository.delete(id);
 
-        try {
-            await redisClient.del(TECNICOS_CACHE_KEY);
-        } catch (error) {
-            console.error("Redis indisponível, não deu pra invalidar o cache de técnicos:", error);
-        }
-
-        return tecnico;
+    try {
+      await redisClient.del(TECNICOS_CACHE_KEY);
+    } catch (error) {
+      console.error("Redis indisponível, não deu pra invalidar o cache de técnicos:", error);
     }
+
+    return tecnico;
+  }
 }
 
-export {RemoveTecnicoService}
+export { RemoveTecnicoService };

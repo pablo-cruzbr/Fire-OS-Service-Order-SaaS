@@ -1,25 +1,16 @@
-import prismaClient from "../../../prisma";
+import { ClienteRepository, clienteRepository } from "../../../repositories/ClienteRepository";
 
-class ListClienteService{
-    async execute() {
-        const cliente = await prismaClient.cliente.findMany({
-            orderBy: {
-                created_at: "desc" 
-            },
-            select: {
-                id: true,
-                name: true,
-                endereco: true,
-                telefone: true,
-                cnpj: true,
-                created_at: true
-            }
-        });
+class ListClienteService {
+  constructor(private repository: ClienteRepository = clienteRepository) {}
 
-        const total = await prismaClient.cliente.count();
-        return {
-            cliente, total};
-    }
+  async execute() {
+    const [cliente, total] = await Promise.all([
+      this.repository.findAll(),
+      this.repository.count(),
+    ]);
+
+    return { cliente, total };
+  }
 }
 
-export {ListClienteService}
+export { ListClienteService };

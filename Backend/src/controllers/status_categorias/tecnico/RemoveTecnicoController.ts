@@ -1,16 +1,14 @@
 import { Request, Response } from "express";
 import { RemoveTecnicoService } from "../../../services/status_categorias/tecnico/RemoveTecnicoService";
 
-class RemoveTecnicoController{
-    async handle(req: Request, res: Response){
-        const tecnico_id = req.query.tecnico_id as string;
+class RemoveTecnicoController {
+  constructor(private service: RemoveTecnicoService = new RemoveTecnicoService()) {}
 
-        const removeTecnicoService = new RemoveTecnicoService();
-
-        const tecnico = await removeTecnicoService.execute({
-            tecnico_id
-        });
-        return res.json(tecnico)
-    }
+  handle = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const tecnico = await this.service.execute(id);
+    return res.json(tecnico);
+  }
 }
-export {RemoveTecnicoController}
+
+export { RemoveTecnicoController };

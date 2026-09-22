@@ -1,19 +1,11 @@
-import prismaClient from "../../../prisma";
+import { SetorRepository, setorRepository } from "../../../repositories/SetorRepository";
 
-interface setorRequest{
-    setor_id: string;
+class RemoveSetorService {
+  constructor(private repository: SetorRepository = setorRepository) {}
+
+  execute(id: string) {
+    return this.repository.delete(id);
+  }
 }
 
-class RemoveSetorService{
-    async execute({setor_id}: setorRequest){
-        const setor = prismaClient.setor.delete({
-            where:{
-                id: setor_id,
-            }
-        })
-        return setor;
-    }
-   
-}
-
-export {RemoveSetorService}
+export { RemoveSetorService };
