@@ -393,4 +393,60 @@ Mesmo raciocínio do `Oitavo passo` (generalização dos lookups): os 7 módulos
 
 ---
 
+## Décimo quinto passo: os últimos 3 endpoints ao redor de OrdemdeServico — 22/09/2026
+
+Pergunta que motivou este passo: "os principais de ordem de serviço e outros que rodeiam ordem de serviço finalizou?" Em vez de responder de memória, conferi contra `routes.ts` de novo — o núcleo de OS (Create/Update/List/Get/tempo/assinatura, `Décimo passo`) e a maior parte ao redor (os 8 módulos de `controles_forms` e seus `Detail*`, `Décimo quarto passo`) já estavam fechados, mas sobravam 3 endpoints de leitura que nunca tinham sido tocados: exportação em Excel, relatório da secretaria, e a lista de atividades padrão.
+
+### ListAtividadePadraoController — o mais direto
+
+`AtividadePadraoRepository.ts` novo (`findAll(categoria?)`), `atividade.schema.ts` com `z.enum(["EXTERNO", "LABORATORIO"])` — o `categoria` do Prisma já é um enum (`CategoriaAtividade`), então o Zod só espelha o que o banco já exige, em vez de aceitar qualquer string e deixar o Prisma reclamar depois.
+
+### RelatorioSecretariaController — o split manual virou transform
+
+```ts
+// antes, no Controller
+const ids = typeof tiposIds === "string" ? tiposIds.split(",").filter(Boolean) : [];
+if (ids.length === 0) {
+  return res.status(400).json({ error: "tiposIds é obrigatório" });
+}
+
+// depois, no schema — o Controller nem vê mais essa lógica
+const relatorioSecretariaQuerySchema = z.object({
+  tiposIds: z.string().min(1, "tiposIds é obrigatório.").transform((value) => value.split(",").filter(Boolean)),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+```
+
+O `.transform()` do Zod resolve os dois problemas de uma vez: valida que o campo veio (senão 422 antes de qualquer lógica) *e* já entrega o array pronto pro Service, sem o Controller precisar saber que `tiposIds` chega como string separada por vírgula. A query em si (filtrar `OrdemdeServico` pelo tipo de instituição) virou `findForRelatorioSecretaria()` no `OrdemdeServicoRepository` já existente — mesmo `select` de sempre, só que testável com um repository fake agora.
+
+### ExportOrdemdeServicoController — a única decisão de design real dos 3
+
+Esse Controller fazia 3 coisas ao mesmo tempo: buscar os dados (via `ListOrdemdeServicoService`, já migrado), montar a planilha inteira (colunas, cores, bordas — ~60 linhas de configuração do ExcelJS), e escrever a resposta HTTP (headers + stream). As duas primeiras são lógica que não deveria estar num Controller; a terceira é exatamente o trabalho de um Controller.
+
+Extraído: `ExportOrdemdeServicoService.buildWorkbook(user_id, query)` — busca os dados e monta o `Workbook` inteiro, devolve pronto, sem nunca tocar em `req`/`res`. O Controller ficou com:
+
+```ts
+handle = async (req, res) => {
+  const workbook = await this.service.buildWorkbook(user_id, query);
+  res.setHeader(...); // 5 headers de download
+  await workbook.xlsx.write(res); // só aqui o res aparece
+  res.status(200).end();
+}
+```
+
+**Onde parei, de propósito:** não dava pra ir além disso sem mudar como o `ExcelJS` entrega o arquivo — `workbook.xlsx.write(res)` escreve direto no stream de resposta; pra desacoplar 100% (Service devolvendo um `Buffer`, Controller decidindo como enviar), precisaria trocar pra `workbook.xlsx.writeBuffer()` e mudar o jeito como o Express responde. Isso é uma mudança de comportamento (buffer inteiro na memória antes de responder, em vez de streaming) que ninguém pediu — ficou bom o suficiente: a lógica de negócio (o que vai na planilha) está separada da lógica de transporte (como isso chega no cliente), mesmo que a linha entre as duas não seja perfeitamente reta no ponto de escrita.
+
+### Testes: os 3 num arquivo só
+
+`relatoriosOrdemDeServico.e2e.test.ts` — 6 testes: filtro de categoria + 422 em `/listatividade`; 422 sem `tiposIds` + o filtro por tipo de instituição realmente funcionando em `/ordens/relatorio-secretaria` (criei 2 OS em instituições de tipos diferentes, confirmei que só a certa volta); e `/ordens/exportar` devolvendo um `.xlsx` de verdade (`content-type` checado) mais 422 num `cliente_id` inválido.
+
+**Achado no processo, não no código:** o primeiro teste do relatório falhou porque assumi que o `select` do `findForRelatorioSecretaria` incluía o campo `name` da OS — não inclui (nunca incluiu, era assim desde antes da migração; copiei o `select` original ao pé da letra). Não era um bug meu nem do código — era uma suposição errada no teste, corrigida trocando pra `descricaodoProblemaouSolicitacao`, um campo que o `select` realmente devolve. Vale registrar: nem todo teste que falha na primeira tentativa achou um bug — às vezes é o teste que assumiu algo sobre o formato da resposta sem checar.
+
+### Resultado
+
+OrdemdeServico e tudo que a rodeia diretamente está agora 100% no padrão Zod/Repository — nenhum endpoint no "raio de uma OS" ficou pra trás. 1 módulo novo no rollout (`AtividadePadraoRepository`, 32 no total). 227 testes unitários inalterados, 73 de integração/E2E (67 → 73), `tsc`/`eslint` limpos (15 avisos).
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.
