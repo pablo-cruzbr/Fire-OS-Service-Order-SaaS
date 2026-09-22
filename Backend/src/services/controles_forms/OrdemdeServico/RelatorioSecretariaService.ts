@@ -1,14 +1,15 @@
-import prismaClient from "../../../prisma";
-
-interface RelatorioRequest {
-  tiposIds: string[];
-  startDate?: string;
-  endDate?: string;
-}
+import { Prisma } from "@prisma/client";
+import {
+  OrdemdeServicoRepository,
+  ordemdeServicoRepository,
+} from "../../../repositories/OrdemdeServicoRepository";
+import { RelatorioSecretariaQuery } from "../../../schemas/ordemdeServico.schema";
 
 class RelatorioSecretariaService {
-  async execute({ tiposIds, startDate, endDate }: RelatorioRequest) {
-    const where: any = {
+  constructor(private repository: OrdemdeServicoRepository = ordemdeServicoRepository) {}
+
+  execute({ tiposIds, startDate, endDate }: RelatorioSecretariaQuery) {
+    const where: Prisma.OrdemdeServicoWhereInput = {
       instituicaoUnidade: {
         tipodeinstituicaoUnidade_id: { in: tiposIds },
       },
@@ -24,33 +25,7 @@ class RelatorioSecretariaService {
       }
     }
 
-    const ordens = await prismaClient.ordemdeServico.findMany({
-      where,
-      orderBy: { created_at: "desc" },
-      select: {
-        id: true,
-        numeroOS: true,
-        descricaodoProblemaouSolicitacao: true,
-        created_at: true,
-        updatedAt: true,
-        tipodeChamado: { select: { id: true, name: true } },
-        tarefa: { select: { id: true, name: true } },
-        tecnico: { select: { id: true, name: true } },
-        nameTecnico: true,
-        instituicaoUnidade: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true,
-            tipodeinstituicaoUnidade: { select: { id: true, name: true } },
-          },
-        },
-        cliente: { select: { id: true, name: true, endereco: true } },
-        statusOrdemdeServico: { select: { id: true, name: true } },
-      },
-    });
-
-    return ordens;
+    return this.repository.findForRelatorioSecretaria(where);
   }
 }
 
