@@ -159,4 +159,75 @@ Nenhum achado novo neste passo (diferente do de OrdemdeServico, que achou a corr
 
 ---
 
+## 22/09 — fechando o item 7: o resto do sistema, e 2 achados na infra de teste
+
+Até aqui a cobertura E2E era auth + OrdemdeServico + `user` (19 testes, 3 arquivos) — sólida onde mais importava, mas uma fração pequena da superfície de rotas real do sistema. Pedido: terminar o item 7. Ordem de ataque: ownership primeiro (mesma classe de risco do sequestro de conta), depois as entidades com bugs de produção documentados, depois CRUD simples, depois o padrão genérico, e por último a máquina de estados de controle de tempo — do mais arriscado pro mais mecânico.
+
+### Os 5 arquivos novos (35 testes)
+
+**`controlesTecnicos.e2e.test.ts`** — os 3 módulos que compartilham `authorizeOwnership`/CASL com OrdemdeServico: AssistenciaTecnica, LaudoTecnico, DocumentacaoTecnica. Mesmo par de cenários usado em OrdemdeServico (dono atualiza / não-dono toma 403), porque é o mesmo middleware genérico sendo exercitado com 3 modelos diferentes — e é exatamente o gap que motivou generalizar `authorizeOwnership` em 15/09 (ver `GUIA-RBAC-CASL.md`), agora provado passando pelo Express real em vez de só com a `ability` mockada.
+
+**`statusCategoriasEntidades.e2e.test.ts`** — Equipamento, InformacoesSetor, InstituicaoUnidade: as 3 "entidades reais" de `status_categorias` (ao contrário das 13 tabelas "só nome"). Cada teste aqui mira uma regressão específica já documentada em `GUIA-ZOD-REPOSITORY.md` ("Sétimo passo"), não só o caminho feliz: o Delete de Equipamento que lia `req.query.equipamento_id` (sempre `undefined`) em vez do `:id` do path e nunca apagava nada de verdade; o conflito de patrimônio duplicado que devolvia 500 em vez de 409; o partial-update de InformacoesSetor que podia apagar uma associação (`cliente_id`/`instituicaoUnidade_id`) só por ela não vir no payload; e a guarda `can(['ADMIN'])` de InstituicaoUnidade.
+
+**`controlesFormsCrud.e2e.test.ts`** — os 5 módulos de `controles_forms` sem ownership: Estabilizadores, Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaoCompras. CRUD simples (criar + 401 + 422), com um teste dedicado à assimetria achada em 15/09: `instituicaoUnidade_id` é opcional em MaquinasPendentesLab e obrigatório em MaquinasPendentesOro, apesar dos dois módulos parecerem cópia um do outro.
+
+**`lookupCategoria.e2e.test.ts`** — em vez de 13 arquivos quase idênticos pras 13 tabelas de lookup (que já são 1 schema + 1 Repository + 2 Services genéricos em produção, ver "Oitavo passo" mais acima), 1 arquivo batendo em 3 rotas diferentes (`statuscompras`, `tipodechamado`, `statusreparo`) mais o único Delete do grupo (`statusordemdeservico`, id via query string, não via `:id`). Prova que o padrão genérico funciona de ponta a ponta pra modelos diferentes, sem multiplicar arquivo de teste por módulo — mesmo raciocínio já usado nos testes unitários desse grupo.
+
+**`ordemDeServicoFluxos.e2e.test.ts`** — o que sobrou de OrdemdeServico fora de criação/ownership: `GET /listordemdeservico` e o ciclo `iniciar → pausar → retomar → concluir`. Esse módulo de tempo nunca passou pelo rollout de Zod/Repository (item 1) — é old-style, `try/catch` manual, mensagens de erro tipo `if (error.message.includes("não encontrada"))` em vez de `AppError` — então a prova aqui é sobre a máquina de estados se comportar certo (cada transição exige o status certo, senão 400; id inexistente dá 404), não sobre validação de payload.
+
+### Achado 1 — corrida entre arquivos de teste, de novo, em escala maior
+
+O padrão de "cada arquivo limpa só as tabelas que usa" (que já tinha rachado uma vez em 21/09, ver a seção acima) rachou de novo assim que o 3º/4º arquivo novo apareceu — dessa vez com erro de FK constraint na cara, não um 404 sutil:
+
+```
+Foreign key constraint violated on the constraint: `ordem_servico_user_id_fkey`
+Foreign key constraint violated on the constraint: `documentacaoTecnica_tecnico_id_fkey`
+```
+
+A causa é estrutural, não um erro pontual: com 9 arquivos batendo no mesmo Postgres efêmero, cada um criando e limpando um subconjunto de tabelas ligadas por FK a `user`/`tecnico`/`equipamento`/`instituicaoUnidade`, a chance de um arquivo tentar apagar uma linha que outro arquivo ainda não limpou (ou que outro criou depois) cresce com o número de arquivos, não fica constante. Consertar arquivo por arquivo, ajustando a ordem de cada `deleteMany()` individualmente, só adia o próximo estouro.
+
+**O fix:** uma função só, `limparBanco()` em `helpers.ts`, com a lista completa de toda tabela usada em qualquer arquivo de integração, numa ordem FK-safe (filhos antes dos pais) calculada uma vez lendo o `schema.prisma` inteiro. Todo `beforeEach` dos 9 arquivos passou a chamar só ela. Isso não é só "menos código" — é a diferença entre 9 listas parciais que cada uma precisa ser mantida certa manualmente conforme os arquivos crescem, e 1 lista central que qualquer arquivo novo automaticamente herda correta.
+
+### Achado 2 — o cliente Redis travava ~20-30s por request quando o Redis caía
+
+O primeiro teste que bateu em `GET /listordemdeservico` (a única rota testada aqui que passa pelo cache-aside do item 6) travou até estourar o timeout de 30s do Vitest — não deu erro, só nunca terminou dentro do prazo.
+
+A causa não era o `try/catch` de `getTotais()` — esse está certo, e continua certo:
+
+```ts
+try {
+  const cached = await redisClient.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+} catch (error) {
+  console.error("Redis indisponível, seguindo sem cache:", error);
+}
+```
+
+O problema é *antes* do `catch` rodar: por padrão, o `ioredis` enfileira qualquer comando emitido enquanto o client está desconectado, e só desiste (rejeitando a promise, o que finalmente deixaria o `catch` agir) depois de várias tentativas de reconexão com backoff — o padrão é `maxRetriesPerRequest: 20`, e cada tentativa espera um pouco mais que a anterior. O `try/catch` nunca chegou a falhar tecnicamente errado; ele só recebia a rejeição tarde demais pra importar. Na prática, pro usuário final, uma queda de Redis fazia **toda** listagem de OS travar por ~20-30 segundos antes de responder — o que é indistinguível de "a rota caiu", exatamente o que o cache-aside (item 6) prometia evitar.
+
+**O fix**, em `src/redis/index.ts`:
+
+```ts
+const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
+  enableOfflineQueue: false,
+});
+```
+
+Com a fila desligada, um comando emitido sem conexão ativa falha **na hora** em vez de esperar reconexão — o `try/catch` cai pro banco imediatamente. O client continua tentando reconectar em segundo plano (o `retryStrategy` padrão do `ioredis` não muda) — só os comandos que chegam durante a janela de desconexão que passam a falhar rápido, não o processo de reconexão em si. Confirmado: a suíte de integração caiu de ~112s pra ~24-25s de duração total só com essa mudança, e os testes unitários de cache (que usam um `redisClient` mockado, não o de verdade) continuaram passando sem alteração.
+
+### O que ficou de fora, de propósito
+
+Não é lacuna esquecida — é escolha de escopo, registrada aqui pra não precisar redescobrir depois:
+- **Assinatura de OrdemdeServico** (`CreateAssinaturaController`, `saveAssinatura.ts`) — já documentado em achados anteriores que o app não chega a enviar assinatura hoje; testar E2E um fluxo que não roda em produção não paga o custo.
+- **Upload/fila via BullMQ** (`fotoController` → `uploadQueue` → `uploadWorker`) — precisaria de Redis **e** o worker rodando de verdade dentro do teste, não só o Postgres efêmero; o item 5 já documentou esse tipo de custo de infra como motivo pra deixar por último.
+- **Rotas de export/relatório** (`ExportOrdemdeServicoController`, `RelatorioSecretariaController`) — endpoints de leitura/dashboard, risco baixo.
+- **Módulo de eventos do calendário** — fora do domínio central de ordens de serviço.
+- **Deletes dos módulos de `controles_forms`** fora de Equipamento — existem rotas de Delete pros 8 módulos, mas só Equipamento tinha um bug real documentado ali; os outros 7 ficaram sem E2E dedicado.
+
+### Números finais
+
+54 testes de integração/E2E (19 → 54, em 9 arquivos), 228 testes unitários inalterados, `tsc`/`eslint` limpos (26 avisos de sempre, 0 erros).
+
+---
+
 Checklist de estado atual: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito de pirâmide de testes: `ROADMAP-PLENO.md`, glossário item 8.

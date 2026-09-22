@@ -137,7 +137,7 @@ Faltam os dois andares de cima, e a ordem de "deixar por último" é sobre **cus
 
 **A resposta de entrevista aqui não é "não dava tempo"** — é: "priorizei terminar a base da pirâmide (unitários com boa cobertura, incluindo os middlewares críticos como RBAC) antes de subir pros andares mais caros, porque o retorno por hora investida é maior embaixo — e comecei pela camada que mais protege contra regressão de lógica de negócio, que é onde um bug pesa mais caro pro usuário final."
 
-- [ ] Primeiro passo real, quando chegar a vez: 1 teste de integração cobrindo o fluxo de autenticação contra o Postgres do Docker — não a suíte inteira de uma vez, mesmo princípio do rollout incremental do item 1.
+- [x] Primeiro passo real: 1 teste de integração cobrindo o fluxo de autenticação contra o Postgres do Docker — não a suíte inteira de uma vez, mesmo princípio do rollout incremental do item 1. **Feito em 18/09** (via TestContainers, não o Docker Compose local). **Expandido em 21-22/09** pro resto do sistema — 54 testes de integração/E2E no total (9 arquivos). Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
 
 ---
 
@@ -175,6 +175,6 @@ Isso é, em essência, uma versão pequena de **análise de trade-off** — o me
 - [ ] Escolher o próximo módulo pro rollout de Zod/Repository (item 1) — aplicando a pergunta de "existe algo óbvio a confirmar antes de replicar" do achado do piloto.
 - [x] Implementar cache-aside em `ListTecnicoController` (item 2) — feito em 04/09, TTL de 60s + invalidação ativa no create/remove. Detalhes em `GUIA-CACHE-REDIS.md`, seção 4.
 - [ ] Instalar e configurar ESLint, depois adicionar `tsc --noEmit` + lint como steps separados no `test.yml`, antes do `test` (item 3).
-- [ ] Primeiro teste de integração real (fluxo de autenticação, Postgres do Docker) — só depois, TestContainers e E2E (item 4).
+- [x] Primeiro teste de integração real (fluxo de autenticação, Postgres do Docker), depois TestContainers e E2E (item 4) — feito em 18/09, expandido pro resto do sistema em 21-22/09 (54 testes no total).
 
 Checklist completo, com o estado atual de cada item, está no `CHECKLIST-REFATORACAO-BACKEND.md`.
