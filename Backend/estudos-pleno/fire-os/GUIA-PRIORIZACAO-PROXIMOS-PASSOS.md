@@ -172,7 +172,7 @@ Isso é, em essência, uma versão pequena de **análise de trade-off** — o me
 
 ## 7. Próximos passos
 
-- [ ] Escolher o próximo módulo pro rollout de Zod/Repository (item 1) — aplicando a pergunta de "existe algo óbvio a confirmar antes de replicar" do achado do piloto.
+- [x] Escolher o próximo módulo pro rollout de Zod/Repository (item 1) — aplicando a pergunta de "existe algo óbvio a confirmar antes de replicar" do achado do piloto. **O rollout inteiro fechou em 22/09** — não sobrou "próximo módulo" pra escolher; a última rodada (Décimo sexto passo do `GUIA-ZOD-REPOSITORY.md`) foi uma auditoria completa de `routes.ts`, não mais escolha de módulo por módulo.
 - [x] Implementar cache-aside em `ListTecnicoController` (item 2) — feito em 04/09, TTL de 60s + invalidação ativa no create/remove. Detalhes em `GUIA-CACHE-REDIS.md`, seção 4.
 - [ ] Instalar e configurar ESLint, depois adicionar `tsc --noEmit` + lint como steps separados no `test.yml`, antes do `test` (item 3).
 - [x] Primeiro teste de integração real (fluxo de autenticação, Postgres do Docker), depois TestContainers e E2E (item 4) — feito em 18/09, expandido pro resto do sistema em 21-22/09 (54 testes no total).

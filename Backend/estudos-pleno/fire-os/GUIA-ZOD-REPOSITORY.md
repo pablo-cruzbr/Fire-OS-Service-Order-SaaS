@@ -449,4 +449,60 @@ OrdemdeServico e tudo que a rodeia diretamente está agora 100% no padrão Zod/R
 
 ---
 
+## Décimo sexto passo: fechando o rollout no projeto inteiro — 22/09/2026
+
+Pedido: "pode fazer os 68 controllers" — o número que o checklist vinha carregando de cabeça, nunca conferido de verdade contra o código. Antes de sair implementando, mandei mapear o que realmente restava.
+
+### Por que a primeira resposta estava errada, e por quê isso importa
+
+O primeiro agente classificou o que faltava **por módulo** — recebeu minha lista de "módulos já migrados" e verificou, pra cada rota de `routes.ts`, se o módulo dela estava nessa lista. Resposta: só 3 rotas fora do padrão novo (AI Chat, `user` List/Detail). Parecia bom demais.
+
+Era. O problema não estava no raciocínio do agente — estava na pergunta que eu fiz. "Módulo X está migrado" e "toda rota do módulo X está migrada" são afirmações diferentes, e a primeira não implica a segunda. Os rollouts de 15/09 (Quinto/Sexto/Sétimo/Oitavo passos deste guia) sempre focaram em Create/Update/Delete/Detail — o `List` de cada módulo, historicamente a rota mais chamada, nunca fazia parte do check-in "esse módulo está fechado". Ninguém percebeu porque ninguém tinha motivo pra reabrir um módulo "fechado" e checar de novo.
+
+A correção veio de trocar a pergunta: em vez de "quais módulos faltam", rodei `grep -rlE "async handle\(" src/controllers` (controllers ainda sem a arrow function do fix de 18/09) e `grep -rl "from ['\"].*prisma['\"]" src/services` (services ainda sem Repository). Isso achou **20 controllers** e **34 services candidatos** — bem longe de "3 rotas".
+
+### Os 8 blocos fechados
+
+1. **13 `List` de lookup** — generalizados (`findAll()` no `LookupCategoriaRepository`, um `ListLookupCategoriaService` só), mesmo raciocínio do `Oitavo passo` aplicado à peça que ele tinha deixado de fora.
+2. **8 `List` de `controles_forms`** — ver a seção de achados abaixo, é onde apareceram os bugs reais.
+3. **`List` de Equipamento/InformacoesSetor** — `findAll()` nos Repositories que Create/Update já usavam.
+4. **InstituicaoUnidade completo** — `Create`/`List`/`Remove` nunca tocados; só `Update` (o achado de código morto de 15/09) tinha Repository.
+5. **`user` completo** — `List`/`Detail` ficaram cruas desde a migração original de Create/Update/Auth (`Quarto passo`).
+6. **AI Chat** — Service extraído do Controller, Zod na pergunta.
+7. **`GET /listordemdeservico`** — o filtro `status_id`/`tipoOS_id` existia no Service, nunca era passado pelo Controller.
+8. **4 arquivos de código morto** apagados.
+
+### Os 4 bugs reais do bloco `controles_forms`
+
+```ts
+// antes — em 4 dos 8 controllers (Laboratorio, MaquinasPendentesLab, MaquinasPendentesOro, SolicitacaoCompras)
+async handle(req, res) {
+  const service = new XService();
+  const { controles, total, ...campos } = await service.execute(); // 1ª chamada
+  const result = await service.execute();                          // 2ª chamada — query inteira jogada fora
+
+  return res.json({ result, controles, total, ...campos });        // "result" nunca lido pelo Frontend
+}
+```
+
+Achado revisando cada controller pra extrair a lógica pro Repository — não dava pra copiar o código sem entender o que ele fazia, e foi aí que o `execute()` duplicado apareceu 4 vezes seguidas. Conferido contra o `LaboratorioResponse` type do Frontend (`getLaboratorio.type.ts`) antes de decidir remover o `result`: o type nem tinha esse campo — nunca foi lido.
+
+Achado adicional, em 2 dos 4: `ListControledeLaboratorioService` contava `totalConcluido` e `ListControledeMaquinasPendentesOroService` contava `totalReservada`, mas nenhum dos dois Controllers incluía esses campos na resposta — query rodava, resultado ia pro lixo. Isso já tinha deixado rastro: um aviso de `no-unused-vars` do eslint sentado nesses arquivos há sessões inteiras, nunca investigado a fundo. Os dois casos: removida a query morta, não adicionado o campo à resposta (mudar o contrato da API não era o pedido).
+
+### O que a auditoria final confirmou
+
+Depois de fechar os 8 blocos, rodei a mesma checagem de novo, do zero:
+
+- `grep -rlE "async handle\(" src/controllers` → **0 arquivos**.
+- `grep -rl "try {" src/controllers src/services` → **6 arquivos**, todos as exceções já catalogadas em passos anteriores (retry de `numeroOS`, fallback de Redis ×4 incluindo o cache de `user`/`OrdemdeServico`/`Tecnico`, `JSON.parse` de `atividades_ids`).
+- `grep -rl "from ['\"].*prisma['\"]" src/services` → **4 arquivos**: `ListOrdemdeServicoService`/`TimeOrdemdeServicoService` (decisão deliberada, documentada nos passos anteriores) e `Create`/`UpdateInformacoesSetorService` (helpers pequenos de validação de FK, o caminho principal já usa `InformacoesSetorRepository`).
+
+Esse é o critério que decide "terminou": não "todo módulo da minha lista está marcado", mas "rodei a busca de novo e ela não achou mais nada".
+
+### Resultado
+
+Item 1/3 do checklist — o rollout de Zod/Repository — fechado no projeto inteiro. 21 Repository classes (14 → 21). 227 testes unitários inalterados, 82 de integração/E2E (73 → 82), `tsc`/`eslint` limpos.
+
+---
+
 Checklist de estado atual e ordem de prioridade: `CHECKLIST-REFATORACAO-BACKEND.md`. Conceito (validação na borda, parse-don't-validate): `ROADMAP-PLENO.md`, glossário item 2.

@@ -48,7 +48,7 @@ Pensa assim: o Fire OS tem quase 100 "gavetas" de controller (cliente, equipamen
 
 **O que é:** garantir que o dado que chega de fora (`req.body`, query params, upload) tem o formato esperado *antes* dele entrar na regra de negócio — em vez de descobrir que estava errado quando o banco já quebrou ou o bcrypt já tentou rodar em cima de algo inválido.
 
-**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado em 15/09:** `user`, os 8 módulos de `controles_forms`, `Equipamento` + `InformacoesSetor`, as 13 tabelas de lookup de `status_categorias`, e `InstituicaoUnidade` já validam via Zod, junto com o piloto original de OrdemdeServico — 25 módulos no total. Os outros ~75 controllers ainda não passaram pelo rollout.
+**No Fire OS:** `CreateUserController.ts:6` fazia `const {name, email, password, ...} = req.body` direto, sem checar nada — esse era o exemplo clássico usado aqui há semanas. **Fechado por completo em 22/09** (`GUIA-ZOD-REPOSITORY.md`, "Décimo sexto passo"): todo `routes.ts` — as 121 rotas, ~107 controllers — passou pelo rollout. Confirmado por auditoria (não por lista de módulo): zero controllers no padrão antigo, zero `try/catch` antigo além de 6 exceções legítimas já catalogadas, e só 4 services ainda tocam `prismaClient` direto, todos exceções deliberadas ou helpers pequenos ao lado de um Repository já em uso.
 
 ### 5. Tratamento de erros global (error-handling middleware)
 
