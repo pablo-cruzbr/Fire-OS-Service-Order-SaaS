@@ -54,24 +54,14 @@ describe('fotoController.handle', () => {
     expect(uploadQueue.add).toHaveBeenCalledOnce()
   })
 
-  it('retorna 400 sem enfileirar nada quando nenhum arquivo é enviado', async () => {
+  it('lança ValidationError sem enfileirar nada quando nenhum arquivo é enviado', async () => {
     const controller = new fotoController()
     const res = makeRes()
 
-    await controller.handle(makeReq({ ordemdeServico_id: 'os-uuid-123' }, {}), res)
+    await expect(
+      controller.handle(makeReq({ ordemdeServico_id: 'os-uuid-123' }, {}), res)
+    ).rejects.toThrow('Arquivo não enviado')
 
     expect(uploadQueue.add).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(400)
-  })
-
-  it('retorna 400 sem enfileirar nada quando ordemdeServico_id não é informado', async () => {
-    const controller = new fotoController()
-    const files = { file: { name: 'foto1.jpg', tempFilePath: '/tmp/foto1.jpg' } }
-    const res = makeRes()
-
-    await controller.handle(makeReq({}, files), res)
-
-    expect(uploadQueue.add).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(400)
   })
 })

@@ -1,48 +1,31 @@
 import { Request, Response } from "express";
-import { getEventsService, createEventService, updateEventService, deleteEventService } from "../../../src/services/Eventos/EventoService";
+import { EventoService, eventoService } from "../../services/Eventos/EventoService";
+import { CreateEventoInput, UpdateEventoInput } from "../../schemas/evento.schema";
 
-export async function getEventsController(req: Request, res: Response) {
-  try {
-    const events = await getEventsService();
-    res.json(events);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar eventos" });
+class EventosController {
+  constructor(private service: EventoService = eventoService) {}
+
+  list = async (req: Request, res: Response) => {
+    const events = await this.service.list();
+    return res.json(events);
+  }
+
+  create = async (req: Request, res: Response) => {
+    const event = await this.service.create(req.body as CreateEventoInput);
+    return res.json(event);
+  }
+
+  update = async (req: Request, res: Response) => {
+    const event = await this.service.update(req.body as UpdateEventoInput);
+    return res.json(event);
+  }
+
+  delete = async (req: Request, res: Response) => {
+    // validate(eventoIdParamSchema, 'params') já coerciona req.params.id pra number.
+    const { id } = req.params as unknown as { id: number };
+    const event = await this.service.delete(id);
+    return res.json(event);
   }
 }
 
-export async function createEventController(req: Request, res: Response) {
-  try {
-    const { text, start_date, end_date } = req.body;
-    if (!text || !start_date || !end_date) {
-      return res.status(400).json({ error: "Campos obrigatórios" });
-    }
-    const event = await createEventService({ text, start_date, end_date });
-    res.json(event);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao criar evento" });
-  }
-}
-
-export async function updateEventController(req: Request, res: Response) {
-  try {
-    const { id, ...data } = req.body;
-    if (!id) return res.status(400).json({ error: "ID obrigatório" });
-
-    const event = await updateEventService(Number(id), data);
-    res.json(event);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao atualizar evento" });
-  }
-}
-
-export async function deleteEventController(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ error: "ID obrigatório" });
-
-    const event = await deleteEventService(Number(id));
-    res.json(event);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao deletar evento" });
-  }
-}
+export { EventosController };
