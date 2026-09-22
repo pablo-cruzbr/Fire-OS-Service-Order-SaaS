@@ -1,17 +1,13 @@
-import { Response, Request } from "express";
+import { Request, Response } from "express";
 import { ListClienteService } from "../../../services/status_categorias/Cliente/ListClienteService";
 
 class ListClienteController {
-  async handle(req: Request, res: Response) {
-    const service = new ListClienteService();
-    const { cliente, total } = await service.execute();
+  constructor(private service: ListClienteService = new ListClienteService()) {}
 
-    return res.json({
-      controles: cliente, 
-      total,
-    });
+  handle = async (req: Request, res: Response) => {
+    const { cliente, total } = await this.service.execute();
+    return res.json({ controles: cliente, total });
   }
 }
 
-
-export {ListClienteController}
+export { ListClienteController };

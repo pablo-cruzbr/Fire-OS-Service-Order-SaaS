@@ -1,35 +1,22 @@
-import prismaClient from "../../../prisma";
 import redisClient from "../../../redis";
+import { TecnicoRepository, tecnicoRepository } from "../../../repositories/TecnicoRepository";
+import { CreateTecnicoInput } from "../../../schemas/tecnico.schema";
 import { TECNICOS_CACHE_KEY } from "./ListTecnicoService";
 
-interface TecnicoCategoryRequest{
-    name: string;
-}
-class CreateTecnicoService{
-    async execute(name){
-        if(name === ''){
-            throw new Error('Name Invalid');
-        }
+class CreateTecnicoService {
+  constructor(private repository: TecnicoRepository = tecnicoRepository) {}
 
-        const tecnicoCategory = await prismaClient.tecnico.create({
-            data: {
-                name: name,
-            },
+  async execute(data: CreateTecnicoInput) {
+    const tecnico = await this.repository.create(data);
 
-            select:{
-                id: true,
-                name: true,
-            }
-        })
-
-        try {
-            await redisClient.del(TECNICOS_CACHE_KEY);
-        } catch (error) {
-            console.error("Redis indisponível, não deu pra invalidar o cache de técnicos:", error);
-        }
-
-        return tecnicoCategory
+    try {
+      await redisClient.del(TECNICOS_CACHE_KEY);
+    } catch (error) {
+      console.error("Redis indisponível, não deu pra invalidar o cache de técnicos:", error);
     }
+
+    return tecnico;
+  }
 }
 
-export {CreateTecnicoService}
+export { CreateTecnicoService };

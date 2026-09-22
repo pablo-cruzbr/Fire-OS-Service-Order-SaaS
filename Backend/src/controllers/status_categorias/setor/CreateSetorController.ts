@@ -1,18 +1,14 @@
-import { Response, Request } from "express";
-import {CreateSetorService } from "../../../services/status_categorias/Setor/CreateSetorService";
+import { Request, Response } from "express";
+import { CreateSetorService } from "../../../services/status_categorias/Setor/CreateSetorService";
+import { CreateSetorInput } from "../../../schemas/setor.schema";
 
 class CreateSetorController {
-    async handle(req: Request, res: Response){
-        const {name} = req.body;
+  constructor(private service: CreateSetorService = new CreateSetorService()) {}
 
-        const createSetorService = new CreateSetorService();
-
-        const setor = await createSetorService.execute({
-      name,
-    });
-
-        return res.json(setor);
-    }
+  handle = async (req: Request, res: Response) => {
+    const setor = await this.service.execute(req.body as CreateSetorInput);
+    return res.json(setor);
+  }
 }
 
-export {CreateSetorController}
+export { CreateSetorController };

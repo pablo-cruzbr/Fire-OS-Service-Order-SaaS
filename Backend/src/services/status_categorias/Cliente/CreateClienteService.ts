@@ -1,40 +1,12 @@
-import prismaClient from "../../../prisma";
-
-interface ClienteRequest {
-    name: string;
-    endereco: string;
-    cnpj: string;
-    telefone: string
-}
+import { ClienteRepository, clienteRepository } from "../../../repositories/ClienteRepository";
+import { CreateClienteInput } from "../../../schemas/cliente.schema";
 
 class CreateClienteService {
-    async execute({ name, endereco, cnpj, telefone }: ClienteRequest) {
-        if (!name || name.trim() === '') {
-            throw new Error('Nome inválido!');
-        }
+  constructor(private repository: ClienteRepository = clienteRepository) {}
 
-        if (!cnpj || cnpj.trim() === '') {
-            throw new Error('CNPJ inválido!');
-        }
-
-        const cliente = await prismaClient.cliente.create({
-            data: {
-                name,
-                endereco,
-                cnpj,
-                telefone
-            },
-            select: {
-                id: true,
-                name: true,
-                endereco: true,
-                cnpj: true,
-                telefone: true
-            }
-        });
-
-        return cliente;
-    }
+  execute(data: CreateClienteInput) {
+    return this.repository.create(data);
+  }
 }
 
 export { CreateClienteService };
