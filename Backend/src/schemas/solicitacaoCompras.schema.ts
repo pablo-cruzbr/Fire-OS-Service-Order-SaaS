@@ -19,8 +19,14 @@ const updateSolicitacaoComprasSchema = z.object({
   statusCompras_id: uuid.optional(),
 });
 
+// GET /compra/detail?compra_id= — único endpoint deste módulo com o id via
+// query em vez de :id.
+const detailComprasQuerySchema = z.object({
+  compra_id: uuid,
+});
+
 type CreateSolicitacaoComprasInput = z.infer<typeof createSolicitacaoComprasSchema>;
 type UpdateSolicitacaoComprasInput = z.infer<typeof updateSolicitacaoComprasSchema>;
 
-export { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema };
+export { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema, detailComprasQuerySchema };
 export type { CreateSolicitacaoComprasInput, UpdateSolicitacaoComprasInput };

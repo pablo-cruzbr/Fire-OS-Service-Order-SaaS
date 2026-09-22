@@ -1,42 +1,10 @@
-import prismaClient from "../../../prisma/index";
-
-interface DetailRequest {
-  controle_id: string;
-}
+import { LaudoTecnicoRepository, laudoTecnicoRepository } from "../../../repositories/LaudoTecnicoRepository";
 
 class DetailLaudoTecnicoService {
-  async execute({ controle_id }: DetailRequest) {
-    if (!controle_id) {
-      throw new Error("O ID do controle é obrigatório!");
-    }
+  constructor(private repository: LaudoTecnicoRepository = laudoTecnicoRepository) {}
 
-    const controle = await prismaClient.controleDeLaudoTecnico.findUnique({
-      where: {
-        id: controle_id,
-      },
-      include: {
-        equipamento: {
-          select: {
-            name: true,
-            patrimonio: true,
-          },
-        },
-        tecnico: {
-          select: {
-            name: true,
-          },
-        },
-       
-        instituicaoUnidade: {
-          select: {
-            name: true,
-            endereco: true,
-          },
-        },
-      },
-    });
-
-    return controle;
+  execute(controle_id: string) {
+    return this.repository.findUnique(controle_id);
   }
 }
 

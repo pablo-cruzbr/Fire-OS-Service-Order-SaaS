@@ -1,23 +1,11 @@
-import prismaClient from "../../../prisma/index";
-
-interface DetailRequest {
-  controle_id: string;
-}
+import { DocumentacaoTecnicaRepository, documentacaoTecnicaRepository } from "../../../repositories/DocumentacaoTecnicaRepository";
 
 class DetailDocumentacaoTecnicaService {
-  async execute({ controle_id }: DetailRequest) {
-    if (!controle_id) {
-      throw new Error("O ID do controle é obrigatório!");
-    }
+  constructor(private repository: DocumentacaoTecnicaRepository = documentacaoTecnicaRepository) {}
 
-    const controle = await prismaClient.documentacaoTecnica.findUnique({
-      where: {
-        id: controle_id,
-      },
-    });
-
-    return controle;
+  execute(controle_id: string) {
+    return this.repository.findUnique(controle_id);
   }
 }
 
-export { DetailDocumentacaoTecnicaService  };
+export { DetailDocumentacaoTecnicaService };

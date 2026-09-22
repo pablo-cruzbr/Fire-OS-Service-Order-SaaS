@@ -9,7 +9,10 @@ const DEFAULT_INCLUDE = {
 
 class MaquinasPendentesOroRepository {
   findUnique(id: string) {
-    return prismaClient.controledeMaquinasPendentesOro.findUnique({ where: { id } });
+    return prismaClient.controledeMaquinasPendentesOro.findUnique({
+      where: { id },
+      include: { statusMaquinasPendentesOro: true },
+    });
   }
 
   create(data: Prisma.controledeMaquinasPendentesOroCreateInput) {

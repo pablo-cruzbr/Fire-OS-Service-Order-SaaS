@@ -9,7 +9,14 @@ const DEFAULT_INCLUDE = {
 
 class MaquinasPendentesLabRepository {
   findUnique(id: string) {
-    return prismaClient.controleDeMaquinasPendentesLaboratorio.findUnique({ where: { id } });
+    return prismaClient.controleDeMaquinasPendentesLaboratorio.findUnique({
+      where: { id },
+      include: {
+        statusMaquinasPendentesLab: { select: { name: true } },
+        equipamento: { select: { name: true } },
+        instituicaoUnidade: { select: { name: true, endereco: true } },
+      },
+    });
   }
 
   create(data: Prisma.controleDeMaquinasPendentesLaboratorioCreateInput) {

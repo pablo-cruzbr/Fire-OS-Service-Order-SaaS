@@ -11,7 +11,10 @@ const DEFAULT_INCLUDE = {
 
 class AssistenciaTecnicaRepository {
   findUnique(id: string) {
-    return prismaClient.controleDeAssistenciaTecnica.findUnique({ where: { id } });
+    return prismaClient.controleDeAssistenciaTecnica.findUnique({
+      where: { id },
+      include: { statusReparo: true },
+    });
   }
 
   create(data: Prisma.controleDeAssistenciaTecnicaCreateInput) {

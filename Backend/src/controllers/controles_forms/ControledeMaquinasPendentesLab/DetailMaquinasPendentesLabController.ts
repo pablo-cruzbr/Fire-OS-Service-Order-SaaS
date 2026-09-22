@@ -1,22 +1,14 @@
 import { Response, Request } from "express";
 import { DetailMaquinasPendentesLabService } from "../../../services/controles_forms/ControledeMaquinasPendentesLab/DetailMaquinasPendentesLabService";
+
 class DetailMaquinasPendentesLabController {
-    async handle(req: Request, res: Response){
-        const controle_id  = req.query.controle_id  as string
+  constructor(private service: DetailMaquinasPendentesLabService = new DetailMaquinasPendentesLabService()) {}
 
-        
-        const detailMaquinasPendentesLabService = new DetailMaquinasPendentesLabService();
-        
-
-        const orders = await detailMaquinasPendentesLabService.execute({
-          controle_id    
-        });
-
-        return res.json(orders);
-    }
-    
+  handle = async (req: Request, res: Response) => {
+    const { controle_id } = req.query as { controle_id: string };
+    const controle = await this.service.execute(controle_id);
+    return res.json(controle);
+  }
 }
 
-
-export {DetailMaquinasPendentesLabController}
-
+export { DetailMaquinasPendentesLabController };

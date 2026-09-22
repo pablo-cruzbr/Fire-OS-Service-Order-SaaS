@@ -9,4 +9,11 @@ const idParamSchema = z.object({
   id: uuid,
 });
 
-export { uuid, idParamSchema };
+// Reaproveitado pelos 6 endpoints de Detail de controles_forms que recebem
+// o id via query string (?controle_id=), não via :id — todos com o mesmo
+// nome de campo, mesmo raciocínio do idParamSchema acima.
+const controleIdQuerySchema = z.object({
+  controle_id: uuid,
+});
+
+export { uuid, idParamSchema, controleIdQuerySchema };
