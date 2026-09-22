@@ -1,22 +1,14 @@
 import { Request, Response } from "express";
-
 import { DetailUserService } from "../../services/user/DetailUserService";
 
 class DetailUserController {
-    async handle(req: Request, res: Response) {
-        //Pegou o id do usuário
-        const user_id = req.user_id as string; 
- 
+  constructor(private service: DetailUserService = new DetailUserService()) {}
 
-        //Chamar o service
-        const detailUserService = new DetailUserService();
-
-        //Passar pro serviço o id do usuário
-        const user = await detailUserService.execute(user_id)
-
-        return res.json(user)
-    }
+  handle = async (req: Request, res: Response) => {
+    const user_id = req.user_id as string;
+    const user = await this.service.execute(user_id);
+    return res.json(user);
+  }
 }
 
-
-export {DetailUserController}
+export { DetailUserController };

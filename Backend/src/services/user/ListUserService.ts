@@ -1,53 +1,23 @@
-import prismaClient from "../../prisma";
+import { UserRepository, userRepository } from "../../repositories/UserRepository";
+import { InstituicaoUnidadeRepository, instituicaoUnidadeRepository } from "../../repositories/InstituicaoUnidadeRepository";
+import { ClienteRepository, clienteRepository } from "../../repositories/ClienteRepository";
 
 class ListUserService {
+  constructor(
+    private userRepo: UserRepository = userRepository,
+    private instituicaoUnidadeRepo: InstituicaoUnidadeRepository = instituicaoUnidadeRepository,
+    private clienteRepo: ClienteRepository = clienteRepository
+  ) {}
+
   async execute() {
-    const users = await prismaClient.user.findMany({
-      orderBy: {
-        created_at: "desc", 
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,       
-        tecnico_id: true, 
-        created_at: true,
+    const [users, total, totalInsituicao, totalcliente] = await Promise.all([
+      this.userRepo.findAll(),
+      this.userRepo.count(),
+      this.instituicaoUnidadeRepo.count(),
+      this.clienteRepo.count(),
+    ]);
 
-        setor: {
-          select: {
-            name: true
-          }
-        },
-
-        instituicaoUnidade: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true
-          }
-        },
-
-        cliente: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true
-          }
-        }
-      }
-    });
-
-    const total = await prismaClient.user.count();
-    const totalInsituicao = await prismaClient.instituicaoUnidade.count();
-    const totalcliente = await prismaClient.cliente.count();
-
-    return {
-      users,
-      total,
-      totalInsituicao,
-      totalcliente
-    };
+    return { users, total, totalInsituicao, totalcliente };
   }
 }
 
