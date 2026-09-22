@@ -1,22 +1,11 @@
-import prismaClient from "../../../prisma";
+import { EstabilizadorRepository, estabilizadorRepository } from "../../../repositories/EstabilizadorRepository";
 
-class ListEquipamentoEstabilizadorService{
-    async execute(){
-        const equipamento = await prismaClient.estabilizadores.findMany({
-            orderBy: {
-                created_at: "desc", 
-                // Ordena do mais recente para o mais antigo
-            },
-            select: {
-                id: true,
-                name: true,
-                patrimonio: true,
-                created_at: true,
-            }
-        })
-        return equipamento;
-    }
+class ListEquipamentoEstabilizadorService {
+  constructor(private repository: EstabilizadorRepository = estabilizadorRepository) {}
+
+  execute() {
+    return this.repository.findAll();
+  }
 }
 
-export {ListEquipamentoEstabilizadorService}
-
+export { ListEquipamentoEstabilizadorService };
