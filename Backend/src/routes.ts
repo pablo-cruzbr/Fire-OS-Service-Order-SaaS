@@ -10,7 +10,7 @@ import { authorizeOrdemdeServico } from "./Middleware/authorizeOrdemdeServico";
 import { authorizeOwnership } from "./Middleware/authorizeOwnership";
 import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
-import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema, listByStatusQuerySchema, listByTecnicoQuerySchema, atualizarTempoSchema, ordemIdParamSchema, assinaturaSchema } from "./schemas/ordemdeServico.schema";
+import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema, listByStatusQuerySchema, listByTecnicoQuerySchema, atualizarTempoSchema, ordemIdParamSchema, assinaturaSchema, relatorioSecretariaQuerySchema, exportOrdemdeServicoQuerySchema } from "./schemas/ordemdeServico.schema";
 import { controleIdQuerySchema } from "./schemas/common.schema";
 import { createUserSchema, updateUserSchema, authUserSchema } from "./schemas/user.schema";
 import { createAssistenciaTecnicaSchema, updateAssistenciaTecnicaSchema } from "./schemas/assistenciaTecnica.schema";
@@ -29,6 +29,7 @@ import { createClienteSchema, updateClienteSchema, detailClienteQuerySchema } fr
 import { createSetorSchema, deleteSetorQuerySchema } from "./schemas/setor.schema";
 import { createTecnicoSchema } from "./schemas/tecnico.schema";
 import { createEquipamentoEstabilizadorSchema } from "./schemas/equipamentoEstabilizador.schema";
+import { listAtividadeQuerySchema } from "./schemas/atividade.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -317,7 +318,7 @@ privateRouter.post('/statusreparo', validate(createLookupCategoriaSchema), new C
 privateRouter.get('/liststatusreparo', new ListstatusReparoController().handle)
 
 // - Atividade Padrao
-privateRouter.get('/listatividade', new ListAtividadePadraoController().handle)
+privateRouter.get('/listatividade', validate(listAtividadeQuerySchema, 'query'), new ListAtividadePadraoController().handle)
 
 //14 - Urgência
 privateRouter.post('/statusurgencia', validate(createLookupCategoriaSchema), new CreateStatusUrgenciaController().handle)
@@ -503,8 +504,8 @@ privateRouter.get(
 privateRouter.post("/tipodeordemdeservico", validate(createLookupCategoriaSchema), new CreatetipodeOrdemdeServicoController().handle)
 
 //Excel
-privateRouter.get('/ordens/exportar', (req, res) => new ExportOrdemdeServicoController().handle(req, res));
-privateRouter.get('/ordens/relatorio-secretaria', (req, res) => new RelatorioSecretariaController().handle(req, res));
+privateRouter.get('/ordens/exportar', validate(exportOrdemdeServicoQuerySchema, 'query'), new ExportOrdemdeServicoController().handle);
+privateRouter.get('/ordens/relatorio-secretaria', validate(relatorioSecretariaQuerySchema, 'query'), new RelatorioSecretariaController().handle);
 
 const router = Router();
 router.use(publicRouter);

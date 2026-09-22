@@ -163,6 +163,34 @@ class OrdemdeServicoRepository {
       select: { assinaturaDigital: true },
     });
   }
+
+  findForRelatorioSecretaria(where: Prisma.OrdemdeServicoWhereInput) {
+    return prismaClient.ordemdeServico.findMany({
+      where,
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        numeroOS: true,
+        descricaodoProblemaouSolicitacao: true,
+        created_at: true,
+        updatedAt: true,
+        tipodeChamado: { select: { id: true, name: true } },
+        tarefa: { select: { id: true, name: true } },
+        tecnico: { select: { id: true, name: true } },
+        nameTecnico: true,
+        instituicaoUnidade: {
+          select: {
+            id: true,
+            name: true,
+            endereco: true,
+            tipodeinstituicaoUnidade: { select: { id: true, name: true } },
+          },
+        },
+        cliente: { select: { id: true, name: true, endereco: true } },
+        statusOrdemdeServico: { select: { id: true, name: true } },
+      },
+    });
+  }
 }
 
 const ordemdeServicoRepository = new OrdemdeServicoRepository();

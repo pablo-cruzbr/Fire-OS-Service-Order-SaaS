@@ -68,10 +68,34 @@ const assinaturaSchema = z.object({
   assinaturaBase64: z.string().min(1, "Assinatura é obrigatória."),
 });
 
+const relatorioSecretariaQuerySchema = z.object({
+  // Vem como string separada por vírgula (?tiposIds=a,b,c) — o schema já
+  // devolve o array pronto pro Service, no lugar do split/filter manual que
+  // o Controller fazia antes.
+  tiposIds: z
+    .string()
+    .min(1, "tiposIds é obrigatório.")
+    .transform((value) => value.split(",").filter(Boolean)),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+const exportOrdemdeServicoQuerySchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  cliente_id: uuid.optional(),
+  instituicao_id: uuid.optional(),
+  tarefa_id: uuid.optional(),
+  status_id: uuid.optional(),
+  tipoOS_id: uuid.optional(),
+});
+
 type CreateOrdemdeServicoInput = z.infer<typeof createOrdemdeServicoSchema>;
 type UpdateOrdemdeServicoInput = z.infer<typeof updateOrdemdeServicoSchema>;
 type AtualizarTempoInput = z.infer<typeof atualizarTempoSchema>;
 type AssinaturaInput = z.infer<typeof assinaturaSchema>;
+type RelatorioSecretariaQuery = z.infer<typeof relatorioSecretariaQuerySchema>;
+type ExportOrdemdeServicoQuery = z.infer<typeof exportOrdemdeServicoQuerySchema>;
 
 export {
   createOrdemdeServicoSchema,
@@ -82,5 +106,14 @@ export {
   atualizarTempoSchema,
   ordemIdParamSchema,
   assinaturaSchema,
+  relatorioSecretariaQuerySchema,
+  exportOrdemdeServicoQuerySchema,
 };
-export type { CreateOrdemdeServicoInput, UpdateOrdemdeServicoInput, AtualizarTempoInput, AssinaturaInput };
+export type {
+  CreateOrdemdeServicoInput,
+  UpdateOrdemdeServicoInput,
+  AtualizarTempoInput,
+  AssinaturaInput,
+  RelatorioSecretariaQuery,
+  ExportOrdemdeServicoQuery,
+};

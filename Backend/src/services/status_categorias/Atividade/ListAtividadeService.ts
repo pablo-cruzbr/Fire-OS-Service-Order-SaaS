@@ -1,23 +1,11 @@
-import prismaClient from "../../../prisma";
-
-interface ListRequest {
-  categoria?: "EXTERNO" | "LABORATORIO";
-}
+import { AtividadePadraoRepository, atividadePadraoRepository } from "../../../repositories/AtividadePadraoRepository";
+import { ListAtividadeQuery } from "../../../schemas/atividade.schema";
 
 class ListAtividadePadraoService {
-  async execute({ categoria }: ListRequest) {
-    const atividades = await prismaClient.atividadePadrao.findMany({
-      where: {
-        categoria: categoria ? categoria : undefined,
-      },
-      select: {
-        id: true,
-        descricao: true,
-        categoria: true,
-      }
-    });
+  constructor(private repository: AtividadePadraoRepository = atividadePadraoRepository) {}
 
-    return atividades;
+  execute({ categoria }: ListAtividadeQuery) {
+    return this.repository.findAll(categoria);
   }
 }
 
