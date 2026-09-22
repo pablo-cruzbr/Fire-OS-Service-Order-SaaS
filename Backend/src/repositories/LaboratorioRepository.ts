@@ -10,7 +10,10 @@ const DEFAULT_INCLUDE = {
 
 class LaboratorioRepository {
   findUnique(id: string) {
-    return prismaClient.controleDeLaboratorio.findUnique({ where: { id } });
+    return prismaClient.controleDeLaboratorio.findUnique({
+      where: { id },
+      include: { statusControledeLaboratorio: true },
+    });
   }
 
   create(data: Prisma.controleDeLaboratorioCreateInput) {

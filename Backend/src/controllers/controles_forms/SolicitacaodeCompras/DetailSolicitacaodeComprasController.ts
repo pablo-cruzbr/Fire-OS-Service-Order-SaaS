@@ -1,22 +1,14 @@
 import { Response, Request } from "express";
 import { DetailComprasService } from "../../../services/controles_forms/SolicitacaodeCompras/DetailSolicitacaodeComprasService";
+
 class DetailComprasController {
-    async handle(req: Request, res: Response){
-        const compra_id = req.query.compra_id as string
+  constructor(private service: DetailComprasService = new DetailComprasService()) {}
 
-        
-        const detailComprasService = new DetailComprasService();
-        
-
-        const orders = await detailComprasService.execute({
-          compra_id    
-        });
-
-        return res.json(orders);
-    }
-    
+  handle = async (req: Request, res: Response) => {
+    const { compra_id } = req.query as { compra_id: string };
+    const controle = await this.service.execute(compra_id);
+    return res.json(controle);
+  }
 }
 
-
-export {DetailComprasController}
-
+export { DetailComprasController };

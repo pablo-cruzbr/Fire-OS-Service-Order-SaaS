@@ -11,6 +11,7 @@ import { authorizeOwnership } from "./Middleware/authorizeOwnership";
 import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
 import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema, listByStatusQuerySchema, listByTecnicoQuerySchema, atualizarTempoSchema, ordemIdParamSchema, assinaturaSchema } from "./schemas/ordemdeServico.schema";
+import { controleIdQuerySchema } from "./schemas/common.schema";
 import { createUserSchema, updateUserSchema, authUserSchema } from "./schemas/user.schema";
 import { createAssistenciaTecnicaSchema, updateAssistenciaTecnicaSchema } from "./schemas/assistenciaTecnica.schema";
 import { createLaudoTecnicoSchema, updateLaudoTecnicoSchema } from "./schemas/laudoTecnico.schema";
@@ -19,7 +20,7 @@ import { createEstabilizadoresSchema, updateEstabilizadoresSchema } from "./sche
 import { createLaboratorioSchema, updateLaboratorioSchema } from "./schemas/laboratorio.schema";
 import { createMaquinasPendentesLabSchema, updateMaquinasPendentesLabSchema } from "./schemas/maquinasPendentesLab.schema";
 import { createMaquinasPendentesOroSchema, updateMaquinasPendentesOroSchema } from "./schemas/maquinasPendentesOro.schema";
-import { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema } from "./schemas/solicitacaoCompras.schema";
+import { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema, detailComprasQuerySchema } from "./schemas/solicitacaoCompras.schema";
 import { createEquipamentoSchema, updateEquipamentoSchema } from "./schemas/equipamento.schema";
 import { createInformacoesSetorSchema, updateInformacoesSetorSchema } from "./schemas/informacoesSetor.schema";
 import { createLookupCategoriaSchema, deleteStatusOrdemdeServicoQuerySchema } from "./schemas/lookupCategoria.schema";
@@ -328,7 +329,7 @@ privateRouter.get('/liststatusurgencia', new ListStatusUrgenciaController().hand
 privateRouter.post('/controledeassistenciatecnica', validate(createAssistenciaTecnicaSchema), new CreateControledeAssistenciaTecnicaController().handle)
 privateRouter.get('/listcontroledeassistenciatecnica', new ListControledeAssistenciaTecnicaController().handle);
 privateRouter.delete('/controledeassistenciatecnica/:id', validate(idParamSchema, 'params'), new DeleteControledeAssistenciaTecnicaController().handle);
-privateRouter.get('/controledeassistenciatecnica/detail', new DetailAssistenciaTecnicaController().handle)
+privateRouter.get('/controledeassistenciatecnica/detail', validate(controleIdQuerySchema, 'query'), new DetailAssistenciaTecnicaController().handle)
 privateRouter.patch(
   '/assistenciatecnica/update/:id',
   validate(idParamSchema, 'params'),
@@ -347,7 +348,7 @@ privateRouter.patch(
 privateRouter.post('/controledelaudotecnico', validate(createLaudoTecnicoSchema), new CreateControledeLaudoTecnicoController().handle)
 privateRouter.get('/listcontroledelaudotecnico', new ListControledeLaudoTecnicoController().handle)
 privateRouter.delete('/deletecontroledelaudotecnico/:id', validate(idParamSchema, 'params'), new DeleteControledeLaudoTecnicoController().handle);
-privateRouter.get('/controledelaudotecnico/detail', new DetailLaudoTenicoController().handle)
+privateRouter.get('/controledelaudotecnico/detail', validate(controleIdQuerySchema, 'query'), new DetailLaudoTenicoController().handle)
 privateRouter.patch(
   '/laudotecnico/update/:id',
   validate(idParamSchema, 'params'),
@@ -366,7 +367,7 @@ privateRouter.patch(
 privateRouter.post('/controledelaboratorio', validate(createLaboratorioSchema), new CreateControledeLaboratorioController().handle)
 privateRouter.get('/listcontroledelaboratorio', new ListControledeLaboratorioController().handle)
 privateRouter.delete('/deletecontroledelaboratorio/:id', validate(idParamSchema, 'params'), new DeleteControledeLaboratorioController().handle)
-privateRouter.get('/controledelaboratorio/detail', new DetailControledeLaboratorioController().handle)
+privateRouter.get('/controledelaboratorio/detail', validate(controleIdQuerySchema, 'query'), new DetailControledeLaboratorioController().handle)
 privateRouter.patch('/controledelaboratorio/update/:id', validate(idParamSchema, 'params'), validate(updateLaboratorioSchema), new UpdateControledeLaboratorioController().handle)
 //CRIAR UPDATE - PATCH
 
@@ -374,7 +375,7 @@ privateRouter.patch('/controledelaboratorio/update/:id', validate(idParamSchema,
 privateRouter.post('/controledemaquinaspendenteslab', validate(createMaquinasPendentesLabSchema), new CreateControledeMaquinasPendentesLabController().handle)
 privateRouter.get('/listcontroledemaquinaspendenteslab', new ListControledeMaquinasPendentesLabController().handle)
 privateRouter.delete('/deletecontroledemaquinaspendenteslab/:id', validate(idParamSchema, 'params'), new DeleteControledeMaquinasPendentesLabController().handle)
-privateRouter.get('/controledemaquinaspendenteslab/detail', new DetailMaquinasPendentesLabController().handle)
+privateRouter.get('/controledemaquinaspendenteslab/detail', validate(controleIdQuerySchema, 'query'), new DetailMaquinasPendentesLabController().handle)
 privateRouter.patch('/controledemaquinaspendenteslab/update/:id', validate(idParamSchema, 'params'), validate(updateMaquinasPendentesLabSchema), new UpdateControledeMaquinasPendentesLabController().handle)
 //CRIAR UPDATE - PACTH
 
@@ -382,7 +383,7 @@ privateRouter.patch('/controledemaquinaspendenteslab/update/:id', validate(idPar
 privateRouter.post('/controledemaquinaspendentesoro', validate(createMaquinasPendentesOroSchema), new CreateControledeMaquinasPendentesOroController().handle)
 privateRouter.get('/listcontroledemaquinaspendentesoro', new ListControledeMaquinasPendentesOroController().handle)
 privateRouter.delete('/deletecontroledemaquinaspendentesoro/:id', validate(idParamSchema, 'params'), new DeleteControledeMaquinasPendentesOroController().handle)
-privateRouter.get('/controledemaquinaspendentesoro/detail', new DetailControledeMaquinasPendentesOroController().handle)
+privateRouter.get('/controledemaquinaspendentesoro/detail', validate(controleIdQuerySchema, 'query'), new DetailControledeMaquinasPendentesOroController().handle)
 privateRouter.patch('/controledemaquinaspendentesoro/update/:id', validate(idParamSchema, 'params'), validate(updateMaquinasPendentesOroSchema), new UpdateControledeMaquinasPendentesOroController().handle)
 // CRIAR UPDATE - PACTH
 
@@ -390,7 +391,7 @@ privateRouter.patch('/controledemaquinaspendentesoro/update/:id', validate(idPar
 privateRouter.post('/documentacaotecnica', validate(createDocumentacaoTecnicaSchema), new CreateDocumentacaoTecnicaController().handle)
 privateRouter.get('/listdocumentacaotecnica', new ListDocumentacaoTecnicaController().handle)
 privateRouter.delete('/deletedocumentacaotecnica/:id', validate(idParamSchema, 'params'), new DeleteDocumentacaoTecnicaController().handle)
-privateRouter.get('/controlededocumentacaotecnica/detail', new DetailDocumentacaoTecnicaController().handle)
+privateRouter.get('/controlededocumentacaotecnica/detail', validate(controleIdQuerySchema, 'query'), new DetailDocumentacaoTecnicaController().handle)
 privateRouter.patch(
   '/documentacaotecnica/update/:id',
   validate(idParamSchema, 'params'),
@@ -408,7 +409,7 @@ privateRouter.patch(
 privateRouter.post('/solicitacaodecompras', validate(createSolicitacaoComprasSchema), new CreateSolicitacaodeComprasController().handle)
 privateRouter.get('/listsolicitacaodecompras', new ListSolicitacaodeComprasController().handle)
 privateRouter.delete('/deletedesolicitacaodecompras/:id', validate(idParamSchema, 'params'), new DeleteSolicitacaodeComprasController().handle)
-privateRouter.get('/compra/detail', new DetailComprasController().handle)
+privateRouter.get('/compra/detail', validate(detailComprasQuerySchema, 'query'), new DetailComprasController().handle)
 privateRouter.patch('/compra/update/:id', validate(idParamSchema, 'params'), validate(updateSolicitacaoComprasSchema), new UpdateSolicitacaodeComprasController().handle)
 
 // - CONTINUAR DEPOIS

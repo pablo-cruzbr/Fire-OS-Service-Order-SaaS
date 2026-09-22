@@ -7,7 +7,10 @@ const DEFAULT_INCLUDE = {
 
 class SolicitacaoComprasRepository {
   findUnique(id: string) {
-    return prismaClient.solicitacaoDeCompras.findUnique({ where: { id } });
+    return prismaClient.solicitacaoDeCompras.findUnique({
+      where: { id },
+      include: { statusCompras: true },
+    });
   }
 
   create(data: Prisma.solicitacaoDeComprasCreateInput) {

@@ -1,25 +1,10 @@
-import prismaClient from "../../../prisma/index";
-
-interface DetailRequest {
-  controle_id: string;
-}
+import { LaboratorioRepository, laboratorioRepository } from "../../../repositories/LaboratorioRepository";
 
 class DetailControledeLaboratorioService {
-  async execute({ controle_id }: DetailRequest) {
-    if (!controle_id) {
-      throw new Error("O ID do controle é obrigatório!");
-    }
+  constructor(private repository: LaboratorioRepository = laboratorioRepository) {}
 
-    const controle = await prismaClient.controleDeLaboratorio.findUnique({
-      where: {
-        id: controle_id,
-      },
-      include: {
-        statusControledeLaboratorio: true,
-      },
-    });
-
-    return controle;
+  execute(controle_id: string) {
+    return this.repository.findUnique(controle_id);
   }
 }
 

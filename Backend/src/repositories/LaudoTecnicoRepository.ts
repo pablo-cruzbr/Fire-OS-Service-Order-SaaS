@@ -9,7 +9,14 @@ const DEFAULT_INCLUDE = {
 
 class LaudoTecnicoRepository {
   findUnique(id: string) {
-    return prismaClient.controleDeLaudoTecnico.findUnique({ where: { id } });
+    return prismaClient.controleDeLaudoTecnico.findUnique({
+      where: { id },
+      include: {
+        equipamento: { select: { name: true, patrimonio: true } },
+        tecnico: { select: { name: true } },
+        instituicaoUnidade: { select: { name: true, endereco: true } },
+      },
+    });
   }
 
   create(data: Prisma.controleDeLaudoTecnicoCreateInput) {

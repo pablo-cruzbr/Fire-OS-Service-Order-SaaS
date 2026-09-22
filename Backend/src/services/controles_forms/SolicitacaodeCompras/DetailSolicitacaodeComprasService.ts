@@ -1,27 +1,11 @@
-//Para modermos manipular o banco
-import prismaClient from "../../../prisma/index";
+import { SolicitacaoComprasRepository, solicitacaoComprasRepository } from "../../../repositories/SolicitacaoComprasRepository";
 
-interface DetailRequest{
-    compra_id: string,
+class DetailComprasService {
+  constructor(private repository: SolicitacaoComprasRepository = solicitacaoComprasRepository) {}
 
+  execute(compra_id: string) {
+    return this.repository.findUnique(compra_id);
+  }
 }
 
-class DetailComprasService{
-    async execute({compra_id}: DetailRequest) {
-
-
-       const controle = await prismaClient.solicitacaoDeCompras.findUnique({
-            where: {
-                id: compra_id,
-            },
-            include:{
-                statusCompras: true,
-            }
-    });
-            return controle;
-        
-    }
-}
-
-export {DetailComprasService}
-
+export { DetailComprasService };

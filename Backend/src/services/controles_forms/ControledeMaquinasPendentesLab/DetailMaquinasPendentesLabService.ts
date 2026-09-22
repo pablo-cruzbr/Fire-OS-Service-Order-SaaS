@@ -1,33 +1,10 @@
-import prismaClient from "../../../prisma/index";
-
-interface DetailRequest {
-  controle_id: string;
-}
+import { MaquinasPendentesLabRepository, maquinasPendentesLabRepository } from "../../../repositories/MaquinasPendentesLabRepository";
 
 class DetailMaquinasPendentesLabService {
-  async execute({ controle_id }: DetailRequest) {
-    if (!controle_id) {
-      throw new Error("O ID do controle é obrigatório!");
-    }
+  constructor(private repository: MaquinasPendentesLabRepository = maquinasPendentesLabRepository) {}
 
-    const controle = await prismaClient.controleDeMaquinasPendentesLaboratorio.findUnique({
-      where: {
-        id: controle_id,
-      },
-      include: {
-        statusMaquinasPendentesLab:{
-          select:{name: true}
-        },
-        equipamento:{
-          select:{name: true}
-        },
-        instituicaoUnidade:{
-          select:{name: true, endereco: true}
-        }
-      },
-    });
-
-    return controle;
+  execute(controle_id: string) {
+    return this.repository.findUnique(controle_id);
   }
 }
 
