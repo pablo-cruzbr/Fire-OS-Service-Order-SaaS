@@ -1,20 +1,25 @@
 import { Request, Response } from "express";
-import { ListOrdemdeServicoTecnicoService } from "../../../services/controles_forms/OrdemdeServico/ListOrdemdeServicoTecnicoService";
+import {
+  OrdemdeServicoRepository,
+  ordemdeServicoRepository,
+} from "../../../repositories/OrdemdeServicoRepository";
 
-class ListByTecnicosTicketsController {
-    async handle(req: Request, res: Response) {
-        try {
-            const tecnico_id = req.query.tecnico_id as string;
+class ListByTecnicosTicketsService {
+  constructor(private repository: OrdemdeServicoRepository = ordemdeServicoRepository) {}
 
-            const listByTecnico = new ListOrdemdeServicoTecnicoService();
-            const ordens = await listByTecnico.execute({ tecnico_id });
-
-            return res.json(ordens);
-        } catch (error) {
-            console.error("Erro ao listar ordens por técnico:", error);
-            return res.status(500).json({ error: "Erro interno ao buscar ordens" });
-        }
-    }
+  execute(tecnico_id: string) {
+    return this.repository.findByTecnico(tecnico_id);
+  }
 }
 
-export { ListByTecnicosTicketsController };
+class ListByTecnicosTicketsController {
+  constructor(private service: ListByTecnicosTicketsService = new ListByTecnicosTicketsService()) {}
+
+  handle = async (req: Request, res: Response) => {
+    const { tecnico_id } = req.query as { tecnico_id: string };
+    const ordens = await this.service.execute(tecnico_id);
+    return res.json(ordens);
+  }
+}
+
+export { ListByTecnicosTicketsController, ListByTecnicosTicketsService };
