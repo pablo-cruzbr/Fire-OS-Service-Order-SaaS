@@ -1,18 +1,14 @@
-import prismaClient from "../../../prisma";
+import {
+  InstituicaoUnidadeRepository,
+  instituicaoUnidadeRepository,
+} from "../../../repositories/InstituicaoUnidadeRepository";
 
-interface instituicaoRequest{
-    instituicao_id: string;
+class RemoveInstituicaoUnidadeService {
+  constructor(private repository: InstituicaoUnidadeRepository = instituicaoUnidadeRepository) {}
+
+  execute(id: string) {
+    return this.repository.delete(id);
+  }
 }
 
-class RemoveInstituicaoUnidadeService{
-    async execute({instituicao_id}: instituicaoRequest){
-        const instituicao = prismaClient.instituicaoUnidade.delete({
-            where:{
-                id: instituicao_id,
-            }
-        })
-        return instituicao;
-    }
-}
-
-export {RemoveInstituicaoUnidadeService}
+export { RemoveInstituicaoUnidadeService };

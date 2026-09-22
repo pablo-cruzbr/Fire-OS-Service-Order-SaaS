@@ -10,7 +10,7 @@ import { authorizeOrdemdeServico } from "./Middleware/authorizeOrdemdeServico";
 import { authorizeOwnership } from "./Middleware/authorizeOwnership";
 import prismaClient from "./prisma";
 import { validate } from "./Middleware/validate";
-import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema, listByStatusQuerySchema, listByTecnicoQuerySchema, atualizarTempoSchema, ordemIdParamSchema, assinaturaSchema, relatorioSecretariaQuerySchema, exportOrdemdeServicoQuerySchema } from "./schemas/ordemdeServico.schema";
+import { createOrdemdeServicoSchema, idParamSchema, updateOrdemdeServicoSchema, listByStatusQuerySchema, listByTecnicoQuerySchema, atualizarTempoSchema, ordemIdParamSchema, assinaturaSchema, relatorioSecretariaQuerySchema, exportOrdemdeServicoQuerySchema, listOrdemdeServicoQuerySchema } from "./schemas/ordemdeServico.schema";
 import { controleIdQuerySchema } from "./schemas/common.schema";
 import { createUserSchema, updateUserSchema, authUserSchema } from "./schemas/user.schema";
 import { createAssistenciaTecnicaSchema, updateAssistenciaTecnicaSchema } from "./schemas/assistenciaTecnica.schema";
@@ -24,12 +24,13 @@ import { createSolicitacaoComprasSchema, updateSolicitacaoComprasSchema, detailC
 import { createEquipamentoSchema, updateEquipamentoSchema } from "./schemas/equipamento.schema";
 import { createInformacoesSetorSchema, updateInformacoesSetorSchema } from "./schemas/informacoesSetor.schema";
 import { createLookupCategoriaSchema, deleteStatusOrdemdeServicoQuerySchema } from "./schemas/lookupCategoria.schema";
-import { updateInstituicaoUnidadeSchema } from "./schemas/instituicaoUnidade.schema";
+import { updateInstituicaoUnidadeSchema, createInstituicaoUnidadeSchema, deleteInstituicaoUnidadeQuerySchema } from "./schemas/instituicaoUnidade.schema";
 import { createClienteSchema, updateClienteSchema, detailClienteQuerySchema } from "./schemas/cliente.schema";
 import { createSetorSchema, deleteSetorQuerySchema } from "./schemas/setor.schema";
 import { createTecnicoSchema } from "./schemas/tecnico.schema";
 import { createEquipamentoEstabilizadorSchema } from "./schemas/equipamentoEstabilizador.schema";
 import { listAtividadeQuerySchema } from "./schemas/atividade.schema";
+import { aiChatSchema } from "./schemas/aiChat.schema";
 import { CreateClienteController } from "./controllers/status_categorias/cliente/CreateClienteController";
 import { CreateSetorController } from "./controllers/status_categorias/setor/CreateSetorController";
 import { ListClienteController } from "./controllers/status_categorias/cliente/ListClienteController";
@@ -186,7 +187,7 @@ privateRouter.use(isAuthenticated);
 
 // ROTA DE IA (custa dinheiro por chamada — não pode ficar pública)
 const aiChatController = new AIChatController();
-privateRouter.post("/ai/chat", aiChatController.handle);
+privateRouter.post("/ai/chat", validate(aiChatSchema), aiChatController.handle);
 
 // Listar todos os usuários — expõe nome/e-mail/role de todo mundo, só ADMIN
 privateRouter.get('/listusers', can(['ADMIN']), new ListUserController().handle)
@@ -235,8 +236,8 @@ privateRouter.patch(
 privateRouter.get('/listinformacoessetor', new ListInformacaoesSetoresController().handle)
 
 //3 - Instuituicao/Unidade
-privateRouter.post('/categoryintituicao', new CreateInstituicaoUnidadeController().handle)
-privateRouter.delete('/deleteinstituicao', can(['ADMIN']), new RemoveInstituicaoUnidadeController().handle)
+privateRouter.post('/categoryintituicao', validate(createInstituicaoUnidadeSchema), new CreateInstituicaoUnidadeController().handle)
+privateRouter.delete('/deleteinstituicao', can(['ADMIN']), validate(deleteInstituicaoUnidadeQuerySchema, 'query'), new RemoveInstituicaoUnidadeController().handle)
 // Achado no rollout de status_categorias: esse controller existia (editar
 // name/endereco/telefone/tipo de uma instituição), com lógica pronta, mas
 // nunca teve rota nem uso no Frontend — decidido ligar mesmo assim (ver
@@ -420,7 +421,7 @@ privateRouter.post(
   validate(createOrdemdeServicoSchema),
   new CreateOrdemServicoController().handle
 )
-privateRouter.get('/listordemdeservico', new ListOrdemdeServicoController().handle)
+privateRouter.get('/listordemdeservico', validate(listOrdemdeServicoQuerySchema, 'query'), new ListOrdemdeServicoController().handle)
 privateRouter.get(
   '/ordemdeservico/:id',
   validate(idParamSchema, 'params'),

@@ -12,7 +12,14 @@ const updateInstituicaoUnidadeSchema = z.object({
   tipodeInstituicaoUnidade_id: uuid,
 });
 
-type UpdateInstituicaoUnidadeInput = z.infer<typeof updateInstituicaoUnidadeSchema>;
+const createInstituicaoUnidadeSchema = updateInstituicaoUnidadeSchema;
 
-export { updateInstituicaoUnidadeSchema };
-export type { UpdateInstituicaoUnidadeInput };
+const deleteInstituicaoUnidadeQuerySchema = z.object({
+  instituicao_id: uuid,
+});
+
+type UpdateInstituicaoUnidadeInput = z.infer<typeof updateInstituicaoUnidadeSchema>;
+type CreateInstituicaoUnidadeInput = z.infer<typeof createInstituicaoUnidadeSchema>;
+
+export { updateInstituicaoUnidadeSchema, createInstituicaoUnidadeSchema, deleteInstituicaoUnidadeQuerySchema };
+export type { UpdateInstituicaoUnidadeInput, CreateInstituicaoUnidadeInput };
