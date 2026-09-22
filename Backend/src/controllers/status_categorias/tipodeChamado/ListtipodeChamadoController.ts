@@ -1,14 +1,18 @@
-import { Response, Request } from "express";
-import { ListtipodeChamadoService } from "../../../services/status_categorias/tipodeChamado/ListtipodeChamadoService";
+import { Request, Response } from "express";
+import { ListLookupCategoriaService } from "../../../services/status_categorias/ListLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
-class ListtipodeChamadoController{
-    async handle (req: Request, res: Response){
-        const listtipodeChamadoService = new ListtipodeChamadoService();
+class ListtipodeChamadoController {
+  constructor(
+    private service: ListLookupCategoriaService = new ListLookupCategoriaService(
+      new LookupCategoriaRepository("tipodeChamado")
+    )
+  ) {}
 
-        const status = await listtipodeChamadoService.execute();
-
-        return res.json(status);
-    }
+  handle = async (req: Request, res: Response) => {
+    const status = await this.service.execute();
+    return res.json(status);
+  }
 }
 
-export {ListtipodeChamadoController}
+export { ListtipodeChamadoController };
