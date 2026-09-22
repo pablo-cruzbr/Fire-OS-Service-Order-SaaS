@@ -30,6 +30,22 @@ class LaudoTecnicoRepository {
   delete(id: string) {
     return prismaClient.controleDeLaudoTecnico.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.controleDeLaudoTecnico.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        osLab: true,
+        mesAno: true,
+        descricaodoProblema: true,
+        created_at: true,
+        equipamento: { select: { id: true, name: true, patrimonio: true } },
+        tecnico: { select: { id: true, name: true } },
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
+      },
+    });
+  }
 }
 
 const laudoTecnicoRepository = new LaudoTecnicoRepository();

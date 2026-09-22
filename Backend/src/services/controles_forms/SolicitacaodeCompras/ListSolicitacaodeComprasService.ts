@@ -1,60 +1,18 @@
-import prismaClient from "../../../prisma";
+import { SolicitacaoComprasRepository, solicitacaoComprasRepository } from "../../../repositories/SolicitacaoComprasRepository";
 
 class ListSolicitacaodeComprasService {
+  constructor(private repository: SolicitacaoComprasRepository = solicitacaoComprasRepository) {}
+
   async execute() {
-    const controles = await prismaClient.solicitacaoDeCompras.findMany({
-      orderBy: {
-        created_at: "desc" // Ordena do mais recente para o mais antigo
-      },
-      select: {
-        id: true,
-        itemSolicitado: true,
-        solicitante: true,
-        motivoDaSolicitacao: true,
-        preco: true,
-        linkDeCompra: true,
-       created_at: true,
-        statusCompras: {
-          select: {
-            name: true, id: true
-          },
-        },
-      }
-    });
+    const [controles, total, totalAguardandoCompra, totalAguardandoEntrega, totalCompraFinalizada] = await Promise.all([
+      this.repository.findAll(),
+      this.repository.count(),
+      this.repository.countByStatusComprasName("AGUARDANDO COMPRA"),
+      this.repository.countByStatusComprasName("AGUARDANDO ENTREGA"),
+      this.repository.countByStatusComprasName("COMPRA FINALIZADA"),
+    ]);
 
-    const total = await prismaClient.solicitacaoDeCompras.count();
-
-    const totalAguardandoCompra = await prismaClient.solicitacaoDeCompras.count({
-      where: {
-        statusCompras: {
-        name: "AGUARDANDO COMPRA"
-        },
-      }
-    });
-
-    const totalAguardandoEntrega = await prismaClient.solicitacaoDeCompras.count({
-      where: {
-        statusCompras: {
-        name: "AGUARDANDO ENTREGA"
-        },
-      }
-    });
-
-    const totalCompraFinalizada = await prismaClient.solicitacaoDeCompras.count({
-      where: {
-        statusCompras: {
-        name: "COMPRA FINALIZADA"
-        },
-      }
-    });
-
-    return {
-      controles,
-      total,
-      totalAguardandoCompra,
-      totalAguardandoEntrega,
-      totalCompraFinalizada
-    };
+    return { controles, total, totalAguardandoCompra, totalAguardandoEntrega, totalCompraFinalizada };
   }
 }
 
