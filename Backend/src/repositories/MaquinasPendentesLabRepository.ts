@@ -34,6 +34,33 @@ class MaquinasPendentesLabRepository {
   delete(id: string) {
     return prismaClient.controleDeMaquinasPendentesLaboratorio.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.controleDeMaquinasPendentesLaboratorio.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        numeroDeSerie: true,
+        ssd: true,
+        idDaOs: true,
+        obs: true,
+        created_at: true,
+        equipamento: { select: { id: true, name: true, patrimonio: true } },
+        statusMaquinasPendentesLab: { select: { id: true, name: true } },
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.controleDeMaquinasPendentesLaboratorio.count();
+  }
+
+  countByStatusName(name: string) {
+    return prismaClient.controleDeMaquinasPendentesLaboratorio.count({
+      where: { statusMaquinasPendentesLab: { name } },
+    });
+  }
 }
 
 const maquinasPendentesLabRepository = new MaquinasPendentesLabRepository();

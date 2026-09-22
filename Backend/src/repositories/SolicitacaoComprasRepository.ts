@@ -24,6 +24,30 @@ class SolicitacaoComprasRepository {
   delete(id: string) {
     return prismaClient.solicitacaoDeCompras.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.solicitacaoDeCompras.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        itemSolicitado: true,
+        solicitante: true,
+        motivoDaSolicitacao: true,
+        preco: true,
+        linkDeCompra: true,
+        created_at: true,
+        statusCompras: { select: { name: true, id: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.solicitacaoDeCompras.count();
+  }
+
+  countByStatusComprasName(name: string) {
+    return prismaClient.solicitacaoDeCompras.count({ where: { statusCompras: { name } } });
+  }
 }
 
 const solicitacaoComprasRepository = new SolicitacaoComprasRepository();

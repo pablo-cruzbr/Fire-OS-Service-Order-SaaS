@@ -1,82 +1,29 @@
-import prismaClient from "../../../prisma";
+import { LaboratorioRepository, laboratorioRepository } from "../../../repositories/LaboratorioRepository";
 
-class ListControledeLaboratorioService{
-    async execute(){
-        const controles = await prismaClient.controleDeLaboratorio.findMany({
-            orderBy: {
-            created_at: "desc", 
-        // Ordena do mais recente para o mais antigo
-      },
-         include: {
-        equipamento: {
-          select: {
-            id: true,
-            name: true,
-            patrimonio: true        
-          }
-        },
-        instituicaoUnidade:{
-          select:{
-            id: true,
-            name: true,
-            endereco: true}
-        },
-        cliente:{
-          select: {
-            id: true,
-            name: true
-          }
-        },
-	    statusControledeLaboratorio: {
-          select: { 
-            id: true,
-            name: true },
-        },
-      },
-        });
+class ListControledeLaboratorioService {
+  constructor(private repository: LaboratorioRepository = laboratorioRepository) {}
 
-        const total = await prismaClient.controleDeLaboratorio.count();
+  // Achado no caminho: a versão antiga também contava "CONCLUIDO", mas nunca
+  // devolvia esse total no JSON (nem o Frontend usa) — query descartada,
+  // removida daqui.
+  async execute() {
+    const [controles, total, totalAguardandoConserto, totalAguardandoOSdeLaboratorio, totalAguardandoDevolucao] =
+      await Promise.all([
+        this.repository.findAll(),
+        this.repository.count(),
+        this.repository.countByStatusName("AGUARDANDO CONSERTO"),
+        this.repository.countByStatusName("AGUARDANDO O.S DE LABORATÓRIO"),
+        this.repository.countByStatusName("AGUARDANDO DEVOLUÇÃO"),
+      ]);
 
-        const totalAguardandoConserto = await prismaClient.controleDeLaboratorio.count({
-          where: {
-            statusControledeLaboratorio:{
-              name: "AGUARDANDO CONSERTO",
-            },
-          }
-        });
-
-        const totalAguardandoOSdeLaboratorio = await prismaClient.controleDeLaboratorio.count({
-          where: {
-            statusControledeLaboratorio:{
-              name: "AGUARDANDO O.S DE LABORATÓRIO",
-            },
-          }
-        });
-
-        const totalConcluido = await prismaClient.controleDeLaboratorio.count({
-          where: {
-            statusControledeLaboratorio:{
-              name: "CONCLUIDO",
-            },
-          }
-        })
-
-        const totalAguardandoDevolucao = await prismaClient.controleDeLaboratorio.count({
-          where: {
-            statusControledeLaboratorio:{
-              name: "AGUARDANDO DEVOLUÇÃO",
-            },
-          },
-        });
-        
-        return {
-          controles,
-          total,
-          totalAguardandoConserto,
-          totalAguardandoDevolucao,
-          totalAguardandoOSdeLaboratorio
-        };
-    }
+    return {
+      controles,
+      total,
+      totalAguardandoConserto,
+      totalAguardandoDevolucao,
+      totalAguardandoOSdeLaboratorio,
+    };
+  }
 }
 
-export {ListControledeLaboratorioService}
+export { ListControledeLaboratorioService };
