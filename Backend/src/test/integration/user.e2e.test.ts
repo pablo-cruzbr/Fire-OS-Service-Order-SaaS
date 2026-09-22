@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import supertest from 'supertest'
 import app from '../../app'
 import prismaClient from '../../prisma'
+import { criarUsuarioELogar, limparBanco } from './helpers'
 
 // E2E de verdade, mesmo padrão dos outros arquivos deste diretório. Foco
 // aqui: PATCH /user/update/:id só tem `can(['ADMIN'])` como barreira (RBAC
@@ -12,22 +13,10 @@ import prismaClient from '../../prisma'
 // autenticado trocava senha/email de QUALQUER outro usuário, sequestro de
 // conta. Esses testes provam o fix passando pelo Express real, não só a
 // existência do middleware no código.
-async function criarUsuarioELogar(params: { role: 'ADMIN' | 'TECNICO' | 'USER'; email: string }) {
-  const passwordHash = await hash('senha123', 8)
-  const user = await prismaClient.user.create({
-    data: { name: 'Usuário Teste', email: params.email, password: passwordHash, role: params.role },
-  })
-
-  const loginResponse = await supertest(app)
-    .post('/session')
-    .send({ email: params.email, password: 'senha123' })
-
-  return { user, token: loginResponse.body.token as string }
-}
 
 describe('user (E2E) — cadastro público + update restrito a ADMIN', () => {
   beforeEach(async () => {
-    await prismaClient.user.deleteMany()
+    await limparBanco()
   })
 
   it('POST /users cadastra um usuário novo sem precisar de token (cadastro público)', async () => {
