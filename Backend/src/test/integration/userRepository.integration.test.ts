@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { UserRepository } from '../../repositories/UserRepository'
-import prismaClient from '../../prisma'
+import { limparBanco } from './helpers'
 
 // Integração de verdade: bate num Postgres real (subido pelo globalSetup via
 // TestContainers), não num mock do Prisma — prova que o contrato com o banco
@@ -8,7 +8,7 @@ import prismaClient from '../../prisma'
 // o teste unitário com repository fake não prova.
 describe('UserRepository (integração, Postgres real)', () => {
   beforeEach(async () => {
-    await prismaClient.user.deleteMany()
+    await limparBanco()
   })
 
   it('cria e busca um usuário de verdade no banco', async () => {

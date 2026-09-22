@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { hash } from 'bcryptjs'
 import { randomUUID } from 'node:crypto'
 import supertest from 'supertest'
 import app from '../../app'
 import prismaClient from '../../prisma'
+import { criarUsuarioELogar, limparBanco } from './helpers'
 
 // E2E de verdade, mesmo padrão do auth.e2e.test.ts: sobe o Express inteiro
 // (validate() do Zod, authorizeOrdemdeServico/CASL, o Controller, o Service,
@@ -11,37 +11,10 @@ import prismaClient from '../../prisma'
 // ownership de OrdemdeServico — a mesma peça (authorizeOwnership + CASL) que
 // protege o gap de "sequestro de conta" achado em user/update — nunca tinha
 // sido provada passando pelo Express real, só em unitário com ability mockada.
-async function criarUsuarioELogar(params: {
-  role: 'ADMIN' | 'TECNICO' | 'USER'
-  tecnico_id?: string | null
-  email: string
-}) {
-  const passwordHash = await hash('senha123', 8)
-  const user = await prismaClient.user.create({
-    data: {
-      name: 'Usuário Teste',
-      email: params.email,
-      password: passwordHash,
-      role: params.role,
-      tecnico_id: params.tecnico_id ?? null,
-    },
-  })
-
-  const loginResponse = await supertest(app)
-    .post('/session')
-    .send({ email: params.email, password: 'senha123' })
-
-  return { user, token: loginResponse.body.token as string }
-}
 
 describe('OrdemdeServico (E2E) — ciclo via HTTP + ownership CASL', () => {
   beforeEach(async () => {
-    // Ordem importa: filhos antes dos pais, senão a FK derruba o deleteMany.
-    await prismaClient.ordemdeServico.deleteMany()
-    await prismaClient.user.deleteMany()
-    await prismaClient.tecnico.deleteMany()
-    await prismaClient.tipodeChamado.deleteMany()
-    await prismaClient.statusOrdemdeServico.deleteMany()
+    await limparBanco()
   })
 
   it('cria uma OS via HTTP (Zod -> Controller -> Service -> Repository -> Postgres real)', async () => {

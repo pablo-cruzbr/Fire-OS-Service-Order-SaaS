@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs'
 import supertest from 'supertest'
 import app from '../../app'
 import prismaClient from '../../prisma'
+import { limparBanco } from './helpers'
 
 // E2E de verdade: sobe o Express inteiro (rotas, validate() do Zod, o
 // Controller, o Service, o errorHandler global) e bate nele via HTTP com
@@ -12,7 +13,7 @@ import prismaClient from '../../prisma'
 // errorHandler, exatamente como sairia pra um cliente de verdade.
 describe('POST /session (E2E)', () => {
   beforeEach(async () => {
-    await prismaClient.user.deleteMany()
+    await limparBanco()
   })
 
   it('devolve 200 e um token quando email e senha estão corretos', async () => {
