@@ -83,8 +83,9 @@ graph TB
   APP -->|"HTTPS / JSON"| API
   API --> DB
   API -->|"cache-aside (totais, listas)"| REDIS
-  REDIS -.->|"fila — protótipo, ainda não ligado ao fluxo real"| WORKER
-  WORKER -.->|"upload"| CDN
+  API -->|"enfileira upload de foto"| REDIS
+  REDIS -->|"fila BullMQ"| WORKER
+  WORKER -->|"upload"| CDN
   APP -->|"Multipart Upload"| CDN
   APP -->|"Deep Link"| MAPS
 ```
@@ -162,13 +163,13 @@ fire-os/                              # Monorepo
 - Atualização ao vivo do modal após edição
 
 ### ⚙️ Backend (Node.js + Express)
-- API REST com mais de 80 endpoints documentados em `routes.ts`
+- API REST com 121 endpoints registrados em `routes.ts`
 - Autenticação JWT com middleware de proteção por rota
 - Autorização por role (RBAC) e por dono do recurso (CASL) nas rotas sensíveis — só `ADMIN` remove entidades críticas, técnico só edita a própria ordem de serviço
-- Validação de entrada com Zod e middleware global de tratamento de erro (piloto: Ordem de Serviço) — erro de input vira 422 com a lista de campos, erros do Prisma viram o status HTTP certo automaticamente
-- Camada de Repository com injeção de dependência (piloto: Ordem de Serviço) — Service não fala mais direto com o Prisma, fica testável com um repository fake
+- Validação de entrada com Zod e middleware global de tratamento de erro em todo o projeto — erro de input vira 422 com a lista de campos, erros do Prisma viram o status HTTP certo automaticamente
+- Camada de Repository com injeção de dependência (21 classes) em todo o projeto — Service não fala mais direto com o Prisma, fica testável com um repository fake
 - Cache-aside com Redis (totais de status, lista de técnicos) com TTL calibrado por tipo de dado e fallback automático se o Redis cair, sem derrubar a rota
-- Fila assíncrona (BullMQ + Redis) prototipada para upload de mídia — ainda não ligada ao fluxo real de fotos/assinatura
+- Fila assíncrona (BullMQ + Redis) ligada ao fluxo real de upload de foto — o request só enfileira o job e responde na hora, o worker (processo separado) sobe pro Cloudinary com retry automático
 - Criptografia de senhas com bcrypt
 - ORM Prisma com PostgreSQL — migrações versionadas
 - Exportação de relatórios via ExcelJS com estilização de planilha
@@ -185,9 +186,9 @@ fire-os/                              # Monorepo
 | **Mobile** | React Native, Expo, Context API, AsyncStorage, Axios |
 | **Backend** | Node.js, Express, TypeScript, JWT, bcrypt, Zod, CASL |
 | **Banco de Dados** | PostgreSQL, Prisma ORM |
-| **Cache & Filas** | Redis (cache-aside), BullMQ (protótipo) |
+| **Cache & Filas** | Redis (cache-aside), BullMQ (fila de upload, ligada ao fluxo real) |
 | **Armazenamento** | Cloudinary (imagens) |
-| **Testes & CI** | Vitest (backend, 211 testes, ~31% de cobertura), GitHub Actions |
+| **Testes & CI** | Vitest (backend, 227 unitários + 125 de integração/E2E via TestContainers — Postgres e Redis reais, não mockados), GitHub Actions |
 | **Infraestrutura** | Docker + Docker Compose (Postgres, Redis, API) |
 | **Calendário** | DHTMLX Scheduler v7 |
 | **Deploy Mobile** | Expo EAS Build + EAS Update |
@@ -270,9 +271,9 @@ Hoje mantenho este projeto como portfólio autoral e continuo evoluindo a arquit
 - [x] **Autorização (RBAC):** controle de acesso por role (ADMIN/TECNICO/USER) nas rotas críticas da API, e por dono do recurso (CASL) na Ordem de Serviço — técnico só edita a que está atribuída a ele
 - [x] **Infraestrutura:** Dockerização completa — PostgreSQL e Redis já rodavam isolados via Docker Compose; adicionado `Dockerfile` multi-stage pra containerizar a própria API (`docker compose up --build` sobe banco, cache e API juntos)
 - [x] **Arquitetura (System Design):** Mapa completo de arquitetura com diagramas (mermaid) — camadas do backend antes/depois, sequence diagrams de request e de cache, e resposta de escala ("o que quebraria com 1000 técnicos") em [`Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md`](Backend/estudos-pleno/ARQUITETURA-ANTES-DEPOIS.md)
-- [x] **Validação & Segurança:** Validação de schema com Zod (piloto: criação/atualização de Ordem de Serviço) e middleware global de tratamento de erro, padronizando toda resposta de erro da API — rollout pros demais módulos em andamento
-- [x] **Testes automatizados (Backend):** 211 testes unitários com **Vitest** — RBAC/CASL, validação Zod, tratamento de erro global, Repository pattern (com repository fake), cache-aside (miss/hit/fallback) — `coverage` configurado com piso mínimo de 30% (ainda baixo porque boa parte do rollout de Zod/Repository segue em andamento; sobe conforme o rollout avança)
-- [ ] **Testes de integração e E2E:** ainda usam só mock do Prisma, não um Postgres real; Playwright também não configurado no Frontend
+- [x] **Validação & Segurança:** Validação de schema com Zod e middleware global de tratamento de erro em todo o projeto (121 rotas), padronizando toda resposta de erro da API
+- [x] **Testes automatizados (Backend):** 227 testes unitários com **Vitest** — RBAC/CASL, validação Zod, tratamento de erro global, Repository pattern (com repository fake), cache-aside (miss/hit/fallback) — `coverage` configurado
+- [x] **Testes de integração e E2E:** 125 testes contra infraestrutura real via **TestContainers** — Postgres e Redis efêmeros, não mockados; prova login, ownership/CASL ponta a ponta, cache-aside contra Redis de verdade, e que o upload de foto publica um job real na fila BullMQ. Playwright ainda não configurado no Frontend
 - [x] **Automação (CI/CD):** GitHub Actions (`test.yml`) roda `tsc --noEmit`, lint e a suíte de testes (com coverage) em steps separados a cada push/PR pra `main`, fail-fast antes do teste
 - [ ] **Features Avançadas:** Notificações push no app mobile (Expo Notifications) e transcrição de áudio para documentação técnica (Expo Speech)
 
