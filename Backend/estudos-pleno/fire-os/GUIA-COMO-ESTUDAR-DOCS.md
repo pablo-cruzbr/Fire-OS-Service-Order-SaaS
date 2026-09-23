@@ -34,8 +34,20 @@ O material mais valioso pra entrevista comportamental/técnica combinada — cad
 
 ---
 
+## Ordem sugerida de estudo (de baixo pra cima — diferente da ordem de resposta numa entrevista)
+
+Pra **estudar**, vá do vocabulário pro mapa, e do mapa pra profundidade — sem o termo primeiro, os outros dois docs têm palavra que você não reconhece:
+
+1. **`LEITURAS-MEDIUM.md` primeiro, com anotação.** Uma sessão de estudo por vez, não precisa ser tudo num dia. Pra cada uma das 12 seções, anote só 2 coisas: **o nome do conceito** + **o "gancho pro seu código"** que já está escrito no fim de cada seção do próprio doc. Não precisa reescrever o artigo — só grifar/copiar esse gancho pra um cheat sheet seu.
+2. **`ARQUITETURA-ANTES-DEPOIS.md` depois.** Com o vocabulário já rodado, os termos que apareciam soltos fazem sentido dentro do fluxo. Atenção especial nas seções 3 (fluxo de request), 6 (system design) e 8 (como isso vira narrativa de entrevista) — são as que mais viram pergunta direta.
+3. **`GUIA-*.md` por último.** Cada um pressupõe que você já sabe o conceito (Medium) e onde ele mora no sistema (Arquitetura). Não precisa ler os 6 de uma vez — vá pelo que te interessa mais ou pelo que sente mais fraco primeiro. E não precisa decorar as histórias palavra por palavra — o valor deles é te dar a **lembrança** do caso real; na entrevista você conta com suas próprias palavras.
+
+**Importante:** essa é a ordem de estudo, não a ordem de resposta na entrevista — ver seção abaixo.
+
+---
+
 ## Resumindo o fluxo de estudo
 
 **Medium te dá o nome, Arquitetura te dá o mapa, os Guias te dão as histórias.**
 
-Numa entrevista: comece pela arquitetura (visão geral), aprofunde com o Guia do assunto que a pergunta tocar, e use o vocabulário do Medium pra soar preciso, não genérico.
+Numa entrevista, a ordem se inverte (de cima pra baixo): comece pela arquitetura (visão geral), aprofunde com o Guia do assunto que a pergunta tocar, e use o vocabulário do Medium pra soar preciso, não genérico.
