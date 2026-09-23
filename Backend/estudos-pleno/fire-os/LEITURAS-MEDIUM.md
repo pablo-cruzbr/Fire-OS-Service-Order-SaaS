@@ -10,6 +10,19 @@ Ordem: do que você pediu primeiro (SOLID) até o resto, mais ou menos na ordem 
 
 Onde aparece no seu projeto: toda vez que um `Service` recebe um `Repository` pelo construtor em vez de criar um `new PrismaClient()` sozinho, isso é Dependency Inversion (o "D" do SOLID) na prática — é literalmente o que o rollout inteiro do item 1 fez, módulo por módulo.
 
+**Exemplo simples (só o "D", o que mais aparece no seu código):**
+```ts
+// Sem Dependency Inversion: a classe cria a própria dependência, fica presa a ela
+class Service {
+  private db = new PostgresClient(); // não dá pra trocar isso num teste
+}
+
+// Com Dependency Inversion: a dependência vem de fora, pronta
+class Service {
+  constructor(private repo: Repository) {} // dá pra passar um repo fake no teste
+}
+```
+
 - **[SOLID Principles: A Funny Guide for Non-Techies](https://medium.com/@sumit-s/solid-principles-a-funny-guide-for-non-techies-25d8850abf9a)** — o mais leve dos três. Usa analogia de LEGO pra explicar Dependency Inversion. Comece por esse.
 - **[Mastering SOLID Principles: A Beginner-Friendly Guide with Real-World Examples](https://onyxwizard.medium.com/mastering-solid-principles-a-beginner-friendly-guide-with-real-world-examples-09d925e18b93)** — passo além, com exemplo de código pra cada uma das 5 letras.
 - **[SOLID Principles - simple and easy explanation](https://betterprogramming.pub/solid-principles-simple-and-easy-explanation-f57d86c47a7f)** — se sobrar dúvida depois dos dois primeiros, esse fecha com exemplos mais técnicos.
@@ -21,6 +34,25 @@ Onde aparece no seu projeto: toda vez que um `Service` recebe um `Repository` pe
 ## 2. Repository Pattern — por que criar essa camada extra
 
 Onde aparece: item 1 do checklist inteiro. É o padrão que te fez trocar "Service falando direto com `prismaClient`" por "Service falando com uma classe `XRepository`".
+
+**Exemplo simples:**
+```ts
+// Sem Repository: o Service fala direto com o Prisma
+class CreateUserService {
+  async execute(data) {
+    return prismaClient.user.create({ data }); // Prisma espalhado em todo Service
+  }
+}
+
+// Com Repository: o Service não sabe que existe um Prisma por trás
+class UserRepository {
+  create(data) { return prismaClient.user.create({ data }); }
+}
+class CreateUserService {
+  constructor(private repo: UserRepository) {}
+  async execute(data) { return this.repo.create(data); }
+}
+```
 
 - **[The Repository Pattern — Build Scalable APIs](https://muyiwa-dev.medium.com/the-repository-pattern-ff87cde360ce)** — leitura rápida, direto ao ponto, exemplos em Node.
 - **[Service–Repository Pattern in Action](https://medium.com/@albinaji.official/service-repository-pattern-in-action-0db4bb9a474b)** — mostra o trio Controller → Service → Repository lado a lado, exatamente a forma que seu projeto usa.
@@ -34,6 +66,16 @@ Onde aparece: item 1 do checklist inteiro. É o padrão que te fez trocar "Servi
 
 Onde aparece: item 3, toda vez que você vê `validate(algumSchema)` em `routes.ts`.
 
+**Exemplo simples:**
+```ts
+// "Validar" — só diz se tá certo, o TypeScript continua achando que é `any`
+if (!body.email || typeof body.email !== "string") throw new Error("inválido");
+
+// "Parse" com Zod — devolve o dado já tipado e confiável, não só um "ok"
+const schema = z.object({ email: z.string().email() });
+const data = schema.parse(body); // data.email agora É string, garantido pelo tipo
+```
+
 - **[Stop Writing Validation Code. Start Using Zod.](https://medium.com/@ananyavhegde2001/stop-writing-validation-code-start-using-zod-b0c361da62db)** — o mais direto, contrasta "if a cada campo" com Zod.
 - **[Zod: The Ultimate TypeScript-first Schema Validation Library](https://imrankhani.medium.com/zod-the-ultimate-typescript-first-schema-validation-library-93869bcde880)** — explica bem a ideia de "parse, don't validate": o schema não só valida, ele te devolve o dado já com o tipo certo.
 - **[Zod: More Than Just Validation (Part 1/2)](https://medium.com/@cibilex/zod-more-than-just-validation-part-1-2-7d4cba13851c)** — pra quando quiser ver o `.transform()` em ação (o mesmo truque que virou o `tiposIds` de string-com-vírgula em array, no relatório da secretaria).
@@ -46,6 +88,16 @@ Onde aparece: item 3, toda vez que você vê `validate(algumSchema)` em `routes.
 
 Onde aparece: todo `constructor(private repository: XRepository = xRepository)` que você escreveu esse mês inteiro.
 
+**Exemplo simples:**
+```ts
+class CreateTecnicoService {
+  // valor default = continua funcionando em produção sem mudar nenhuma
+  // chamada (`new CreateTecnicoService()`), mas dá pra injetar um fake no
+  // teste (`new CreateTecnicoService(fakeRepo)`)
+  constructor(private repo: TecnicoRepository = tecnicoRepository) {}
+}
+```
+
 - **[Dependency Injection in TypeScript: Simplified guide for beginners](https://medium.com/@DulanaSenavirathna/dependency-injection-in-typescript-simplified-guide-for-beginners-b5412886aa68)** — o mais amigável dos três, sem framework nenhum no meio.
 - **[Dependency Injection Pattern — with TypeScript](https://ro-zcn.medium.com/dependency-injection-pattern-with-typescript-4c6d45bdd877)** — mostra o "antes" (classe cria a própria dependência) vs "depois" (recebe de fora), igual ao que você fez em cada rollout.
 
@@ -56,6 +108,16 @@ Onde aparece: todo `constructor(private repository: XRepository = xRepository)` 
 ## 5. CASL / RBAC — a diferença entre "pode usar a rota" e "pode mexer NESSE registro"
 
 Onde aparece: item 2, a peça que resolveu o achado mais grave do projeto (`user/update` sem dono nenhum) e o gap dos 3 módulos técnicos.
+
+**Exemplo simples:**
+```ts
+// RBAC: só olha o papel do usuário, não o registro específico
+can(['ADMIN']) // "só ADMIN pode chamar essa rota, ponto"
+
+// CASL/ownership: olha o registro específico que a rota vai mexer
+authorizeOwnership("Recurso", "update", (id) => repo.findById(id))
+// "só o dono DESSE registro (ou ADMIN) pode mexer nele"
+```
 
 - **[What is CASL or how can you build a castle around your application?](https://medium.com/dailyjs/what-is-casl-or-how-can-you-build-a-castle-around-your-application-4d2daa0b1ab4)** — o título já avisa que é uma leitura mais leve, com a analogia do castelo.
 - **[CASL. Permission management in express](https://medium.com/dailyjs/authorization-with-casl-in-express-app-d94eb2e2b73b)** — exemplo direto com Express, próximo do seu `authorizeOwnership.ts`.
@@ -69,6 +131,15 @@ Onde aparece: item 2, a peça que resolveu o achado mais grave do projeto (`user
 
 Onde aparece: item 4, `src/Middleware/errorHandler.ts`, e a novela dos 48 controllers com `try/catch` removidos.
 
+**Exemplo simples:**
+```ts
+// Sem handler central: cada controller decide o status sozinho, na mão
+try { ... } catch (e) { res.status(400).json(e.message) } // sempre 400, mesmo se for erro de infra (500 de verdade)
+
+// Com handler central: o controller só lança o erro certo, o handler decide o status
+if (!user) throw new NotFoundError("Usuário não encontrado"); // handler global -> 404 sozinho
+```
+
 - **[Express.js Error Handling: From Custom Errors to Enhanced Error Responses](https://medium.com/@ctrlaltvictoria/mastering-express-js-error-handling-from-custom-errors-to-enhanced-error-responses-5fda471d38d4)** — mostra a evolução de "catch em todo controller" pra "um handler global + classes de erro tipadas", exatamente o caminho que seu `AppError`/`NotFoundError`/`ValidationError` percorreu.
 - **[Centralized Error Control in Express.js: A Complete Guide](https://medium.com/@ravipatel.it/centralized-error-control-in-express-js-a-complete-guide-code-981fbf253379)** — reforça o "por quê": erro tratado num lugar só é mais fácil de manter que 100 `catch` espalhados, cada um decidindo um status diferente.
 
@@ -80,6 +151,18 @@ Onde aparece: item 4, `src/Middleware/errorHandler.ts`, e a novela dos 48 contro
 
 Onde aparece: item 6, os `count()` de status cacheados por 30s.
 
+**Exemplo simples:**
+```ts
+async function getTotais() {
+  const cached = await redis.get(chave);
+  if (cached) return JSON.parse(cached); // achou no cache, nem toca no banco
+
+  const totais = await db.count(/* ... */); // não achou, busca no banco
+  await redis.set(chave, JSON.stringify(totais), "EX", 30); // guarda pra próxima vez
+  return totais;
+}
+```
+
 - **[Understanding the Cache-Aside Pattern: A Practical Guide](https://medium.com/@mallik-tech-vision/understanding-the-cache-aside-pattern-a-practical-guide-0c368bc71875)** — a explicação mais simples: olha o cache primeiro, se não achar busca no banco e guarda pra próxima.
 - **[Cache-Aside pattern — a how-to guide with .NET 8 and Redis](https://medium.com/@monkey-dev/cache-aside-pattern-a-how-to-guide-with-net-8-and-redis-2aa4f5b84381)** — a linguagem é diferente (.NET), mas o desenho do padrão é idêntico ao que você tem em TypeScript.
 
@@ -90,6 +173,16 @@ Onde aparece: item 6, os `count()` de status cacheados por 30s.
 ## 8. BullMQ — filas de trabalho, pra não travar o usuário esperando o Cloudinary
 
 Onde aparece: item 5, o `fotoController` que responde 202 na hora e sobe a foto em segundo plano.
+
+**Exemplo simples:**
+```ts
+// Produtor: só deixa um "bilhete" na fila e responde na hora, sem esperar
+await uploadQueue.add("upload-foto", { ordemdeServico_id, tempFilePath });
+res.status(202).json({ message: "processando em segundo plano" });
+
+// Consumidor (outro processo, o worker): pega o bilhete e faz o trabalho pesado
+worker.process(async (job) => { await cloudinary.upload(job.data.tempFilePath); });
+```
 
 - **[BullMQ for Beginners: A Friendly, Practical Guide](https://hadoan.medium.com/bullmq-for-beginners-a-friendly-practical-guide-with-typescript-examples-eb8064bef1c4)** — TypeScript, exemplos mínimos, sem enrolação.
 - **[Getting started with job queues with BullMQ](https://arie-m-prasetyo.medium.com/getting-started-with-job-queues-with-bullmq-3edcedc13f5e)** — explica bem a ideia central com uma frase simples: "em vez de fazer o trabalho na hora, você deixa um bilhete na fila dizendo 'alguém precisa fazer isso', e um worker separado pega esse bilhete e faz, no próprio ritmo dele."
@@ -103,6 +196,18 @@ Onde aparece: item 5, o `fotoController` que responde 202 na hora e sobe a foto 
 
 Onde aparece: item 7, e a análise de distribuição de esforço (30% unitário / 50% integração / 20% E2E) que você pediu.
 
+**Exemplo simples (a forma, não o código):**
+```
+Pirâmide clássica                 Testing Trophy
+(muito unitário raso)             (peso na integração real)
+
+      /E2E\     poucos                 /E2E\      poucos
+     /Integ\                          -------
+    /-------\                        |Integ.|     a maioria
+   /  Unit.  \  muitos                -------
+                                       \Unit/      só o essencial
+```
+
 - **[Test Pyramid, Test Honeycomb, Test Trophy: A Triumphant Trio](https://medium.com/@manishsaini74.ms/test-pyramid-test-honeycomb-test-trophy-a-triumphant-trio-for-effective-testing-d48507ed7ba4)** — passa pelos 3 formatos, com desenho de cada um.
 - **[Beyond the Pyramid: Navigating Modern Strategies in Software Testing](https://medium.com/@sanclk/beyond-the-pyramid-navigating-modern-strategies-in-software-testing-5e448ed4dc47)** — foca no "por quê" da mudança: teste de integração pega bug real com menos testes que unitário, porque não depende de detalhe de implementação.
 - **[On the Diverse and Fantastical Shapes of Testing](https://martinfowler.com/articles/2021-test-shapes.html)** — não é Medium, é do Martin Fowler, mas é a referência que todo mundo cita quando fala de testing trophy — vale a leitura extra se o tema pegou seu interesse.
@@ -115,6 +220,19 @@ Onde aparece: item 7, e a análise de distribuição de esforço (30% unitário 
 
 Onde aparece: o achado mais grave do checklist (48 controllers devolvendo 500 sempre, por causa de `new Controller().handle` perder o `this`).
 
+**Exemplo simples:**
+```ts
+class Controller {
+  handle(req, res) { this.service.execute(); } // depende de quem chama pra "this" existir
+}
+new Controller().handle // extrai a função solta do protótipo -> "this" vira undefined
+
+// Arrow function como campo de classe resolve:
+class Controller {
+  handle = (req, res) => { this.service.execute(); } // "this" gruda na instância, sempre
+}
+```
+
 - **[The Strange Case of Arrow Functions and Mr. Context](https://medium.com/front-end-weekly/the-strange-case-of-arrow-functions-and-mr-3087a0d7b71f)** — o título já é uma piada com "O Médico e o Monstro", e explica exatamente o mecanismo que quebrou seus 48 controllers.
 - **[Lexical this: How this works in Arrow Functions](https://medium.com/@ctrlaltmonique/lexical-this-how-this-works-in-arrow-functions-100239be6550)** — mais curto, direto no "por que a arrow function resolve isso".
 
@@ -126,6 +244,15 @@ Onde aparece: o achado mais grave do checklist (48 controllers devolvendo 500 se
 
 Onde aparece: literalmente todo Repository do projeto.
 
+**Exemplo simples:**
+```ts
+// Sem ORM: você escreve SQL na mão, sem tipo nenhum garantido
+db.query("SELECT * FROM tecnico WHERE id = $1", [id]);
+
+// Com Prisma: métodos tipados, e o schema.prisma é a fonte da verdade
+prismaClient.tecnico.findUnique({ where: { id } }); // autocomplete + tipo garantido
+```
+
 - **[Introduction to Prisma ORM: A Beginner's Guide](https://medium.com/@pushkarajworkspace/introduction-to-prisma-orm-a-beginners-guide-60cf045d3583)** — visão geral rápida das 3 peças (Client, Migrate, Studio).
 - **[A beginners guide to using Prisma with Node.js](https://medium.com/@chinedumike85/a-beginners-guide-to-using-prisma-with-node-js-ef3e040fad73)** — mais prático, com setup de projeto do zero.
 
@@ -136,6 +263,16 @@ Onde aparece: literalmente todo Repository do projeto.
 ## 12. TestContainers — por que o `globalSetup.ts` sobe um Postgres (e um Redis) de verdade, não mockado
 
 Onde aparece: toda a suíte de integração/E2E (`vitest.integration.config.ts`), e a peça mais nova do projeto — o `RedisContainer` que entrou no `globalSetup.ts` na sessão que fechou o item 7 e os 21 Repositories.
+
+**Exemplo simples:**
+```ts
+// Sem TestContainers: você mocka o banco — não prova FK, tipo de dado real, nada de infra
+vi.mock('../../prisma')
+
+// Com TestContainers: sobe um Postgres de verdade, isolado, só pra essa rodada de teste
+const container = await new PostgreSqlContainer().start();
+process.env.DATABASE_URL = container.getConnectionUri(); // testes batem nesse banco real
+```
 
 - **[🧪 Real Integration Testing with Testcontainers: A Guide for Devs & Testers](https://medium.com/@taanyasingh2001/testing-with-real-databases-using-testcontainers-a-guide-for-devs-testers-ecebb2e7b188)** — o mais leve dos três, com a ideia central em uma frase: em vez de fingir que o banco existe (mock), você sobe um banco de verdade, isolado, só pra aquela rodada de teste.
 - **[Integration Tests for Node.js Apps with MySQL and MongoDB using Testcontainers](https://medium.com/@anna.burlyaeva/integration-tests-for-node-js-apps-with-mysql-and-mongodb-using-testcontainers-2b132c6ff179)** — Node.js de verdade, mostra o `beforeAll`/`afterAll` subindo e derrubando o container, o mesmo papel que o `globalSetup`/`teardown` cumprem no seu projeto.
