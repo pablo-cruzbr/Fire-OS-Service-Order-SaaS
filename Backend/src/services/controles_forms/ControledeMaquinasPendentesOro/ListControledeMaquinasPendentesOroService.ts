@@ -1,88 +1,22 @@
-import prismaClient from "../../../prisma";
+import { MaquinasPendentesOroRepository, maquinasPendentesOroRepository } from "../../../repositories/MaquinasPendentesOroRepository";
 
 class ListControledeMaquinasPendentesOroService {
+  constructor(private repository: MaquinasPendentesOroRepository = maquinasPendentesOroRepository) {}
+
+  // Achado no caminho: a versão antiga também contava "RESERVADA"
+  // (totalReservada), mas o Controller nunca devolvia esse campo no JSON —
+  // query descartada, removida daqui.
   async execute() {
-    const controles = await prismaClient.controledeMaquinasPendentesOro.findMany({
-      orderBy: {
-        created_at: "desc", // Ordena do mais recente para o mais antigo
-      },
-      select: {
-        id: true,
-        datadaInstalacao: true,
-        osInstalacao: true,
-        osRetirada: true,
-        created_at: true,
-        equipamento: {
-          select: {
-            id: true,
-            name: true,
-            patrimonio: true,
-          },
-        },
-        statusMaquinasPendentesOro: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        instituicaoUnidade:{
-            select:{
-                id: true,
-                name: true,
-                endereco: true
-            }
-        }
-      },
-    });
-    const total = await prismaClient.controledeMaquinasPendentesOro.count();
-
-    const totalDisponivel = await prismaClient.controledeMaquinasPendentesOro.count({
-      where: {
-        statusMaquinasPendentesOro:{
-          name: "DISPONIVEL"
-        }
-      }
-    });
-
-    const totalInstalada = await prismaClient.controledeMaquinasPendentesOro.count({
-      where: {
-        statusMaquinasPendentesOro:{
-          name: "INSTALADA"
-        }
-      }
-    });
-
-    const totalAguardandoRetirada = await prismaClient.controledeMaquinasPendentesOro.count({
-      where: {
-        statusMaquinasPendentesOro:{
-          name: "AGUARDANDO RETIRADA"
-        }
-      }
-    });
-
-    const totalEmManutencao = await prismaClient.controledeMaquinasPendentesOro.count({
-      where: {
-        statusMaquinasPendentesOro:{
-          name: "EM MANUTENÇÃO"
-        }
-      }
-    });
-
-    const totalReservada = await prismaClient.controledeMaquinasPendentesOro.count({
-      where: {
-        statusMaquinasPendentesOro:{
-          name: "RESERVADA"
-        }
-      }
-    });
-
-    const totalDescartada = await prismaClient.controledeMaquinasPendentesOro.count({
-      where: {
-        statusMaquinasPendentesOro:{
-          name: "DESCARTADA"
-        }
-      }
-    });
+    const [controles, total, totalDisponivel, totalInstalada, totalAguardandoRetirada, totalEmManutencao, totalDescartada] =
+      await Promise.all([
+        this.repository.findAll(),
+        this.repository.count(),
+        this.repository.countByStatusName("DISPONIVEL"),
+        this.repository.countByStatusName("INSTALADA"),
+        this.repository.countByStatusName("AGUARDANDO RETIRADA"),
+        this.repository.countByStatusName("EM MANUTENÇÃO"),
+        this.repository.countByStatusName("DESCARTADA"),
+      ]);
 
     return {
       controles,
@@ -91,7 +25,7 @@ class ListControledeMaquinasPendentesOroService {
       totalDescartada,
       totalDisponivel,
       totalEmManutencao,
-      totalInstalada
+      totalInstalada,
     };
   }
 }

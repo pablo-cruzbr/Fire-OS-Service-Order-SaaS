@@ -26,6 +26,32 @@ class MaquinasPendentesOroRepository {
   delete(id: string) {
     return prismaClient.controledeMaquinasPendentesOro.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.controledeMaquinasPendentesOro.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        datadaInstalacao: true,
+        osInstalacao: true,
+        osRetirada: true,
+        created_at: true,
+        equipamento: { select: { id: true, name: true, patrimonio: true } },
+        statusMaquinasPendentesOro: { select: { id: true, name: true } },
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.controledeMaquinasPendentesOro.count();
+  }
+
+  countByStatusName(name: string) {
+    return prismaClient.controledeMaquinasPendentesOro.count({
+      where: { statusMaquinasPendentesOro: { name } },
+    });
+  }
 }
 
 const maquinasPendentesOroRepository = new MaquinasPendentesOroRepository();

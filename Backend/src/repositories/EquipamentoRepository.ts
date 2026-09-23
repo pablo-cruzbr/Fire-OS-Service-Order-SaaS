@@ -25,6 +25,20 @@ class EquipamentoRepository {
   delete(id: string) {
     return prismaClient.equipamento.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.equipamento.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        name: true,
+        patrimonio: true,
+        created_at: true,
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true, telefone: true } },
+        tipodeEquipamento: { select: { id: true, name: true } },
+      },
+    });
+  }
 }
 
 const equipamentoRepository = new EquipamentoRepository();

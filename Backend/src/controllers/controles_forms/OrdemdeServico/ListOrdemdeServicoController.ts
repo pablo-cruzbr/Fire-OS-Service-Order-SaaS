@@ -1,39 +1,22 @@
 import { Request, Response } from "express";
 import { ListOrdemdeServicoService } from "../../../services/controles_forms/OrdemdeServico/ListOrdemdeServicoService";
+import { ListOrdemdeServicoQuery } from "../../../schemas/ordemdeServico.schema";
 
 class ListOrdemdeServicoController {
-    async handle(req: Request, res: Response) {
-        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-        res.setHeader("Pragma", "no-cache");
-        res.setHeader("Expires", "0");
+  constructor(private service: ListOrdemdeServicoService = new ListOrdemdeServicoService()) {}
 
-        const user_id = req.user_id as string;
+  handle = async (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
-        const {
-            startDate,
-            endDate,
-            cliente_id,
-            instituicao_id,
-            tarefa_id,
-            page,
-            limit
-        } = req.query;
+    const user_id = req.user_id as string;
+    const query = req.query as unknown as ListOrdemdeServicoQuery;
 
-        const service = new ListOrdemdeServicoService();
+    const result = await this.service.execute({ user_id, ...query });
 
-        const result = await service.execute({
-            user_id,
-            startDate: startDate as string,
-            endDate: endDate as string,
-            cliente_id: cliente_id as string,
-            instituicao_id: instituicao_id as string,
-            tarefa_id: tarefa_id as string,
-            page: page ? Number(page) : undefined,
-            limit: limit ? Number(limit) : undefined
-        });
-
-        return res.json(result);
-    }
+    return res.json(result);
+  }
 }
 
 export { ListOrdemdeServicoController };

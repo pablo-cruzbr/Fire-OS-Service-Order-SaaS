@@ -1,41 +1,11 @@
-import prismaClient from "../../../../prisma";
+import { InformacoesSetorRepository, informacoesSetorRepository } from "../../../../repositories/InformacoesSetorRepository";
 
 class ListInformacoesSetorService {
-    async execute(){
-        const setores = await prismaClient.informacoesSetor.findMany({
-             orderBy: {
-                created_at: "desc", 
-                
-            },
-           select: {
-                id: true,
-                usuario: true,
-                ramal: true,
-                andar: true,
-                setor: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-                cliente: {
-                    select: {
-                        id: true,
-                        name: true,
-                        endereco: true,
-                        cnpj: true
-                    }
-                },
-                instituicaoUnidade: {
-                    select:{
-                        name: true,
-                        endereco: true
-                    }
-                },
-            },
-        })
-        return setores;
-    }
+  constructor(private repository: InformacoesSetorRepository = informacoesSetorRepository) {}
+
+  execute() {
+    return this.repository.findAll();
+  }
 }
 
-export { ListInformacoesSetorService}
+export { ListInformacoesSetorService };

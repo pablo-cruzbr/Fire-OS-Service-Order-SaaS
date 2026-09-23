@@ -1,51 +1,18 @@
-import prismaClient from "../../../prisma";
+import { EstabilizadoresRepository, estabilizadoresRepository } from "../../../repositories/EstabilizadoresRepository";
 
 class ListControledeEstabilizadoresService {
+  constructor(private repository: EstabilizadoresRepository = estabilizadoresRepository) {}
+
   async execute() {
-    const controles = await prismaClient.controledeEstabilizadores.findMany({
-      orderBy: {
-        created_at: "desc", 
-        // Ordena do mais recente para o mais antigo
-      },
-      include: {
-        estabilizadores: {
-          select: {name: true, patrimonio: true, id: true},
+    const [controles, total, totalAguardandoReparo, totalFinalizado] = await Promise.all([
+      this.repository.findAll(),
+      this.repository.count(),
+      this.repository.countByStatusEstabilizadoresName("AGUARDANDO REPARO"),
+      this.repository.countByStatusEstabilizadoresName("REPARO FINALIZADO"),
+    ]);
 
-        },
-        statusEstabilizadores:{
-          select:{name: true, id: true}
-        },
-        instituicaoUnidade:{
-          select:{name: true, id: true, endereco: true}
-        },
-      },
-    });
-
-    const total = await prismaClient.controledeEstabilizadores.count();
-
-    const totalAguardandoReparo = await prismaClient.controledeEstabilizadores.count({
-      where: {
-        statusEstabilizadores:{
-          name: "AGUARDANDO REPARO",
-        },
-      },
-    });
-
-    const totalFinalizado = await prismaClient.controledeEstabilizadores.count({
-      where:{
-        statusEstabilizadores:{
-        name: "REPARO FINALIZADO",
-        }
-      },
-    });
-
-    return {
-    controles,
-    total,
-    totalAguardandoReparo,
-    totalFinalizado
-    }
-  }   
+    return { controles, total, totalAguardandoReparo, totalFinalizado };
+  }
 }
 
 export { ListControledeEstabilizadoresService };

@@ -32,6 +32,27 @@ class AssistenciaTecnicaRepository {
   delete(id: string) {
     return prismaClient.controleDeAssistenciaTecnica.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.controleDeAssistenciaTecnica.findMany({
+      orderBy: { created_at: "desc" },
+      include: {
+        equipamento: { select: { name: true, patrimonio: true, id: true } },
+        statusReparo: { select: { name: true, id: true } },
+        instituicaoUnidade: { select: { name: true, id: true, endereco: true } },
+        tecnico: { select: { name: true, id: true } },
+        cliente: { select: { name: true, id: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.controleDeAssistenciaTecnica.count();
+  }
+
+  countByStatusReparoName(name: string) {
+    return prismaClient.controleDeAssistenciaTecnica.count({ where: { statusReparo: { name } } });
+  }
 }
 
 const assistenciaTecnicaRepository = new AssistenciaTecnicaRepository();

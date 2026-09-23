@@ -1,43 +1,19 @@
-import prismaClient from "../../../prisma";
-
-interface InstituicaoRequest {
-  name: string;
-  endereco: string;
-  telefone: string;
-  tipodeInstituicaoUnidade_id: string;
-}
+import { CreateInstituicaoUnidadeInput } from "../../../schemas/instituicaoUnidade.schema";
+import {
+  InstituicaoUnidadeRepository,
+  instituicaoUnidadeRepository,
+} from "../../../repositories/InstituicaoUnidadeRepository";
 
 class CreateInstituicaoUnidadeService {
-  async execute({ name, endereco, tipodeInstituicaoUnidade_id, telefone }: InstituicaoRequest) {
-    if (!name || name.trim() === '') {
-      throw new Error('Nome inválido');
-    }
+  constructor(private repository: InstituicaoUnidadeRepository = instituicaoUnidadeRepository) {}
 
-    if (!endereco || endereco.trim() === '') {
-      throw new Error('Endereço inválido');
-    }
-
-    if (!tipodeInstituicaoUnidade_id) {
-      throw new Error('Tipo de Instituição é obrigatório');
-    }
-
-    const instituicao = await prismaClient.instituicaoUnidade.create({
-      data: {
-        name,
-        endereco,
-        telefone,
-        tipodeinstituicaoUnidade_id: tipodeInstituicaoUnidade_id,
-      },
-      select: {
-        id: true,
-        name: true,
-        endereco: true,
-        telefone: true,
-        tipodeinstituicaoUnidade_id: true,
-      },
+  execute(data: CreateInstituicaoUnidadeInput) {
+    return this.repository.create({
+      name: data.name,
+      endereco: data.endereco,
+      telefone: data.telefone,
+      tipodeinstituicaoUnidade: { connect: { id: data.tipodeInstituicaoUnidade_id } },
     });
-
-    return instituicao;
   }
 }
 

@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
-import { ListstatusControlleLaboratioService } from "../../../services/status_categorias/statusControlledeLaboratorio/ListstatusControlledeLaboratioService";
+import { ListLookupCategoriaService } from "../../../services/status_categorias/ListLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
-class ListstatusControlleLaboratioController{
-    async handle(req: Request, res: Response){
-        const liststatusControlleLaboratioService = new ListstatusControlleLaboratioService();
+class ListstatusControlleLaboratioController {
+  constructor(
+    private service: ListLookupCategoriaService = new ListLookupCategoriaService(
+      new LookupCategoriaRepository("statusControledeLaboratorio")
+    )
+  ) {}
 
-        const status = await liststatusControlleLaboratioService.execute();
-
-        return res.json(status);
-    }
+  handle = async (req: Request, res: Response) => {
+    const status = await this.service.execute();
+    return res.json(status);
+  }
 }
 
-export {ListstatusControlleLaboratioController}
+export { ListstatusControlleLaboratioController };

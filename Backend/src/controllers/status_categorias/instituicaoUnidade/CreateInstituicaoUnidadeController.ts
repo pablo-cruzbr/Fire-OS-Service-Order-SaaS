@@ -1,19 +1,12 @@
 import { Request, Response } from "express";
 import { CreateInstituicaoUnidadeService } from "../../../services/status_categorias/instituicaoUnidade/CreateInstituicaoUnidadeService";
+import { CreateInstituicaoUnidadeInput } from "../../../schemas/instituicaoUnidade.schema";
 
 class CreateInstituicaoUnidadeController {
-  async handle(req: Request, res: Response) {
-    const { name, endereco, tipodeInstituicaoUnidade_id, telefone } = req.body;
+  constructor(private service: CreateInstituicaoUnidadeService = new CreateInstituicaoUnidadeService()) {}
 
-    const createInstituicaoUnidadeService = new CreateInstituicaoUnidadeService();
-
-    const instituicao = await createInstituicaoUnidadeService.execute({
-      name,
-      endereco,
-      tipodeInstituicaoUnidade_id,
-      telefone
-    });
-
+  handle = async (req: Request, res: Response) => {
+    const instituicao = await this.service.execute(req.body as CreateInstituicaoUnidadeInput);
     return res.json(instituicao);
   }
 }

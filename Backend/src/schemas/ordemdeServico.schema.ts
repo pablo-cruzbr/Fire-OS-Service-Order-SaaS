@@ -80,6 +80,21 @@ const relatorioSecretariaQuerySchema = z.object({
   endDate: z.string().optional(),
 });
 
+// Achado no rollout: o Controller de List nunca passava status_id/tipoOS_id
+// pro Service, mesmo o Service já suportando os dois filtros — faltava
+// só a fiação, não a lógica.
+const listOrdemdeServicoQuerySchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  cliente_id: uuid.optional(),
+  instituicao_id: uuid.optional(),
+  tarefa_id: uuid.optional(),
+  status_id: uuid.optional(),
+  tipoOS_id: uuid.optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+});
+
 const exportOrdemdeServicoQuerySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -96,6 +111,7 @@ type AtualizarTempoInput = z.infer<typeof atualizarTempoSchema>;
 type AssinaturaInput = z.infer<typeof assinaturaSchema>;
 type RelatorioSecretariaQuery = z.infer<typeof relatorioSecretariaQuerySchema>;
 type ExportOrdemdeServicoQuery = z.infer<typeof exportOrdemdeServicoQuerySchema>;
+type ListOrdemdeServicoQuery = z.infer<typeof listOrdemdeServicoQuerySchema>;
 
 export {
   createOrdemdeServicoSchema,
@@ -108,6 +124,7 @@ export {
   assinaturaSchema,
   relatorioSecretariaQuerySchema,
   exportOrdemdeServicoQuerySchema,
+  listOrdemdeServicoQuerySchema,
 };
 export type {
   CreateOrdemdeServicoInput,
@@ -116,4 +133,5 @@ export type {
   AssinaturaInput,
   RelatorioSecretariaQuery,
   ExportOrdemdeServicoQuery,
+  ListOrdemdeServicoQuery,
 };

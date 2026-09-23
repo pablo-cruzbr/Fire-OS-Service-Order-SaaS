@@ -21,6 +21,25 @@ class EstabilizadoresRepository {
   update(id: string, data: Prisma.controledeEstabilizadoresUpdateInput) {
     return prismaClient.controledeEstabilizadores.update({ where: { id }, data, include: DEFAULT_INCLUDE });
   }
+
+  findAll() {
+    return prismaClient.controledeEstabilizadores.findMany({
+      orderBy: { created_at: "desc" },
+      include: {
+        estabilizadores: { select: { name: true, patrimonio: true, id: true } },
+        statusEstabilizadores: { select: { name: true, id: true } },
+        instituicaoUnidade: { select: { name: true, id: true, endereco: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.controledeEstabilizadores.count();
+  }
+
+  countByStatusEstabilizadoresName(name: string) {
+    return prismaClient.controledeEstabilizadores.count({ where: { statusEstabilizadores: { name } } });
+  }
 }
 
 const estabilizadoresRepository = new EstabilizadoresRepository();

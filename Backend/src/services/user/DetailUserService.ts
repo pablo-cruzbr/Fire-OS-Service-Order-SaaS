@@ -1,45 +1,14 @@
-import prismaClient from "../../prisma";
+import { UserRepository, userRepository } from "../../repositories/UserRepository";
+import { NotFoundError } from "../../errors/AppError";
 
 class DetailUserService {
-  async execute(user_id: string) {
-    if (!user_id) {
-      throw new Error("ID do usuário não fornecido");
-    }
+  constructor(private repository: UserRepository = userRepository) {}
 
-    const user = await prismaClient.user.findUnique({
-      where: {
-        id: user_id,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,  
-        setor: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        cliente: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true,
-          },
-        },
-        instituicaoUnidade: {
-          select: {
-            id: true,
-            name: true,
-            endereco: true,
-          },
-        },
-      },
-    });
+  async execute(user_id: string) {
+    const user = await this.repository.findById(user_id);
 
     if (!user) {
-      throw new Error("Usuário não encontrado");
+      throw new NotFoundError("Usuário não encontrado.");
     }
 
     return user;
