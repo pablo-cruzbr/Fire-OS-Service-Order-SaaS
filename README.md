@@ -305,7 +305,7 @@ Fire-OS-Service-Order-SaaS/            # Monorepo
 | **Cache & Filas** | Redis 7 (cache-aside), BullMQ (upload de fotos), Bull Board |
 | **Armazenamento** | Cloudinary (imagens) |
 | **IA (experimental)** | Groq, Llama 3.3 70B via AI SDK |
-| **Testes & CI** | Vitest (215 unitários + 73 de integração/E2E com Testcontainers), GitHub Actions |
+| **Testes & CI** | Vitest (227 unitários + 125 de integração/E2E com Testcontainers — Postgres e Redis reais), GitHub Actions |
 | **Infraestrutura** | Docker + Docker Compose (Postgres, Redis, API e worker) |
 | **Deploy Mobile** | Expo EAS Build + EAS Update |
 
@@ -313,8 +313,8 @@ Fire-OS-Service-Order-SaaS/            # Monorepo
 
 ## 🧪 Qualidade
 
-- **Testes unitários:** 215 casos em 75 arquivos, com o Prisma mockado. Cobrem RBAC/CASL, schemas Zod, `errorHandler`, repositories e cache-aside (hit, miss e fallback).
-- **Testes de integração e E2E:** 73 casos em 13 arquivos contra **Postgres real via Testcontainers**, cobrindo auth, CRUDs, fluxos da OS e relatórios.
+- **Testes unitários:** 227 casos em 75 arquivos, com o Prisma mockado. Cobrem RBAC/CASL, schemas Zod, `errorHandler`, repositories e cache-aside (hit, miss e fallback).
+- **Testes de integração e E2E:** 125 casos em 22 arquivos contra **Postgres e Redis reais via Testcontainers**, cobrindo auth, CRUDs, ownership/CASL ponta a ponta, fluxos da OS, relatórios, cache-aside no Redis de verdade e o job de upload publicado na fila BullMQ.
 - **CI no GitHub Actions** (`.github/workflows/test.yml`): typecheck, lint, testes unitários com cobertura (piso de 30%) e testes de integração, em steps separados.
 - **Frontend:** `tsc --noEmit` e `next build` sem erros. Testes de interface (Playwright) estão no roadmap.
 
