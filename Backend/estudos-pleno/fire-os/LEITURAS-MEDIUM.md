@@ -133,9 +133,21 @@ Onde aparece: literalmente todo Repository do projeto.
 
 ---
 
-## 12. Bônus — leitura de sofá, sem gancho técnico nenhum
+## 12. TestContainers — por que o `globalSetup.ts` sobe um Postgres (e um Redis) de verdade, não mockado
 
-- **[JavaScript & TypeScript: A Funny Way to Understand Them](https://medium.com/@rdhanurzid/javascript-typescript-a-funny-way-to-understand-them-81cb81449f23)** — comparação bem-humorada dos dois, boa pra rir um pouco depois de ler os outros 11 itens sérios.
+Onde aparece: toda a suíte de integração/E2E (`vitest.integration.config.ts`), e a peça mais nova do projeto — o `RedisContainer` que entrou no `globalSetup.ts` na sessão que fechou o item 7 e os 21 Repositories.
+
+- **[🧪 Real Integration Testing with Testcontainers: A Guide for Devs & Testers](https://medium.com/@taanyasingh2001/testing-with-real-databases-using-testcontainers-a-guide-for-devs-testers-ecebb2e7b188)** — o mais leve dos três, com a ideia central em uma frase: em vez de fingir que o banco existe (mock), você sobe um banco de verdade, isolado, só pra aquela rodada de teste.
+- **[Integration Tests for Node.js Apps with MySQL and MongoDB using Testcontainers](https://medium.com/@anna.burlyaeva/integration-tests-for-node-js-apps-with-mysql-and-mongodb-using-testcontainers-2b132c6ff179)** — Node.js de verdade, mostra o `beforeAll`/`afterAll` subindo e derrubando o container, o mesmo papel que o `globalSetup`/`teardown` cumprem no seu projeto.
+- **[Leveraging Testcontainers Over Mock Tests for Reliable Integration Database Testing](https://medium.com/@rohmatmret/leveraging-testcontainers-over-mock-tests-for-reliable-integration-database-testing-c807dec35681)** — o "por quê" direto: mock nunca falha do jeito que produção falha. É a mesma lição do achado do Redis travando ~20-30s quando cai (item 9) — um `vi.mock('../../redis')` nunca teria pego isso, porque a função fake não tem *latência* nenhuma pra travar.
+
+**Gancho pro seu código:** `globalSetup.ts` sobe **dois** containers em paralelo (`Promise.all`) — `PostgreSqlContainer` e `RedisContainer` — antes de qualquer arquivo de teste ser importado, e seta `DATABASE_URL`/`REDIS_URL` no `process.env` pra apontar pra eles. Isso importa porque `src/redis/index.ts` e `src/prisma/index.ts` instanciam o client **na hora do import**, lendo essas variáveis — se o container subisse depois do primeiro `import`, seria tarde demais. É o mesmo motivo por trás de rodar `prisma db push` dentro do próprio `setup()`, não separado: a ordem de execução é a peça toda. E o achado mais recente do projeto (a limpeza de `limparBanco()` não cobrindo `fotoOrdemServico`/`atividadeNoChamado`/`formTecnico`) só apareceu porque o teste rodava contra um Postgres real com constraint de FK de verdade — um Prisma mockado não teria uma FK pra violar.
+
+---
+
+## 13. Bônus — leitura de sofá, sem gancho técnico nenhum
+
+- **[JavaScript & TypeScript: A Funny Way to Understand Them](https://medium.com/@rdhanurzid/javascript-typescript-a-funny-way-to-understand-them-81cb81449f23)** — comparação bem-humorada dos dois, boa pra rir um pouco depois de ler os outros 12 itens sérios.
 
 ---
 
