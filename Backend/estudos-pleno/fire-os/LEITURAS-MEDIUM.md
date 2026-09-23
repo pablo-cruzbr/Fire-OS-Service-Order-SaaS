@@ -10,6 +10,8 @@ Ordem: do que você pediu primeiro (SOLID) até o resto, mais ou menos na ordem 
 
 Onde aparece no seu projeto: toda vez que um `Service` recebe um `Repository` pelo construtor em vez de criar um `new PrismaClient()` sozinho, isso é Dependency Inversion (o "D" do SOLID) na prática — é literalmente o que o rollout inteiro do item 1 fez, módulo por módulo.
 
+**Pra que serve:** pra você trocar o banco de dados nos testes por um "banco fake" sem precisar tocar no código do Service. Sem isso, testar vira "preciso de um Postgres rodando só pra testar uma função".
+
 **Exemplo simples (só o "D", o que mais aparece no seu código):**
 ```ts
 // Sem Dependency Inversion: a classe cria a própria dependência, fica presa a ela
@@ -34,6 +36,8 @@ class Service {
 ## 2. Repository Pattern — por que criar essa camada extra
 
 Onde aparece: item 1 do checklist inteiro. É o padrão que te fez trocar "Service falando direto com `prismaClient`" por "Service falando com uma classe `XRepository`".
+
+**Pra que serve:** pra isolar "onde o dado mora" (Prisma) de "o que fazer com o dado" (regra de negócio). Sem isso, se um dia você trocar Prisma por outro ORM, precisa mexer em 100 arquivos espalhados em vez de só nos Repositories.
 
 **Exemplo simples:**
 ```ts
@@ -66,6 +70,8 @@ class CreateUserService {
 
 Onde aparece: item 3, toda vez que você vê `validate(algumSchema)` em `routes.ts`.
 
+**Pra que serve:** pra não confiar cegamente no que chega na requisição. Sem isso, alguém manda `preco: "grátis"` (string) e seu banco quebra lá na frente, com um erro genérico, difícil de rastrear até a causa.
+
 **Exemplo simples:**
 ```ts
 // "Validar" — só diz se tá certo, o TypeScript continua achando que é `any`
@@ -88,6 +94,8 @@ const data = schema.parse(body); // data.email agora É string, garantido pelo t
 
 Onde aparece: todo `constructor(private repository: XRepository = xRepository)` que você escreveu esse mês inteiro.
 
+**Pra que serve:** pra testar um Service sem precisar de banco de verdade, **e** sem quebrar nada em produção (`new Service()` continua funcionando igual). É o melhor dos dois mundos — não é "ou testável ou simples", é os dois.
+
 **Exemplo simples:**
 ```ts
 class CreateTecnicoService {
@@ -108,6 +116,8 @@ class CreateTecnicoService {
 ## 5. CASL / RBAC — a diferença entre "pode usar a rota" e "pode mexer NESSE registro"
 
 Onde aparece: item 2, a peça que resolveu o achado mais grave do projeto (`user/update` sem dono nenhum) e o gap dos 3 módulos técnicos.
+
+**Pra que serve:** pra impedir que um técnico edite a ordem de serviço de outro técnico (ou pior, que qualquer usuário troque a senha de qualquer outro — foi exatamente o bug mais grave já achado nesse projeto). Sem isso, "estar logado" é a única trava, e isso não basta.
 
 **Exemplo simples:**
 ```ts
@@ -131,6 +141,8 @@ authorizeOwnership("Recurso", "update", (id) => repo.findById(id))
 
 Onde aparece: item 4, `src/Middleware/errorHandler.ts`, e a novela dos 48 controllers com `try/catch` removidos.
 
+**Pra que serve:** pra não ter 100 controllers cada um decidindo um status HTTP diferente pro mesmo tipo de erro. Sem isso, um erro de banco vira 400 num lugar e 500 em outro, e o Frontend nunca sabe o que esperar.
+
 **Exemplo simples:**
 ```ts
 // Sem handler central: cada controller decide o status sozinho, na mão
@@ -150,6 +162,8 @@ if (!user) throw new NotFoundError("Usuário não encontrado"); // handler globa
 ## 7. Cache-Aside com Redis — a ideia por trás do `ListOrdemdeServicoService`
 
 Onde aparece: item 6, os `count()` de status cacheados por 30s.
+
+**Pra que serve:** pra não bater no banco toda vez que alguém abre a tela de OS (que calcula 8 contagens). Sem cache, cada carregamento de tela custa 8 queries; com cache, custa 8 queries a cada 30 segundos, não a cada clique.
 
 **Exemplo simples:**
 ```ts
@@ -174,6 +188,8 @@ async function getTotais() {
 
 Onde aparece: item 5, o `fotoController` que responde 202 na hora e sobe a foto em segundo plano.
 
+**Pra que serve:** pra o usuário não ficar esperando 5-10 segundos com a tela travada enquanto a foto sobe pro Cloudinary. Sem fila, o upload trava o request inteiro; com fila, você responde na hora e o upload acontece em segundo plano.
+
 **Exemplo simples:**
 ```ts
 // Produtor: só deixa um "bilhete" na fila e responde na hora, sem esperar
@@ -195,6 +211,8 @@ worker.process(async (job) => { await cloudinary.upload(job.data.tempFilePath); 
 ## 9. Pirâmide de testes vs. Testing Trophy — a conversa que a gente acabou de ter
 
 Onde aparece: item 7, e a análise de distribuição de esforço (30% unitário / 50% integração / 20% E2E) que você pediu.
+
+**Pra que serve:** pra decidir onde investir tempo de teste. Não é "ter mais testes" — é ter menos testes bobos (que só provam que um mock devolve o que você mandou ele devolver) e mais testes que realmente pegam bug de verdade, sem gastar horas escrevendo E2E pra cada detalhezinho.
 
 **Exemplo simples (a forma, não o código):**
 ```
@@ -220,6 +238,8 @@ Pirâmide clássica                 Testing Trophy
 
 Onde aparece: o achado mais grave do checklist (48 controllers devolvendo 500 sempre, por causa de `new Controller().handle` perder o `this`).
 
+**Pra que serve (o porquê de usar arrow function como campo de classe):** pra garantir que `this` dentro do método sempre aponte pra instância certa, não importa como o Express chama o método depois. Sem isso, o controller quebra silenciosamente toda vez que alguém registra a rota como `new Controller().handle` em vez de vincular manualmente.
+
 **Exemplo simples:**
 ```ts
 class Controller {
@@ -244,6 +264,8 @@ class Controller {
 
 Onde aparece: literalmente todo Repository do projeto.
 
+**Pra que serve:** pra não escrever SQL na mão toda vez, e pra ter o `schema.prisma` como fonte única da verdade — o tipo TypeScript que você usa no código e a constraint que existe no banco vêm do mesmo lugar, não podem divergir silenciosamente.
+
 **Exemplo simples:**
 ```ts
 // Sem ORM: você escreve SQL na mão, sem tipo nenhum garantido
@@ -263,6 +285,8 @@ prismaClient.tecnico.findUnique({ where: { id } }); // autocomplete + tipo garan
 ## 12. TestContainers — por que o `globalSetup.ts` sobe um Postgres (e um Redis) de verdade, não mockado
 
 Onde aparece: toda a suíte de integração/E2E (`vitest.integration.config.ts`), e a peça mais nova do projeto — o `RedisContainer` que entrou no `globalSetup.ts` na sessão que fechou o item 7 e os 21 Repositories.
+
+**Pra que serve:** pra provar que seu código funciona contra um banco/Redis **de verdade**, não contra uma versão fake que sempre responde o que você mandou ela responder. O bug dos 48 controllers (item 10) só apareceu porque um teste bateu no Express real, não numa função mockada — mesmo espírito por trás do TestContainers.
 
 **Exemplo simples:**
 ```ts
