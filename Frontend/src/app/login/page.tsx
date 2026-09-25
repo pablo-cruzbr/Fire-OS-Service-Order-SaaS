@@ -4,9 +4,10 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { api } from "@/services/api";
 import { loginSchema } from "@/lib/schemas/loginSchema";
 import { loginErrorMessage, setSessionCookie } from "@/lib/auth";
-import { AuthError, AuthShell } from "@/components/auth/AuthShell";
+import { AuthDivider, AuthError, AuthShell, authSlides } from "@/components/auth/AuthShell";
+import { EmailInput, PasswordInput } from "@/components/auth/AuthFields";
 import { SubmitButton } from "@/components/auth/SubmitButton";
-import { Field, Input } from "@/components/ui";
+import { ButtonLink, Field } from "@/components/ui";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -43,13 +44,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthShell
-      title="Portal administrativo"
-      subtitle="Acesso para administradores e técnicos."
-      footer={
+      title="Bem-vindo de volta"
+      subtitle="Portal administrativo para administradores e técnicos."
+      slides={authSlides.staff}
+      asideTitle="Sua equipe em campo, organizada do chamado à OS assinada"
+      asideText="Agende atendimentos, acompanhe cada ordem de serviço e tenha o histórico de todos os equipamentos."
+      topLink={
         <>
-          É um cliente?{" "}
+          É cliente?{" "}
           <Link href="/AreadeUsuario" className="font-medium text-primary hover:underline">
-            Entre na Área do Usuário
+            Área do usuário
           </Link>
         </>
       }
@@ -57,13 +61,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <AuthError message={loginErrorMessage(error)} />
       <form action={handleLogin} className="flex flex-col gap-5">
         <Field label="E-mail" htmlFor="email">
-          <Input id="email" type="email" name="email" autoComplete="email" placeholder="voce@empresa.com" required />
+          <EmailInput id="email" name="email" required />
         </Field>
         <Field label="Senha" htmlFor="password">
-          <Input id="password" type="password" name="password" autoComplete="current-password" required minLength={4} />
+          <PasswordInput id="password" name="password" autoComplete="current-password" required minLength={4} />
         </Field>
         <SubmitButton>Entrar</SubmitButton>
       </form>
+      <AuthDivider>ou</AuthDivider>
+      <ButtonLink href="/AreadeUsuario" variant="outline" size="lg" className="w-full">
+        Sou cliente, quero abrir um chamado
+      </ButtonLink>
     </AuthShell>
   );
 }

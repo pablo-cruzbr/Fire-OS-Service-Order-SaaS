@@ -113,7 +113,7 @@ export function Sidebar({ sections, open, onClose }: SidebarProps) {
       >
         <div className="flex h-[70px] shrink-0 items-center px-6">
           <Link href="/dashboard" onClick={onClose} className="rounded-md bg-white px-1 py-1 dark:px-2">
-            <Image src={logoLight} alt="Fire OS" width={150} height={34} priority />
+            <Image src={logoLight} alt="Fire OS" width={150} height={34} priority className="h-auto" />
           </Link>
         </div>
 

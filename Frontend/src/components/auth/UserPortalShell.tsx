@@ -12,7 +12,7 @@ export function UserPortalShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-[70px] max-w-5xl items-center gap-3 px-4 sm:px-6">
           <span className="rounded-md bg-white px-1 py-1">
-            <Image src={logo} alt="Fire OS" width={130} height={30} priority />
+            <Image src={logo} alt="Fire OS" width={128} height={29} priority className="h-auto" />
           </span>
           <span className="hidden rounded-full bg-lightprimary px-2.5 py-1 text-xs font-medium text-primary sm:inline">
             Área do usuário
