@@ -17,3 +17,4 @@ No attribution is required by their licenses; sources are kept here for referenc
 | solar.webp | Free solar panel installation crew | — | CC0 | https://www.rawpixel.com/image/5906768/photo-image-public-domain-person-free |
 | limpeza.webp | Free skyscraper window cleaning services | — | CC0 | https://www.rawpixel.com/image/5906435/photo-image-public-domain-blue-people |
 | serralheria.webp | Joe Bertrand teaches welding | U. S. Fish and Wildlife Service - Northeast Region | PDM | https://www.flickr.com/photos/43322816@N08/6720567425 |
+| hero.webp (mirrored) | U.S. Navy Machinery Repairman 2nd | U.S. Forest Service (source) | CC0 | https://www.rawpixel.com/image/8738833/photo-image-public-domain-woman |
