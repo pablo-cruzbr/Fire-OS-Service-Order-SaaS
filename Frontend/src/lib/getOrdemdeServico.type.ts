@@ -68,6 +68,7 @@ export interface OrdemdeServicoProps {
     id: string;
     name: string;
     endereco?: string;
+    cnpj?: string;
   };
 
     tarefa?: {
