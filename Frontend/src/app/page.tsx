@@ -73,7 +73,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="rounded-md bg-white px-1 py-1">
-            <Image src={logo} alt="Fire OS" width={140} height={32} priority />
+            <Image src={logo} alt="Fire OS" width={141} height={32} priority className="h-auto" />
           </Link>
           <nav aria-label="Seções" className="hidden items-center gap-7 text-sm font-medium text-link lg:flex">
             <a href="#recursos" className="hover:text-primary">Recursos</a>
@@ -95,81 +95,81 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="relative isolate overflow-hidden bg-[#140d2b]">
-          <Image
-            src="/segments/hero.webp"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="-z-20 object-cover object-right"
-          />
-          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-[#140d2b] via-[#140d2b]/60 to-transparent" />
-          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-[#140d2b] via-[#140d2b]/10 to-[#140d2b]/30" />
+        <section className="flex flex-col bg-[#140d2b] lg:min-h-[calc(100svh-70px)]">
+          <div className="relative isolate flex flex-1 items-center overflow-hidden">
+            <Image
+              src="/segments/hero.webp"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="-z-20 object-cover object-right"
+            />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-[#140d2b] via-[#140d2b]/60 to-transparent" />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-[#140d2b] via-[#140d2b]/10 to-[#140d2b]/30" />
 
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-12 lg:pb-24 lg:pt-24">
-            <div className="lg:col-span-7">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
-                Software de ordens de serviço e chamados
-              </span>
-              <h1 className="mt-6 text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white sm:text-6xl">
-                Tudo para organizar e fazer crescer o seu <span className="text-[#b9a4ff]">negócio de serviços</span>
-              </h1>
-              <p className="mt-6 max-w-xl text-base text-white/80 sm:text-lg">
-                <strong className="font-semibold text-white">Do chamado à OS assinada no local.</strong> Agenda da equipe,
-                controle de equipamentos, laboratório, compras e relatórios em um só sistema.
-              </p>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <ButtonLink href="/login" size="lg" icon={<TbArrowRight className="h-5 w-5" />}>
-                  Acessar o portal
-                </ButtonLink>
-                <Link
-                  href="/AreadeUsuario"
-                  className="inline-flex h-12 items-center rounded-md border border-white/30 px-6 font-medium text-white transition-colors hover:bg-white/10"
-                >
-                  Sou cliente, quero abrir um chamado
-                </Link>
+            <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:py-10">
+              <div className="lg:col-span-7">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+                  Software de ordens de serviço e chamados
+                </span>
+                <h1 className="mt-6 text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white sm:text-5xl xl:text-6xl">
+                  Tudo para organizar e fazer crescer o seu <span className="text-[#b9a4ff]">negócio de serviços</span>
+                </h1>
+                <p className="mt-5 max-w-xl text-base text-white/80 sm:text-lg">
+                  <strong className="font-semibold text-white">Do chamado à OS assinada no local.</strong> Agenda da equipe,
+                  controle de equipamentos, laboratório, compras e relatórios em um só sistema.
+                </p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <ButtonLink href="/login" size="lg" icon={<TbArrowRight className="h-5 w-5" />}>
+                    Acessar o portal
+                  </ButtonLink>
+                  <Link
+                    href="/AreadeUsuario"
+                    className="inline-flex h-12 items-center rounded-md border border-white/30 px-6 font-medium text-white transition-colors hover:bg-white/10"
+                  >
+                    Sou cliente, quero abrir um chamado
+                  </Link>
+                </div>
+                <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
+                  {["Área do cliente inclusa", "OS digital com assinatura", "Relatórios em Excel"].map((item) => (
+                    <li key={item} className="flex items-center gap-1.5">
+                      <TbCheck className="text-success" /> {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
-                {["Área do cliente inclusa", "OS digital com assinatura", "Relatórios em Excel"].map((item) => (
-                  <li key={item} className="flex items-center gap-1.5">
-                    <TbCheck className="text-success" /> {item}
+
+              <ul aria-hidden className="hidden flex-col items-end gap-3 lg:col-span-5 lg:flex">
+                {[
+                  { icon: <TbCalendarTime />, title: "OS agendada", text: "Instalação amanhã às 9h · Mariana" },
+                  { icon: <TbRoute />, title: "Técnico a caminho", text: "OS #48224 · chegada em 15 min" },
+                  { icon: <TbSignature />, title: "OS concluída e assinada", text: "Assinada por Sandra O. · há 2 min" },
+                ].map((note, index) => (
+                  <li
+                    key={note.title}
+                    className="flex w-80 items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 text-white shadow-lg backdrop-blur-md"
+                    style={{ marginRight: `${index * 1.5}rem` }}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-xl">
+                      {note.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center justify-between text-[11px] text-white/60">
+                        <span>Fire OS</span>
+                        <span>agora</span>
+                      </p>
+                      <p className="truncate text-sm font-semibold">{note.title}</p>
+                      <p className="truncate text-xs text-white/70">{note.text}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <ul aria-hidden className="hidden flex-col items-end gap-3 lg:col-span-5 lg:flex">
-              {[
-                { icon: <TbCalendarTime />, title: "OS agendada", text: "Instalação amanhã às 9h · Mariana" },
-                { icon: <TbRoute />, title: "Técnico a caminho", text: "OS #48224 · chegada em 15 min" },
-                { icon: <TbSignature />, title: "OS concluída e assinada", text: "Assinada por Sandra O. · há 2 min" },
-              ].map((note, index) => (
-                <li
-                  key={note.title}
-                  className="flex w-80 items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 text-white shadow-lg backdrop-blur-md"
-                  style={{ marginRight: `${index * 1.5}rem` }}
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-xl">
-                    {note.icon}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center justify-between text-[11px] text-white/60">
-                      <span>Fire OS</span>
-                      <span>agora</span>
-                    </p>
-                    <p className="truncate text-sm font-semibold">{note.title}</p>
-                    <p className="truncate text-xs text-white/70">{note.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
           </div>
 
-          <div className="pb-14">
-            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-wider text-white/50">
-              Usado para organizar serviços de
-            </p>
+          <div className="border-t border-white/10 bg-[#140d2b] pb-5 pt-5">
             <SegmentCarousel />
           </div>
         </section>
@@ -305,7 +305,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-12">
           <div className="md:col-span-4">
             <span className="inline-block rounded-md bg-white px-1 py-1">
-              <Image src={logo} alt="Fire OS" width={130} height={30} />
+              <Image src={logo} alt="Fire OS" width={128} height={29} className="h-auto" />
             </span>
             <p className="mt-4 max-w-xs text-sm text-bodytext">
               Software de ordens de serviço e chamados para empresas de assistência técnica e manutenção.

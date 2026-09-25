@@ -9,6 +9,7 @@ import { apiErrorMessage } from "@/lib/apiError";
 import { cn } from "@/lib/cn";
 import { useLookups } from "@/components/data/useLookups";
 import { Button, Field, Input, Select } from "@/components/ui";
+import { EmailInput, PasswordInput } from "./AuthFields";
 
 export type Vinculo = "empresa" | "instituicao";
 
@@ -96,10 +97,10 @@ export function NewUserForm({ defaultVinculo }: { defaultVinculo: Vinculo }) {
         <Input id="name" name="name" autoComplete="name" required />
       </Field>
       <Field label="E-mail" htmlFor="email" required>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <EmailInput id="email" name="email" required />
       </Field>
       <Field label="Senha" htmlFor="password" required hint="Mínimo de 4 caracteres.">
-        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={4} required />
+        <PasswordInput id="password" name="password" autoComplete="new-password" minLength={4} required />
       </Field>
       <Field label={vinculo === "empresa" ? "Empresa" : "Instituição"} htmlFor="org" required>
         <Select id="org" name="org" required defaultValue="" key={vinculo} disabled={loading}>
