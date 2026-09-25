@@ -95,38 +95,79 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden pb-16 pt-16 sm:pt-20">
-          <div aria-hidden className="absolute left-1/2 top-0 h-[420px] w-[900px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-          <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
-            <span className="inline-flex items-center gap-2 rounded-full bg-lightprimary px-3 py-1.5 text-xs font-semibold text-primary">
-              Software de ordens de serviço e chamados
-            </span>
-            <h1 className="mt-6 text-4xl font-bold leading-[1.1] text-link sm:text-6xl">
-              Tudo para organizar e fazer crescer o seu <span className="text-primary">negócio de serviços</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base text-bodytext sm:text-lg">
-              Do chamado aberto pelo cliente à OS assinada no local: agenda da equipe, controle de equipamentos,
-              laboratório, compras e relatórios em um só sistema.
-            </p>
-            <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <ButtonLink href="/login" size="lg" icon={<TbArrowRight className="h-5 w-5" />}>
-                Acessar o portal
-              </ButtonLink>
-              <ButtonLink href="/AreadeUsuario" size="lg" variant="outline">
-                Sou cliente, quero abrir um chamado
-              </ButtonLink>
+        <section className="relative isolate overflow-hidden bg-[#140d2b]">
+          <Image
+            src="/segments/hero.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="-z-20 object-cover object-right"
+          />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-[#140d2b] via-[#140d2b]/60 to-transparent" />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-[#140d2b] via-[#140d2b]/10 to-[#140d2b]/30" />
+
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-12 lg:pb-24 lg:pt-24">
+            <div className="lg:col-span-7">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+                Software de ordens de serviço e chamados
+              </span>
+              <h1 className="mt-6 text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white sm:text-6xl">
+                Tudo para organizar e fazer crescer o seu <span className="text-[#b9a4ff]">negócio de serviços</span>
+              </h1>
+              <p className="mt-6 max-w-xl text-base text-white/80 sm:text-lg">
+                <strong className="font-semibold text-white">Do chamado à OS assinada no local.</strong> Agenda da equipe,
+                controle de equipamentos, laboratório, compras e relatórios em um só sistema.
+              </p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <ButtonLink href="/login" size="lg" icon={<TbArrowRight className="h-5 w-5" />}>
+                  Acessar o portal
+                </ButtonLink>
+                <Link
+                  href="/AreadeUsuario"
+                  className="inline-flex h-12 items-center rounded-md border border-white/30 px-6 font-medium text-white transition-colors hover:bg-white/10"
+                >
+                  Sou cliente, quero abrir um chamado
+                </Link>
+              </div>
+              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
+                {["Área do cliente inclusa", "OS digital com assinatura", "Relatórios em Excel"].map((item) => (
+                  <li key={item} className="flex items-center gap-1.5">
+                    <TbCheck className="text-success" /> {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-bodytext">
-              {["Área do cliente inclusa", "OS digital com assinatura", "Relatórios em Excel"].map((item) => (
-                <li key={item} className="flex items-center gap-1.5">
-                  <TbCheck className="text-successtext" /> {item}
+
+            <ul aria-hidden className="hidden flex-col items-end gap-3 lg:col-span-5 lg:flex">
+              {[
+                { icon: <TbCalendarTime />, title: "OS agendada", text: "Instalação amanhã às 9h · Mariana" },
+                { icon: <TbRoute />, title: "Técnico a caminho", text: "OS #48224 · chegada em 15 min" },
+                { icon: <TbSignature />, title: "OS concluída e assinada", text: "Assinada por Sandra O. · há 2 min" },
+              ].map((note, index) => (
+                <li
+                  key={note.title}
+                  className="flex w-80 items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 text-white shadow-lg backdrop-blur-md"
+                  style={{ marginRight: `${index * 1.5}rem` }}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-xl">
+                    {note.icon}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center justify-between text-[11px] text-white/60">
+                      <span>Fire OS</span>
+                      <span>agora</span>
+                    </p>
+                    <p className="truncate text-sm font-semibold">{note.title}</p>
+                    <p className="truncate text-xs text-white/70">{note.text}</p>
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="relative mt-14">
-            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-wider text-muted">
+          <div className="pb-14">
+            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-wider text-white/50">
               Usado para organizar serviços de
             </p>
             <SegmentCarousel />
