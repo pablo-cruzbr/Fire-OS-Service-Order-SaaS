@@ -1,14 +1,18 @@
-# Fire OS — Service Order Management SaaS
+# Ordem Next — Service Order Management SaaS
+
+> Antes chamado **Fire OS**.
 
 ## ▶ Demonstração em Vídeo
 
 https://github.com/user-attachments/assets/e92169b7-23c2-4fe3-bc6a-10abf8c70550
 
 
-### *"Engenharia focada na eficiência: Eliminando a burocracia na gestão de Serviços de Informática."*
+### *"Ordens de serviço do chamado à assinatura, em 2 telas."*
+
+Técnicos de campo gastam mais tempo preenchendo sistema do que resolvendo problemas. O Ordem Next reduz cada atendimento de 5–6 telas para 2. Nasceu no suporte de TI e hoje atende qualquer empresa de serviços: TI, climatização, elétrica, oficinas e mais.
 
 <p align="center">
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js_14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" /></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" /></a>
   <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" /></a>
   <a href="https://reactnative.dev/"><img src="https://img.shields.io/badge/React_Native-61DAFB?style=for-the-badge&logo=react&logoColor=black" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /></a>
@@ -33,7 +37,7 @@ https://github.com/user-attachments/assets/e92169b7-23c2-4fe3-bc6a-10abf8c70550
 
 Empresas de TI terceirizadas que atendem prefeituras, escolas e postos de saúde costumam depender de sistemas legados onde o técnico de campo precisa navegar por **5 a 6 telas diferentes** para registrar uma única ordem de serviço — gastando mais tempo no software do que no hardware.
 
-**O Fire OS resolve isso.** Identifiquei esse problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: app mobile para o técnico em campo e painel web estratégico para o gestor.
+**O Ordem Next resolve isso.** Identifiquei esse problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: app mobile para o técnico em campo e painel web estratégico para o gestor.
 
 ---
 
@@ -41,7 +45,7 @@ Empresas de TI terceirizadas que atendem prefeituras, escolas e postos de saúde
 
 O sistema foi implantado em ambiente real de trabalho para validação, processando ordens de serviço de equipes técnicas atendendo instituições públicas.
 
-| Métrica | Antes (Sistema Legado) | Depois (Fire OS) | Ganho |
+| Métrica | Antes (Sistema Legado) | Depois (Ordem Next) | Ganho |
 |---|---|---|---|
 | Telas por OS | 5–6 telas | **2 telas** | **−66% complexidade** |
 | Esforço de input | 100% manual/fragmentado | Fluxo otimizado | **−83% esforço** |
@@ -55,12 +59,12 @@ O sistema foi implantado em ambiente real de trabalho para validação, processa
 
 ## 🏗️ Arquitetura do Sistema
 
-O Fire OS opera como um **monorepo com 3 camadas integradas**:
+O Ordem Next opera como um **monorepo com 3 camadas integradas**:
 
 ```mermaid
 graph TB
-  subgraph Web["🌐 Web Dashboard — Next.js 14 (App Router)"]
-    FE["Painel Administrativo<br/>SSR + Client Components + SCSS Modules"]
+  subgraph Web["🌐 Web Dashboard — Next.js 16 (App Router)"]
+    FE["Painel Administrativo<br/>SSR + Client Components + Tailwind CSS"]
   end
 
   subgraph Mobile["📱 App Mobile — React Native + Expo"]
@@ -98,7 +102,7 @@ graph TB
 ```
 fire-os/                              # Monorepo
 │
-├── Frontend/                         # Next.js 14 — Painel Administrativo Web
+├── Frontend/                         # Next.js 16 — Painel Administrativo Web
 │   └── src/
 │       ├── app/
 │       │   ├── dashboard/            # Rotas protegidas do painel
@@ -181,7 +185,7 @@ fire-os/                              # Monorepo
 
 | Camada | Tecnologias |
 |---|---|
-| **Frontend Web** | Next.js 14, React, TypeScript, SCSS Modules, react-select, ExcelJS |
+| **Frontend Web** | Next.js 16, React 19, TypeScript, Tailwind CSS v4, react-select, ExcelJS |
 | **Mobile** | React Native, Expo, Context API, AsyncStorage, Axios |
 | **Backend** | Node.js, Express, TypeScript, JWT, bcrypt, Zod, CASL |
 | **Banco de Dados** | PostgreSQL, Prisma ORM |
