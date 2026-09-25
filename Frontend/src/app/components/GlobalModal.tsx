@@ -1,87 +1,49 @@
 'use client';
 
-import { useGlobalModal } from "@/provider/GlobalModalProvider";
-import { ModalCompras } from './modalCardCompras';
-import { ModalAssistenciaTecnica } from './modalCardAssistenciaTecnica';
-import { ModalLaudoTecnico } from "./modalCardLaudoTecnico";
-import { ModalLaboratorio } from "./modalCardLaboratorio";
-import { ModalMaquinasPendentesLab } from "./modalCardMaquinasPendentesLab";
-import { ModalMaquinasPendentesOro } from "./modalCardMaquinasPendentesOro";
-import { ModalDocumentacaoTecnica } from "./modalCardDocumentacaoTecnica";
-import { ModalCardEquipamento } from "./modalCardEquipamento";
-import { ModalOrdemdeServico } from "./modalCardTickets";
-import { ModalCardEstabilizadores } from "./modalCardEstabilizadores";
-import { ModalCliente } from "./modalCliente";
-import { ModalClienteMunicipal } from "./modalClienteMunicipal";
-import { ModalRamaisSetores } from "./modalRamaisSetores";
-import { ModalUsuarios } from "./modalUsuarios";
+import { ComponentType } from "react";
+import { useGlobalModal, ModalType } from "@/provider/GlobalModalProvider";
+import type { EntityModalProps } from "@/features/modalTypes";
+import { AssistenciaTecnicaModal } from "@/features/assistenciaTecnica/AssistenciaTecnicaModal";
+import { ClienteModal } from "@/features/clientes/ClienteModal";
+import { ClienteMunicipalModal } from "@/features/clientesMunicipais/ClienteMunicipalModal";
+import { ComprasModal } from "@/features/compras/ComprasModal";
+import { DocumentacaoTecnicaModal } from "@/features/documentacaoTecnica/DocumentacaoTecnicaModal";
+import { EquipamentoModal } from "@/features/equipamentos/EquipamentoModal";
+import { EstabilizadoresModal } from "@/features/estabilizadores/EstabilizadoresModal";
+import { LaboratorioModal } from "@/features/laboratorio/LaboratorioModal";
+import { LaudoTecnicoModal } from "@/features/laudoTecnico/LaudoTecnicoModal";
+import { MaquinasPendentesLabModal } from "@/features/maquinasPendentesLab/MaquinasPendentesLabModal";
+import { MaquinasPendentesOroModal } from "@/features/maquinasPendentesOro/MaquinasPendentesOroModal";
+import { RamalSetorModal } from "@/features/ramaisSetores/RamalSetorModal";
+import { TecnicoModal } from "@/features/tecnicos/TecnicoModal";
+import { UsuarioModal } from "@/features/usuarios/UsuarioModal";
+import { OrdemModal } from "@/features/ordens/OrdemModal";
 
-import { useEffect } from "react";
+const modals: Partial<Record<NonNullable<ModalType>, ComponentType<EntityModalProps<any>>>> = {
+  assistencia: AssistenciaTecnicaModal,
+  cliente: ClienteModal,
+  clienteMunicipal: ClienteMunicipalModal,
+  compras: ComprasModal,
+  documentacaoTecnica: DocumentacaoTecnicaModal,
+  equipamento: EquipamentoModal,
+  Estabilizadores: EstabilizadoresModal,
+  laboratorio: LaboratorioModal,
+  laudotecnico: LaudoTecnicoModal,
+  maquinasPendentesLab: MaquinasPendentesLabModal,
+  maquinasPendentesOro: MaquinasPendentesOroModal,
+  OrdemdeServico: OrdemModal,
+  ramaisSetores: RamalSetorModal,
+  tecnico: TecnicoModal,
+  usuarios: UsuarioModal,
+};
 
+/** Renders the modal currently opened through `useGlobalModal().openModal`. */
 export default function GlobalModal() {
   const { isOpen, modalType, modalData, closeModal } = useGlobalModal();
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [isOpen]);
-
   if (!isOpen || !modalType) return null;
 
-  return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-      }}
-      onClick={closeModal}
-    >
-      <div 
-        style={{ 
-          background: 'white', 
-          padding: '20px', 
-          borderRadius: '8px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          position: 'relative'
-        }}
-        onClick={(e) => e.stopPropagation()} 
-      >
-        <button 
-          onClick={closeModal}
-          style={{ position: 'absolute', right: 10, top: 10, cursor: 'pointer' }}
-        >
-          ✖
-        </button>
-
-        {modalType === 'compras' && <ModalCompras data={modalData} />}
-        {modalType === 'assistencia' && <ModalAssistenciaTecnica data={modalData} />}
-        {modalType === 'laudotecnico' && <ModalLaudoTecnico data={modalData}/>}
-        {modalType === 'laboratorio' && <ModalLaboratorio data={modalData}/>}
-        {modalType === 'maquinasPendentesLab' && <ModalMaquinasPendentesLab data={modalData}/>}
-        {modalType === 'maquinasPendentesOro' && <ModalMaquinasPendentesOro data={modalData}/>}
-        {modalType === 'documentacaoTecnica' && <ModalDocumentacaoTecnica data={modalData}/>}
-        {modalType === 'OrdemdeServico' && <ModalOrdemdeServico data={modalData}/>}
-        {modalType === 'Estabilizadores' && <ModalCardEstabilizadores data={modalData}/>}
-        {modalType === 'cliente' && <ModalCliente data={modalData}/>}
-        {modalType === 'clienteMunicipal' && <ModalClienteMunicipal data={modalData}/>}
-        {modalType === 'ramaisSetores' && <ModalRamaisSetores data={modalData}/>}
-        {modalType === 'usuarios' && <ModalUsuarios data={modalData}/>}
-        {modalType === 'equipamento' && <ModalCardEquipamento data={modalData}/>}
-
-      </div>
-    </div>
-  );
+  const item = Array.isArray(modalData) ? modalData[0] : modalData;
+  const Modal = modals[modalType];
+  if (!Modal || !item) return null;
+  return <Modal data={item} onClose={closeModal} />;
 }

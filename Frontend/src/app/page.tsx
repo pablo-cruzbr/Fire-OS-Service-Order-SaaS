@@ -1,129 +1,358 @@
 import Image from "next/image";
-import styles from './page.module.scss';
-import logoImg from "../../public/Fire-os-fundo-branco.svg";
-import { cookies } from "next/headers";
-import { api } from "@/services/api";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { Button } from "./components/Button";
-import { loginSchema } from "@/lib/schemas/loginSchema";
+import {
+  TbArrowRight,
+  TbBuildingWarehouse,
+  TbCalendarEvent,
+  TbCalendarTime,
+  TbChartBar,
+  TbCheck,
+  TbClipboardCheck,
+  TbExternalLink,
+  TbFileSpreadsheet,
+  TbFileText,
+  TbFlask,
+  TbInbox,
+  TbMoon,
+  TbPhotoCheck,
+  TbReportAnalytics,
+  TbRoute,
+  TbShieldLock,
+  TbShoppingCart,
+  TbSignature,
+  TbTicket,
+  TbTool,
+  TbUserCheck,
+  TbUsersGroup,
+} from "react-icons/tb";
+import { ButtonLink } from "@/components/ui";
+import { Logo } from "@/components/brand/Logo";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { SegmentCarousel } from "@/features/landing/SegmentCarousel";
+import { SegmentShowcase } from "@/features/landing/SegmentShowcase";
+import { segments } from "@/features/landing/segments";
 
-interface PageProps {
-  searchParams: Promise<{ error?: string }>;
-}
+const workflow = [
+  { icon: <TbInbox />, title: "Receba chamados", text: "Clientes abrem chamados pela Área do Usuário, já identificados por empresa e setor." },
+  { icon: <TbCalendarTime />, title: "Agende e despache", text: "Defina técnico, prioridade e data. Arraste no calendário para reagendar." },
+  { icon: <TbRoute />, title: "Atenda em campo", text: "Acompanhe cada OS: aberta, em deslocamento, em andamento, pausada ou concluída." },
+  { icon: <TbTool />, title: "Registre o serviço", text: "Atividades, peças, equipamentos e solução aplicada ficam no histórico." },
+  { icon: <TbSignature />, title: "Colete a assinatura", text: "Fotos do atendimento e assinatura do responsável na OS digital." },
+  { icon: <TbChartBar />, title: "Analise e exporte", text: "Relatórios por período, cliente ou status, direto para o Excel." },
+];
 
-export default async function Home({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const error = params?.error;
+const highlights = [
+  { value: "3 perfis", label: "Administrador, técnico e cliente, cada um com o seu acesso" },
+  { value: "1 clique", label: "Para exportar as ordens de serviço filtradas em Excel" },
+  { value: "100% digital", label: "OS com fotos, atividades e assinatura, pronta para imprimir" },
+];
 
-  async function handleLogin(formData: FormData) {
-    "use server";
+const features = [
+  { icon: <TbTicket />, title: "Chamados e tickets", text: "Abertura pelo cliente ou pela equipe, com prioridade e tipo." },
+  { icon: <TbClipboardCheck />, title: "Ordens de serviço", text: "Status, técnico, atividades padrão e tempo de atendimento." },
+  { icon: <TbCalendarEvent />, title: "Calendário técnico", text: "Agenda mensal e semanal com reagendamento por arrastar." },
+  { icon: <TbPhotoCheck />, title: "Fotos e assinatura", text: "Comprovação do serviço anexada à própria OS." },
+  { icon: <TbBuildingWarehouse />, title: "Controle de equipamentos", text: "Patrimônio, estabilizadores e máquinas pendentes." },
+  { icon: <TbFlask />, title: "Laboratório e laudos", text: "Bancada, assistência autorizada e laudos técnicos." },
+  { icon: <TbShoppingCart />, title: "Compras", text: "Solicitações de peças com status de compra e entrega." },
+  { icon: <TbFileSpreadsheet />, title: "Relatórios", text: "Exportação em Excel e relatórios por secretaria." },
+  { icon: <TbFileText />, title: "Documentação técnica", text: "Procedimentos e informações de cada cliente." },
+  { icon: <TbUsersGroup />, title: "Clientes e setores", text: "Empresas, instituições, setores e ramais." },
+  { icon: <TbShieldLock />, title: "Perfis de acesso", text: "Cada perfil vê só o que precisa, validado no servidor." },
+  { icon: <TbMoon />, title: "Tema claro e escuro", text: "Interface moderna, confortável de dia e de noite." },
+];
 
-    const raw = {
-      email: formData.get("email")?.toString() ?? "",
-      password: formData.get("password")?.toString() ?? "",
-    };
+const steps = [
+  { icon: <TbTicket />, title: "O cliente abre o chamado", text: "Pela Área do Usuário, com o patrimônio e a descrição do problema." },
+  { icon: <TbUserCheck />, title: "A equipe atende", text: "O técnico é designado, se desloca e registra atividades, fotos e solução." },
+  { icon: <TbReportAnalytics />, title: "A OS é concluída", text: "O responsável assina, a OS digital fica disponível e entra nos relatórios." },
+];
 
-    const parsed = loginSchema.safeParse(raw);
-    if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message || "Dados inválidos";
-      redirect(`/?error=${encodeURIComponent(msg)}`);
-    }
-
-    const { email, password } = parsed.data;
-
-    try {
-      const response = await api.post("/session", { email, password });
-
-      if (response.data.token) {
-        const userRole = response.data.role?.toUpperCase() || "USER";
-        if (userRole === "USER") {
-          redirect("/?error=no_admin");
-        }
-
-        const cookieStore = await cookies();
-        const oneMonth = 60 * 60 * 24 * 30;
-
-        cookieStore.set("session", response.data.token, { 
-          maxAge: oneMonth, 
-          path: "/",
-          httpOnly: false, 
-          secure: process.env.NODE_ENV === "production" 
-        });
-        
-        cookieStore.set("role", userRole, { maxAge: oneMonth, path: "/" });
-
-        if (userRole === "ADMIN") {
-          redirect("/dashboard/ticketscount");
-        } else if (userRole === "TECNICO") {
-          redirect("/dashboard/tickets");
-        }
-      }
-    } catch (err: any) {
-      if (isRedirectError(err)) throw err;
-      
-      console.log("ERRO NO LOGIN:", err.response?.data || err.message);
-      redirect("/?error=credentials");
-    }
-  }
-
-  const errorMsg = error === "no_admin"
-    ? "Acesso negado: Este portal é exclusivo para Administradores e Técnicos."
-    : error === "credentials"
-    ? "E-mail ou senha incorretos."
-    : error
-    ? decodeURIComponent(error)
-    : null;
-
+export default function LandingPage() {
   return (
-    <div className={styles.container}>
-      <div className={styles.conteiner}>
-        <section className={styles.login}>
-          <Image src={logoImg} alt="Logo" width={200} height={100} priority />
-          <h1>Portal Administrativo</h1>
-          <div className={styles.userAreaContainer}>
-            <p className={styles.text}>É um cliente?</p>
-            <Link href="/AreadeUsuario" className={styles.userLink}>
-              Entre na conta de Usuário
-            </Link>
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
+        <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-6 px-4 sm:px-6">
+          <Link href="/" aria-label="Ordem Next, início" className="text-link">
+            <Logo className="h-6" />
+          </Link>
+          <nav aria-label="Seções" className="hidden items-center gap-7 text-sm font-medium text-link lg:flex">
+            <a href="#recursos" className="hover:text-primary">Recursos</a>
+            <a href="#segmentos" className="hover:text-primary">Segmentos</a>
+            <a href="#como-funciona" className="hover:text-primary">Como funciona</a>
+            <Link href="/AreadeUsuario" className="hover:text-primary">Área do usuário</Link>
+          </nav>
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
+            <ButtonLink href="/login" variant="ghost" className="hidden sm:inline-flex">
+              Entrar
+            </ButtonLink>
+            <ButtonLink href="/login" icon={<TbArrowRight className="h-4 w-4" />}>
+              Acessar o portal
+            </ButtonLink>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        {/* Hero */}
+        <section className="flex flex-col bg-[#140d2b] lg:min-h-[calc(100svh-70px)]">
+          <div className="relative isolate flex flex-1 items-center overflow-hidden">
+            <Image
+              src="/segments/hero.webp"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="-z-20 object-cover object-right"
+            />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-[#140d2b] via-[#140d2b]/60 to-transparent" />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-[#140d2b] via-[#140d2b]/10 to-[#140d2b]/30" />
+
+            <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:py-10">
+              <div className="lg:col-span-7">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+                  Software de ordens de serviço e chamados
+                </span>
+                <h1 className="mt-6 text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white sm:text-5xl xl:text-6xl">
+                  Tudo para organizar e fazer crescer o seu <span className="text-[#b9a4ff]">negócio de serviços</span>
+                </h1>
+                <p className="mt-5 max-w-xl text-base text-white/80 sm:text-lg">
+                  <strong className="font-semibold text-white">Do chamado à OS assinada no local.</strong> Agenda da equipe,
+                  controle de equipamentos, laboratório, compras e relatórios em um só sistema.
+                </p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <ButtonLink href="/login" size="lg" icon={<TbArrowRight className="h-5 w-5" />}>
+                    Acessar o portal
+                  </ButtonLink>
+                  <Link
+                    href="/AreadeUsuario"
+                    className="inline-flex h-12 items-center rounded-md border border-white/30 px-6 font-medium text-white transition-colors hover:bg-white/10"
+                  >
+                    Sou cliente, quero abrir um chamado
+                  </Link>
+                </div>
+                <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
+                  {["Área do cliente inclusa", "OS digital com assinatura", "Relatórios em Excel"].map((item) => (
+                    <li key={item} className="flex items-center gap-1.5">
+                      <TbCheck className="text-success" /> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <ul aria-hidden className="hidden flex-col items-end gap-3 lg:col-span-5 lg:flex">
+                {[
+                  { icon: <TbCalendarTime />, title: "OS agendada", text: "Instalação amanhã às 9h · Mariana" },
+                  { icon: <TbRoute />, title: "Técnico a caminho", text: "OS #48224 · chegada em 15 min" },
+                  { icon: <TbSignature />, title: "OS concluída e assinada", text: "Assinada por Sandra O. · há 2 min" },
+                ].map((note, index) => (
+                  <li
+                    key={note.title}
+                    className="flex w-80 items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 text-white shadow-lg backdrop-blur-md"
+                    style={{ marginRight: `${index * 1.5}rem` }}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-xl">
+                      {note.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center justify-between text-[11px] text-white/60">
+                        <span>Ordem Next</span>
+                        <span>agora</span>
+                      </p>
+                      <p className="truncate text-sm font-semibold">{note.title}</p>
+                      <p className="truncate text-xs text-white/70">{note.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
 
-          {errorMsg && (
-            <p style={{ 
-              color: '#FF3F4B', 
-              fontWeight: 'bold', 
-              marginBottom: '15px', 
-              textAlign: 'center',
-              backgroundColor: 'rgba(255, 63, 75, 0.1)',
-              padding: '10px',
-              borderRadius: '4px',
-              fontSize: '14px',
-              border: '1px solid rgba(255, 63, 75, 0.2)'
-            }}>
-              {errorMsg}
-            </p>
-          )}
-
-          <form action={handleLogin}>
-            <input 
-              type="email" 
-              name="email" 
-              placeholder="E-mail" 
-              required 
-              className={styles.input} 
-            />
-            <input 
-              type="password" 
-              name="password" 
-              placeholder="Senha" 
-              required 
-              className={styles.input} 
-            />
-            <Button/>
-          </form>
+          <div className="border-t border-white/10 bg-[#140d2b] pb-5 pt-5">
+            <SegmentCarousel />
+          </div>
         </section>
-      </div>
+
+        {/* Workflow */}
+        <section id="recursos" className="bg-surface py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">Do começo ao fim</p>
+              <h2 className="mt-2 text-3xl font-bold text-link sm:text-4xl">Um fluxo para cada etapa do atendimento</h2>
+            </div>
+            <ol className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {workflow.map((item, index) => (
+                <li
+                  key={item.title}
+                  className="rounded-xl bg-card p-6 shadow-md transition-transform duration-200 hover:-translate-y-1 dark:shadow-dark-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-lightprimary text-2xl text-primary">
+                      {item.icon}
+                    </span>
+                    <span className="text-sm font-bold text-primary/30">0{index + 1}</span>
+                  </div>
+                  <h3 className="mt-5 font-semibold text-link">{item.title}</h3>
+                  <p className="mt-2 text-sm text-bodytext">{item.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Highlights */}
+        <section className="border-y border-border py-14">
+          <dl className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 text-center sm:px-6 md:grid-cols-3">
+            {highlights.map((item) => (
+              <div key={item.value}>
+                <dt className="text-4xl font-bold text-primary">{item.value}</dt>
+                <dd className="mx-auto mt-2 max-w-xs text-bodytext">{item.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        {/* Segments */}
+        <section id="segmentos" className="py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">Segmentos</p>
+              <h2 className="mt-2 text-3xl font-bold text-link sm:text-4xl">Feito para quem vive de prestar serviço</h2>
+              <p className="mt-3 text-bodytext">
+                Veja como a ordem de serviço do Ordem Next se adapta ao dia a dia de cada tipo de negócio.
+              </p>
+            </div>
+            <div className="mt-12">
+              <SegmentShowcase />
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="bg-surface py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">Recursos</p>
+              <h2 className="mt-2 text-3xl font-bold text-link sm:text-4xl">Tudo o que a sua operação precisa</h2>
+            </div>
+            <ul className="mt-12 grid grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              {features.map((feature) => (
+                <li key={feature.title} className="flex gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-card text-xl text-primary shadow-md dark:shadow-dark-md">
+                    {feature.icon}
+                  </span>
+                  <div>
+                    <h3 className="font-semibold text-link">{feature.title}</h3>
+                    <p className="mt-1 text-sm text-bodytext">{feature.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section id="como-funciona" className="py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">Como funciona</p>
+              <h2 className="mt-2 text-3xl font-bold text-link sm:text-4xl">Do chamado à OS assinada em três passos</h2>
+            </div>
+            <ol className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+              {steps.map((step, index) => (
+                <li key={step.title} className="relative rounded-xl border border-border p-6">
+                  <span className="absolute right-6 top-6 text-4xl font-bold text-primary/15">{index + 1}</span>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl text-white">
+                    {step.icon}
+                  </span>
+                  <h3 className="mt-5 text-lg font-semibold text-link">{step.title}</h3>
+                  <p className="mt-2 text-bodytext">{step.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="px-4 pb-20 sm:px-6">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-2xl bg-primary px-8 py-14 text-center">
+            <div aria-hidden className="absolute -left-10 -top-16 h-52 w-52 rounded-full bg-white/10" />
+            <div aria-hidden className="absolute -bottom-20 -right-10 h-60 w-60 rounded-full bg-white/10" />
+            <h2 className="relative text-3xl font-bold text-white">Pronto para organizar seus atendimentos?</h2>
+            <p className="relative mx-auto mt-3 max-w-xl text-white/80">
+              Entre no portal administrativo ou abra um chamado pela Área do Usuário.
+            </p>
+            <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/login"
+                className="inline-flex h-12 items-center gap-2 rounded-md bg-white px-6 font-medium text-primary transition-opacity hover:opacity-90"
+              >
+                Acessar o portal <TbArrowRight />
+              </Link>
+              <Link
+                href="/AreadeUsuario"
+                className="inline-flex h-12 items-center gap-2 rounded-md border border-white/40 px-6 font-medium text-white transition-colors hover:bg-white/10"
+              >
+                <TbTicket /> Abrir um chamado
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-border bg-surface">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-12">
+          <div className="md:col-span-4">
+            <Logo className="h-6 text-link" />
+            <p className="mt-4 max-w-xs text-sm text-bodytext">
+              Software de ordens de serviço e chamados para empresas de assistência técnica e manutenção.
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <h3 className="text-sm font-semibold text-link">Produto</h3>
+            <ul className="mt-4 flex flex-col gap-2.5 text-sm text-bodytext">
+              <li><a href="#recursos" className="hover:text-primary">Recursos</a></li>
+              <li><a href="#como-funciona" className="hover:text-primary">Como funciona</a></li>
+              <li><a href="#segmentos" className="hover:text-primary">Segmentos</a></li>
+            </ul>
+          </div>
+          <div className="md:col-span-4">
+            <h3 className="text-sm font-semibold text-link">Segmentos</h3>
+            <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm text-bodytext">
+              {segments.map((segment) => (
+                <li key={segment.id}>
+                  <a href="#segmentos" className="hover:text-primary">{segment.short}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="md:col-span-2">
+            <h3 className="text-sm font-semibold text-link">Acesso</h3>
+            <ul className="mt-4 flex flex-col gap-2.5 text-sm text-bodytext">
+              <li><Link href="/login" className="hover:text-primary">Portal administrativo</Link></li>
+              <li><Link href="/AreadeUsuario" className="hover:text-primary">Área do usuário</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-border">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-bodytext sm:flex-row sm:px-6">
+            <p>© {new Date().getFullYear()} Ordem Next. Todos os direitos reservados.</p>
+            <p>
+              Fundado por{" "}
+              <a
+                href="https://pablocruz.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                Pablo Cruz <TbExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

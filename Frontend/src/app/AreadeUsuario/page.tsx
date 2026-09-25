@@ -1,112 +1,75 @@
-import Image from "next/image";
-import logo from "../../assets/Fire-os-fundo-roxo.svg";
-import styles from "./logindeUsuario.module.scss";
-import { api } from "@/services/api";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { FaEnvelope, FaLock } from "react-icons/fa";
-import { Button } from "./Button";
+import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { api } from "@/services/api";
 import { loginSchema } from "@/lib/schemas/loginSchema";
+import { loginErrorMessage, setSessionCookie } from "@/lib/auth";
+import { AuthDivider, AuthError, AuthShell, authSlides } from "@/components/auth/AuthShell";
+import { EmailInput, PasswordInput } from "@/components/auth/AuthFields";
+import { SubmitButton } from "@/components/auth/SubmitButton";
+import { Field } from "@/components/ui";
 
-export default function AreadeUsuario() {
-  
-  async function handleLogin(formData: FormData) {
-    "use server";
+type PageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
 
-    const raw = {
-      email: formData.get("email")?.toString() ?? "",
-      password: formData.get("password")?.toString() ?? "",
-    };
+async function handleLogin(formData: FormData) {
+  "use server";
 
-    const parsed = loginSchema.safeParse(raw);
-    if (!parsed.success) {
-      return;
-    }
-
-    const { email, password } = parsed.data;
-
-    try {
-      const response = await api.post("/session", { email, password });
-
-      if (!response.data.token) {
-        return;
-      }
-
-      const expressTime = 60 * 60 * 24 * 30 * 1000;
-      const cookieStore = await cookies();
-      
-      cookieStore.set("session", response.data.token, {
-        maxAge: expressTime,
-        path: "/",
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production"
-      });
-
-    } catch (err) {
-      return;
-    } 
-
-    redirect("/AreadeUsuario/formularioAddTickets");
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email")?.toString() ?? "",
+    password: formData.get("password")?.toString() ?? "",
+  });
+  if (!parsed.success) {
+    redirect(`/AreadeUsuario?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Dados inválidos")}`);
   }
-  
+
+  try {
+    const { data } = await api.post("/session", parsed.data);
+    if (!data?.token) redirect("/AreadeUsuario?error=credentials");
+    await setSessionCookie(data.token);
+  } catch (err: any) {
+    if (isRedirectError(err)) throw err;
+    redirect(err?.response ? "/AreadeUsuario?error=credentials" : "/AreadeUsuario?error=server");
+  }
+
+  redirect("/AreadeUsuario/formularioAddTickets");
+}
+
+export default async function AreadeUsuario({ searchParams }: PageProps) {
+  const { error } = await searchParams;
+
   return (
-    <div className={styles.container}>
-      <div className={styles.formsContainer}>
-        <div className={styles.signinSignup}>
-          <form action={handleLogin} className={styles.signInForm}>
-            <h2 className={styles.title}>Entrar</h2>
-
-            <div className={styles.inputField}>
-              <FaEnvelope className={styles.icon} />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                required
-              />
-            </div>
-
-            <div className={styles.inputField}>
-              <FaLock className={styles.icon} />
-              <input
-                type="password"
-                name="password"
-                placeholder="Senha"
-                required
-              />
-            </div>
-
-            <div className={styles.userAreaContainer}>
-              <p className={styles.text}>É um colaborador?</p>
-              <Link href="https://fire-os-frontend.vercel.app/" className={styles.userLink}>
-                Portal Administrativo
-              </Link>
-            </div>
-            <Button />            
-          </form>
-        </div>
-      </div>
-
-      <div className={styles.panelsContainer}>
-        <div className={`${styles.panel} ${styles.leftPanel}`}>
-          <div className={styles.content}>
-            <Image
-              src={logo}
-              alt="Logo Fire OS"
-              width={400}
-              height={500}
-              className={styles.image}
-            />
-            <h3>Sua Central de Chamados Inteligente e Rápida</h3>
-            <h4>
-              Abra chamados, acompanhe soluções e tenha <br />
-              suporte completo.
-            </h4>
-            <p>Atendimentos Técnicos Descomplicados, Do Jeito Certo.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <AuthShell
+      title="Área do usuário"
+      subtitle="Entre para abrir e acompanhar seus chamados."
+      slides={authSlides.client}
+      asideTitle="Atendimento técnico descomplicado"
+      asideText="Abra chamados em poucos cliques e acompanhe cada etapa até a solução."
+      asidePoints={["Abra um chamado em menos de um minuto", "Seus dados já vão junto com o pedido", "Técnicos atendendo no seu local"]}
+      topLink={
+        <>
+          É colaborador?{" "}
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Portal administrativo
+          </Link>
+        </>
+      }
+    >
+      <AuthError message={loginErrorMessage(error)} />
+      <form action={handleLogin} className="flex flex-col gap-5">
+        <Field label="E-mail" htmlFor="email">
+          <EmailInput id="email" name="email" required />
+        </Field>
+        <Field label="Senha" htmlFor="password">
+          <PasswordInput id="password" name="password" autoComplete="current-password" required minLength={4} />
+        </Field>
+        <SubmitButton>Entrar</SubmitButton>
+      </form>
+      <AuthDivider>ou</AuthDivider>
+      <p className="text-center text-sm text-bodytext">
+        Ainda não tem acesso? Peça à empresa que presta o atendimento para criar o seu usuário.
+      </p>
+    </AuthShell>
   );
 }

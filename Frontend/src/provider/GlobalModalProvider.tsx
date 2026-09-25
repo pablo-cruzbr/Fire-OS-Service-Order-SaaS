@@ -1,26 +1,24 @@
 'use client'
 
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-// Tipos de Modal suportados
+/** Every modal GlobalModal knows how to render. */
 export type ModalType =
-  | 'laudotecnico'
   | 'assistencia'
-  | 'compras'
-  | 'usuarios'
-  | 'equipamentos'
-  | 'laboratorio'
-  | 'maquinasPendentesLab'
-  | 'maquinasPendentesOro'
-  | 'documentacaoTecnica'
-  | 'tickets'
-  | 'OrdemdeServico'
-  | 'Estabilizadores'
   | 'cliente'
   | 'clienteMunicipal'
-  | 'ramaisSetores'
-  | 'usuarios'
+  | 'compras'
+  | 'documentacaoTecnica'
   | 'equipamento'
+  | 'Estabilizadores'
+  | 'laboratorio'
+  | 'laudotecnico'
+  | 'maquinasPendentesLab'
+  | 'maquinasPendentesOro'
+  | 'OrdemdeServico'
+  | 'ramaisSetores'
+  | 'tecnico'
+  | 'usuarios'
   | null;
 
 interface ModalContextProps {
@@ -38,31 +36,21 @@ export const useGlobalModal = () => useContext(ModalContext);
 export function GlobalModalProvider({ children }: { children: ReactNode }) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [modalData, setModalData] = useState<any>(null);
-  const [isOpen, setIsOpen] = useState(false);
 
-  const openModal = (type: ModalType, data?: any) => {
+  const openModal = useCallback((type: ModalType, data?: any) => {
     setModalType(type);
     setModalData(data ?? null);
-    setIsOpen(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalType(null);
     setModalData(null);
-    setIsOpen(false);
-  };
+  }, []);
 
-  return (
-    <ModalContext.Provider
-      value={{
-        openModal,
-        closeModal,
-        modalType,
-        modalData,
-        isOpen,
-      }}
-    >
-      {children}
-    </ModalContext.Provider>
+  const value = useMemo(
+    () => ({ openModal, closeModal, modalType, modalData, isOpen: modalType !== null }),
+    [openModal, closeModal, modalType, modalData],
   );
+
+  return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;
 }
