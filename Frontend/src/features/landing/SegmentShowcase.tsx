@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { StatusBadge } from "@/components/ui";
 import { segments } from "./segments";
 
-/** Tabs of service segments: pick one on the left, see how Fire OS fits it on the right. */
+/** Tabs of service segments: pick one on the left, see how Ordem Next fits it on the right. */
 export function SegmentShowcase() {
   const [activeId, setActiveId] = useState(segments[0].id);
   const activeIndex = Math.max(0, segments.findIndex((segment) => segment.id === activeId));

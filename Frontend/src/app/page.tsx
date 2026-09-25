@@ -8,6 +8,7 @@ import {
   TbChartBar,
   TbCheck,
   TbClipboardCheck,
+  TbExternalLink,
   TbFileSpreadsheet,
   TbFileText,
   TbFlask,
@@ -25,11 +26,11 @@ import {
   TbUsersGroup,
 } from "react-icons/tb";
 import { ButtonLink } from "@/components/ui";
+import { Logo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { SegmentCarousel } from "@/features/landing/SegmentCarousel";
 import { SegmentShowcase } from "@/features/landing/SegmentShowcase";
 import { segments } from "@/features/landing/segments";
-import logo from "../../public/Fire-os-fundo-branco.svg";
 
 const workflow = [
   { icon: <TbInbox />, title: "Receba chamados", text: "Clientes abrem chamados pela Área do Usuário, já identificados por empresa e setor." },
@@ -72,8 +73,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="rounded-md bg-white px-1 py-1">
-            <Image src={logo} alt="Fire OS" width={141} height={32} priority className="h-auto" />
+          <Link href="/" aria-label="Ordem Next, início" className="text-link">
+            <Logo className="h-6" />
           </Link>
           <nav aria-label="Seções" className="hidden items-center gap-7 text-sm font-medium text-link lg:flex">
             <a href="#recursos" className="hover:text-primary">Recursos</a>
@@ -156,7 +157,7 @@ export default function LandingPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center justify-between text-[11px] text-white/60">
-                        <span>Fire OS</span>
+                        <span>Ordem Next</span>
                         <span>agora</span>
                       </p>
                       <p className="truncate text-sm font-semibold">{note.title}</p>
@@ -220,7 +221,7 @@ export default function LandingPage() {
               <p className="text-sm font-semibold uppercase tracking-wide text-primary">Segmentos</p>
               <h2 className="mt-2 text-3xl font-bold text-link sm:text-4xl">Feito para quem vive de prestar serviço</h2>
               <p className="mt-3 text-bodytext">
-                Veja como a ordem de serviço do Fire OS se adapta ao dia a dia de cada tipo de negócio.
+                Veja como a ordem de serviço do Ordem Next se adapta ao dia a dia de cada tipo de negócio.
               </p>
             </div>
             <div className="mt-12">
@@ -304,9 +305,7 @@ export default function LandingPage() {
       <footer className="border-t border-border bg-surface">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-12">
           <div className="md:col-span-4">
-            <span className="inline-block rounded-md bg-white px-1 py-1">
-              <Image src={logo} alt="Fire OS" width={128} height={29} className="h-auto" />
-            </span>
+            <Logo className="h-6 text-link" />
             <p className="mt-4 max-w-xs text-sm text-bodytext">
               Software de ordens de serviço e chamados para empresas de assistência técnica e manutenção.
             </p>
@@ -338,9 +337,20 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="border-t border-border">
-          <p className="mx-auto max-w-7xl px-4 py-5 text-sm text-bodytext sm:px-6">
-            © {new Date().getFullYear()} Fire OS. Todos os direitos reservados.
-          </p>
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-bodytext sm:flex-row sm:px-6">
+            <p>© {new Date().getFullYear()} Ordem Next. Todos os direitos reservados.</p>
+            <p>
+              Fundado por{" "}
+              <a
+                href="https://pablocruz.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                Pablo Cruz <TbExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -8,7 +7,7 @@ import { TbChevronDown, TbPointFilled } from "react-icons/tb";
 import { cn } from "@/lib/cn";
 import type { NavItem, NavSection } from "./navigation";
 
-import logoLight from "../../../public/Fire-os-fundo-branco.svg";
+import { Logo } from "@/components/brand/Logo";
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === href;
@@ -112,8 +111,8 @@ export function Sidebar({ sections, open, onClose }: SidebarProps) {
         )}
       >
         <div className="flex h-[70px] shrink-0 items-center px-6">
-          <Link href="/dashboard" onClick={onClose} className="rounded-md bg-white px-1 py-1 dark:px-2">
-            <Image src={logoLight} alt="Fire OS" width={150} height={34} priority className="h-auto" />
+          <Link href="/dashboard" onClick={onClose} aria-label="Ordem Next, painel" className="text-link">
+            <Logo className="h-6" />
           </Link>
         </div>
 

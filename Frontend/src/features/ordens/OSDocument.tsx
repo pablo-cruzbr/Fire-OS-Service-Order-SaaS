@@ -99,9 +99,9 @@ export function OSDocument({ os, fotos, crossOrigin, ref, className }: OSDocumen
     >
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Fire-os-fundo-branco.svg" alt="Fire OS" width={185} height={42} className="h-11 w-auto dark:hidden" />
+        <img src="/brand/ordem-next.svg" alt="Ordem Next" width={258} height={32} className="h-8 w-auto dark:hidden" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Fire-os-fundo-roxo.svg" alt="Fire OS" width={185} height={42} className="hidden h-11 w-auto rounded-md dark:block" />
+        <img src="/brand/ordem-next-white.svg" alt="Ordem Next" width={258} height={32} className="hidden h-8 w-auto dark:block" />
         <div className="text-right">
           <h1 className="text-xl font-semibold text-link">Ordem de serviço</h1>
           <p className="text-sm text-bodytext">

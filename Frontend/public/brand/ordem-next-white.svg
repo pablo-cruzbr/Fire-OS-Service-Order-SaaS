@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 40 968 120" width="968" height="120" role="img" aria-label="Ordem Next">
+  <title>Ordem Next</title>
+  <g fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="80" cy="100" r="53" />
+    <path d="M171 153 V113 A26 26 0 0 1 197 87" />
+    <circle cx="266" cy="120" r="33" />
+    <path d="M299 47 V153" />
+    <path d="M370 120 H403 A33 33 0 1 0 394 143" />
+    <path d="M441 153 V111 A24 24 0 0 1 489 111 V153 M489 111 A24 24 0 0 1 537 111 V153" />
+    <g stroke="#ffffff">
+      <path d="M631 153 V47 L711 153 V47" />
+      <path d="M782 120 H815 A33 33 0 1 0 806 143" />
+      <path d="M849 87 L909 153 M909 87 L849 153" />
+      <path d="M959 60 V136 A17 17 0 0 0 976 153 H981 M943 87 H981" />
+    </g>
+  </g>
+</svg>

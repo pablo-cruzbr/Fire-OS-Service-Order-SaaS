@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { TbMoon, TbSun } from "react-icons/tb";
 
-const STORAGE_KEY = "fireos-theme";
+const STORAGE_KEY = "ordemnext-theme";
 
 /** Inline script for <head>: applies the saved theme before first paint. */
 export const themeScript = `(function(){try{var t=localStorage.getItem("${STORAGE_KEY}");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})();`;

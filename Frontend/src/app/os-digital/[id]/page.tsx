@@ -6,7 +6,7 @@ import { OSDigitalView } from "@/features/ordens/OSDigitalView";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Ordem de serviço digital - Fire OS" };
+export const metadata: Metadata = { title: "Ordem de serviço digital" };
 
 export default async function OSDigitalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
