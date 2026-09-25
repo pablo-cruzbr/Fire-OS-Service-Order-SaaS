@@ -12,8 +12,13 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Fire OS - Service Order",
-  description: "Gestão de ordens de serviço, chamados e controles técnicos.",
+  title: {
+    default: "Ordem Next — Ordens de serviço do chamado à assinatura",
+    template: "%s · Ordem Next",
+  },
+  description:
+    "Gestão de ordens de serviço e chamados para equipes de campo: agenda técnica, OS digital com assinatura, controle de equipamentos e relatórios.",
+  applicationName: "Ordem Next",
 };
 
 export default function RootLayout({

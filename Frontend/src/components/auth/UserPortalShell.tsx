@@ -1,9 +1,8 @@
-import Image from "next/image";
 import { ReactNode } from "react";
 import { TbLogout } from "react-icons/tb";
 import { logoutAction } from "@/actions/logout";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
-import logo from "../../../public/Fire-os-fundo-branco.svg";
+import { Logo } from "@/components/brand/Logo";
 
 /** Simple top-bar layout for the end-user area (no admin sidebar). */
 export function UserPortalShell({ children }: { children: ReactNode }) {
@@ -11,9 +10,7 @@ export function UserPortalShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-surface">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-[70px] max-w-5xl items-center gap-3 px-4 sm:px-6">
-          <span className="rounded-md bg-white px-1 py-1">
-            <Image src={logo} alt="Fire OS" width={128} height={29} priority className="h-auto" />
-          </span>
+          <Logo className="h-6 text-link" />
           <span className="hidden rounded-full bg-lightprimary px-2.5 py-1 text-xs font-medium text-primary sm:inline">
             Área do usuário
           </span>

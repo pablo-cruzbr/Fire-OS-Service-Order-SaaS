@@ -95,7 +95,7 @@ export default function FormularioAddTickets() {
       <div className="relative mb-6 overflow-hidden rounded-xl bg-lightprimary px-6 py-7 sm:px-8">
         <div className="relative z-10">
           <h1 className="text-2xl font-semibold text-link">
-            {usuario ? `Olá, ${usuario.name.split(" ")[0]}!` : "Bem-vindo ao Fire OS"}
+            {usuario ? `Olá, ${usuario.name.split(" ")[0]}!` : "Bem-vindo ao Ordem Next"}
           </h1>
           <p className="mt-2 max-w-xl text-bodytext">
             Descreva o problema abaixo e nossa equipe técnica entrará em contato para o atendimento.

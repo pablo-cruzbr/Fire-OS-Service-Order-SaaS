@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { TbCheck, TbCircleCheck } from "react-icons/tb";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { AuthSlide, AuthSlideshow } from "./AuthSlideshow";
-import logo from "../../../public/Fire-os-fundo-branco.svg";
+import { Logo } from "@/components/brand/Logo";
 
 /** Photo sequences for each auth page (CC0 images in /public/segments). */
 export const authSlides = {
@@ -64,8 +64,8 @@ export function AuthShell({
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-[#2a1760]/50 to-transparent" />
 
         <div className="flex items-start justify-between gap-6">
-          <Link href="/" className="rounded-md bg-white px-2 py-1">
-            <Image src={logo} alt="Fire OS" width={150} height={34} priority className="h-auto" />
+          <Link href="/" aria-label="Ordem Next, início" className="text-white">
+            <Logo className="h-7" />
           </Link>
           <div aria-hidden className="flex max-w-[280px] items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 text-white shadow-lg backdrop-blur-md">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-xl">
@@ -97,8 +97,8 @@ export function AuthShell({
 
       <main className="flex flex-col px-6 py-8 sm:px-10 lg:col-span-5">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="rounded-md bg-white px-1 py-1 lg:invisible">
-            <Image src={logo} alt="Fire OS" width={128} height={29} className="h-auto" />
+          <Link href="/" aria-label="Ordem Next, início" className="text-link lg:invisible">
+            <Logo className="h-6" />
           </Link>
           <div className="flex items-center gap-3 text-sm text-bodytext">
             {topLink && <span className="hidden sm:inline">{topLink}</span>}
@@ -125,7 +125,17 @@ export function AuthShell({
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted">© {new Date().getFullYear()} Fire OS</p>
+        <p className="text-center text-xs text-muted">
+          © {new Date().getFullYear()} Ordem Next · Fundado por{" "}
+          <a
+            href="https://pablocruz.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-bodytext hover:text-primary hover:underline"
+          >
+            Pablo Cruz
+          </a>
+        </p>
       </main>
     </div>
   );

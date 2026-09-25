@@ -350,7 +350,7 @@ const withTotals = <T,>(rows: T[], status: (row: T) => string, totals: Record<st
 export const mockUser = {
   id: "usr-admin",
   name: "Pablo Cruz",
-  email: "admin@fireos.dev",
+  email: "admin@ordemnext.dev",
   role: process.env.NEXT_PUBLIC_MOCK_ROLE ?? "ADMIN",
 };
 
