@@ -6,7 +6,7 @@ import { ExpressAdapter } from "@bull-board/express";
 import { uploadQueue } from "./uploadQueue";
 
 // Painel visual só pra olhar a fila — não tem nada a ver com a API
-// principal do Fire OS, é só uma ferramenta de desenvolvimento.
+// principal do Ordem Next, é só uma ferramenta de desenvolvimento.
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/admin/queues");
 
