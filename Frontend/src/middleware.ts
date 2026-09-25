@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(req: NextRequest) {
+  // `npm run dev:mock`: no backend to validate against.
+  if (process.env.NEXT_PUBLIC_MOCK_API === "true") return NextResponse.next();
+
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("session")?.value;
 
   if (!token) {
-    const loginUrl = pathname.startsWith("/dashboard") ? "/" : "/AreadeUsuario";
+    const loginUrl = pathname.startsWith("/dashboard") ? "/login" : "/AreadeUsuario";
     return NextResponse.redirect(new URL(loginUrl, req.url));
   }
 
   const isValid = await validateToken(token);
 
   if (!isValid) {
-    const loginUrl = pathname.startsWith("/dashboard") ? "/" : "/AreadeUsuario";
+    const loginUrl = pathname.startsWith("/dashboard") ? "/login" : "/AreadeUsuario";
     const response = NextResponse.redirect(new URL(loginUrl, req.url));
     
     response.cookies.delete("session");
