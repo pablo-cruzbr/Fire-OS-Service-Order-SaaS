@@ -8,7 +8,7 @@ import { AuthError, AuthShell } from "@/components/auth/AuthShell";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { Field, Input } from "@/components/ui";
 
-type PageProps = {
+type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
@@ -20,35 +20,36 @@ async function handleLogin(formData: FormData) {
     password: formData.get("password")?.toString() ?? "",
   });
   if (!parsed.success) {
-    redirect(`/AreadeUsuario?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Dados inválidos")}`);
+    redirect(`/login?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Dados inválidos")}`);
   }
 
   try {
     const { data } = await api.post("/session", parsed.data);
-    if (!data?.token) redirect("/AreadeUsuario?error=credentials");
+    if (!data?.token) redirect("/login?error=credentials");
+
+    const role = data.role?.toUpperCase() ?? "USER";
+    if (role === "USER") redirect("/login?error=no_admin");
+
     await setSessionCookie(data.token);
+    redirect(role === "ADMIN" ? "/dashboard" : "/dashboard/tickets");
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
-    redirect(err?.response ? "/AreadeUsuario?error=credentials" : "/AreadeUsuario?error=server");
+    redirect(err?.response ? "/login?error=credentials" : "/login?error=server");
   }
-
-  redirect("/AreadeUsuario/formularioAddTickets");
 }
 
-export default async function AreadeUsuario({ searchParams }: PageProps) {
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error } = await searchParams;
 
   return (
     <AuthShell
-      title="Área do usuário"
-      subtitle="Entre para abrir e acompanhar seus chamados."
-      asideTitle="Atendimento técnico descomplicado"
-      asideText="Abra chamados em poucos cliques e acompanhe cada etapa até a solução."
+      title="Portal administrativo"
+      subtitle="Acesso para administradores e técnicos."
       footer={
         <>
-          É um colaborador?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Acesse o portal administrativo
+          É um cliente?{" "}
+          <Link href="/AreadeUsuario" className="font-medium text-primary hover:underline">
+            Entre na Área do Usuário
           </Link>
         </>
       }
