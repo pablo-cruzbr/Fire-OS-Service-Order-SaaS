@@ -9,6 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Valor só de teste: a API assina e valida os JWTs com ele. Localmente
+      # vem do Backend/.env, que não existe no CI.
+      JWT_SECREATE: ci-test-secret
 
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: Backend/package-lock.json
 
