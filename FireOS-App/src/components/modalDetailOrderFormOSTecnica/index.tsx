@@ -15,6 +15,7 @@ import {
 import { api } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SignatureScreen, { SignatureViewRef } from 'react-native-signature-canvas';
+import { colors } from '../../theme/colors';
 import { MaterialIcons } from '@expo/vector-icons'; // Importação adicionada
 
 interface ModalDetailOrderTecnicoProps {
@@ -114,7 +115,7 @@ export function ModalDetailOrderFormOSTecnica({
     container: {
       width: WIDTH - 30,
       maxHeight: HEIGHT - 80,
-      backgroundColor: '#fff',
+      backgroundColor: colors.white,
       padding: 20,
       borderRadius: 12,
     },
@@ -161,7 +162,7 @@ export function ModalDetailOrderFormOSTecnica({
                 descriptionText="Assine acima"
                 webStyle={`
                   .m-signature-pad--footer {display: none; margin: 0px;}
-                  .m-signature-pad {box-shadow: none; border: 1px solid #f4f4f4;}
+                  .m-signature-pad {box-shadow: none; border: 1px solid #e5eaef;}
                   body,html {height: 200px;}
                 `}
               />
@@ -187,7 +188,7 @@ export function ModalDetailOrderFormOSTecnica({
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.white} />
               ) : (
                 <Text style={styles.buttonText}>FINALIZAR ORDEM</Text>
               )}
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4E3182',
+    color: colors.primary,
   },
   closeButtonIcon: {
     padding: 5,
@@ -233,16 +234,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.link,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.surface,
   },
   textArea: {
     height: 80,
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
   signatureContainer: {
     height: 200,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 10,
@@ -262,14 +263,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   buttonSubmit: {
-    backgroundColor: '#4E3182',
+    backgroundColor: colors.primary,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 12,
   },
   buttonSecondary: {
-    backgroundColor: '#EDF2F7',
+    backgroundColor: colors.border,
     padding: 10,
     borderRadius: 6,
     width: '48%',
@@ -280,17 +281,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: colors.white,
     fontWeight: '800',
     fontSize: 16,
   },
   buttonTextSecondary: {
-    color: '#4E3182',
+    color: colors.primary,
     fontWeight: '600',
     fontSize: 12,
   },
   buttonTextCancel: {
-    color: '#E53E3E',
+    color: colors.errorText,
     fontWeight: '600',
   },
 });
