@@ -14,6 +14,7 @@ import { ScrollComIndicador } from "../ScrollComIndicador";
 import { OrdensDeServico } from "../../pages/Dashboard";
 import { ModalDetailOrderFormTecnico } from "../modalDetailOrderFormTecnico";
 import { MaterialIcons } from "@expo/vector-icons";
+import { colors } from "../../theme/colors";
 import { FontAwesome5 } from '@expo/vector-icons'; // Se usar Expo
 // import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'; // Se usar React Native CLI puro
 
@@ -64,7 +65,7 @@ export function ModalNavegacao({ ordem, handleCloseModal }: ModalDetailOsProps) 
     onPress={() => setModalDestinoOpen(true)}
   >
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-      <MaterialIcons name="navigation" size={20} color="#FFF" style={{ marginRight: 8 }} />
+      <MaterialIcons name="navigation" size={20} color={colors.white} style={{ marginRight: 8 }} />
       <Text style={styles.textButton}>NAVEGAR ATÉ O LOCAL</Text>
     </View>
   </TouchableOpacity>
@@ -80,12 +81,12 @@ export function ModalNavegacao({ ordem, handleCloseModal }: ModalDetailOsProps) 
       <Text style={{fontWeight: 'bold'}}>{item.label}</Text>
       <View style={styles.rowButtons}>
         <TouchableOpacity style={styles.btnNav} onPress={() => abrirWaze(item.endereco)}>
-          <FontAwesome5 name="waze" size={16} color="#FFF" /> <Text style={{color:'#FFF'}}>WAZE</Text>
+          <FontAwesome5 name="waze" size={16} color={colors.white} /> <Text style={{color:colors.white}}>WAZE</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-        style={[styles.btnNav, {backgroundColor:'#27AE60'}]} onPress={() => 
+        style={[styles.btnNav, {backgroundColor:colors.success}]} onPress={() => 
           abrirGoogleMaps(item.endereco)}>
-          <FontAwesome5 name="map-marked-alt" size={16} color="#FFF" /> <Text style={{color:'#FFF'}}>GOOGLE MAPS</Text>
+          <FontAwesome5 name="map-marked-alt" size={16} color={colors.white} /> <Text style={{color:colors.white}}>GOOGLE MAPS</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -106,25 +107,25 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
   modalContainer: { 
     width: WIDTH, 
-    backgroundColor: "#FFF", 
+    backgroundColor: colors.white, 
     paddingHorizontal: 15,
     paddingTop: 10, 
     paddingBottom: 10
   },
   buttonBase: { 
-   backgroundColor: "#4E3182", 
+   backgroundColor: colors.primary, 
     paddingVertical: 15, 
     paddingHorizontal: 30, 
     borderRadius: 8, 
     alignItems: "center",
     width: '90%', 
   },
-  buttonNavigation: { backgroundColor: "#4E3182" },
-  textButton: { color: "#FFF", fontWeight: "bold" },
+  buttonNavigation: { backgroundColor: colors.primary },
+  textButton: { color: colors.white, fontWeight: "bold" },
   title: { fontSize: 18, fontWeight: "bold" },
   centeredModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: '#FFF', padding: 20, borderRadius: 12 },
-  destinoItem: { marginTop: 15, borderBottomWidth: 1, borderColor: '#EEE', paddingBottom: 10 },
+  modalContent: { backgroundColor: colors.white, padding: 20, borderRadius: 12 },
+  destinoItem: { marginTop: 15, borderBottomWidth: 1, borderColor: colors.border, paddingBottom: 10 },
   rowButtons: { flexDirection: 'row', gap: 10, marginTop: 10 },
-  btnNav: { flex: 1, padding: 10, backgroundColor: '#4E3182', alignItems: 'center', borderRadius: 5 }
+  btnNav: { flex: 1, padding: 10, backgroundColor: colors.primary, alignItems: 'center', borderRadius: 5 }
 });

@@ -13,6 +13,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { api } from "../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { colors } from "../../theme/colors";
 
 interface ModalDetailOrderTecnicoProps {
   handleCloseModal: () => void;
@@ -278,7 +279,7 @@ const handlePesquisaHibrida = async () => {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.white} />
             ) : (
               <Text style={styles.buttonText}>Concluir OS</Text>
             )}
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   container: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     margin: 20,
     padding: 20,
     borderRadius: 12,
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 6,
     padding: 10,
     marginBottom: 12,
@@ -328,7 +329,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 6,
     marginBottom: 12,
   },
@@ -338,32 +339,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   infoBox: {
-    backgroundColor: "#f2f2f2",
+    backgroundColor: colors.surface,
     padding: 10,
     borderRadius: 6,
     marginBottom: 12,
   },
   button: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 6,
     alignItems: "center",
     marginBottom: 10,
   },
   buttonSmall: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     padding: 10,
     borderRadius: 6,
     alignItems: "center",
   },
   buttonClose: {
-    backgroundColor: "#888",
+    backgroundColor: colors.muted,
     padding: 12,
     borderRadius: 6,
     alignItems: "center",
   },
   buttonText: {
-    color: "#fff",
+    color: colors.white,
     fontWeight: "bold",
   },
 });

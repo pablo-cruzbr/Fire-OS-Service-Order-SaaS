@@ -24,6 +24,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from "expo-image-picker";
 import { SiGooglemaps } from "react-icons/si";
 import { SiWaze } from "react-icons/si";
+import { colors } from "../../theme/colors";
 import { FontAwesome5 } from '@expo/vector-icons'; // Ou de 'react-native-vector-icons/FontAwesome5'
 
 
@@ -577,10 +578,10 @@ const isDisabled = selectedImages.length === 0;
         <View style={styles.header}>
           <Text style={styles.title}>Detalhes da Ordem</Text>
           <TouchableOpacity onPress={atualizarOrdem} style={styles.refreshIcon}>
-            <MaterialIcons name="refresh" size={24} color="#0F1431" />
+            <MaterialIcons name="refresh" size={24} color={colors.link} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleCloseModal} style={styles.closeIcon}>
-            <MaterialIcons name="close" size={34} color="#0F1431" />
+            <MaterialIcons name="close" size={34} color={colors.link} />
           </TouchableOpacity>
         </View>
 
@@ -633,7 +634,7 @@ const isDisabled = selectedImages.length === 0;
   ) : (
     <>
       <Text style={styles.label}>Endereço:</Text>
-      <Text style={{ color: '#E67E22', fontWeight: '500' }}>
+      <Text style={{ color: colors.warningText, fontWeight: '500' }}>
         Endereço ainda não atribuído. Peça para seu gestor atribuir.
       </Text>
     </>
@@ -704,13 +705,13 @@ const isDisabled = selectedImages.length === 0;
       style={styles.reSignButton} 
       onPress={() => setShowSignatureModal(true)}
     >
-      <MaterialIcons name="refresh" size={16} color="#4E3182" />
+      <MaterialIcons name="refresh" size={16} color={colors.primary} />
       <Text style={styles.reSignText}>Refazer assinatura</Text>
     </TouchableOpacity>
   </View>
 ) : (
   <View style={{ marginVertical: 10 }}>
-    <Text style={{ color: '#666', fontStyle: 'italic', marginBottom: 10 }}>
+    <Text style={{ color: colors.bodytext, fontStyle: 'italic', marginBottom: 10 }}>
       Nenhuma assinatura coletada para esta ordem.
     </Text>
   </View>
@@ -718,21 +719,21 @@ const isDisabled = selectedImages.length === 0;
 
              <TouchableOpacity style={styles.buttonClose} onPress={() => setModalTecnicoOpen(true)}>
               <View style={styles.buttonContent}>
-                <MaterialIcons name="description" size={20} color="#FFF" />
+                <MaterialIcons name="description" size={20} color={colors.white} />
                 <Text style={styles.textButtonClose}>ADICIONAR DESCRIÇÃO TÉCNICA</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.buttonClose} onPress={takePhoto}>
               <View style={styles.buttonContent}>
-                <MaterialIcons name="photo-camera" size={20} color="#FFF" />
+                <MaterialIcons name="photo-camera" size={20} color={colors.white} />
                 <Text style={styles.textButtonClose}>TIRAR FOTO</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.buttonClose} onPress={pickImages}>
               <View style={styles.buttonContent}>
-                <MaterialIcons name="photo-library" size={20} color="#FFF" />
+                <MaterialIcons name="photo-library" size={20} color={colors.white} />
                 <Text style={styles.textButtonClose}>SELECIONAR IMAGENS</Text>
               </View>
             </TouchableOpacity>
@@ -742,7 +743,7 @@ const isDisabled = selectedImages.length === 0;
                 <View key={index} style={styles.imageWrapper}>
                   <Image source={{ uri: img.uri }} style={styles.imageItem} />
                   <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(index)}>
-                    <MaterialIcons name="close" size={16} color="#FFF" />
+                    <MaterialIcons name="close" size={16} color={colors.white} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -751,14 +752,14 @@ const isDisabled = selectedImages.length === 0;
            <TouchableOpacity
           style={[
             styles.buttonClose,
-            isJaConcluida ? { backgroundColor: '#555' } : styles.buttonComplete, 
+            isJaConcluida ? { backgroundColor: colors.bodytext } : styles.buttonComplete, 
             isDisabled && styles.buttonDisabled,
           ]}
           disabled={isDisabled}
           onPress={handleFinalizarEEnviar}
         >
           <View style={styles.buttonContent}>
-            <MaterialIcons name="check-circle" size={20} color="#FFF" />
+            <MaterialIcons name="check-circle" size={20} color={colors.white} />
             <Text style={styles.textButtonClose}>
               {isJaConcluida ? "ENVIAR MAIS IMAGENS" : "CONCLUIR OS"}
             </Text>
@@ -796,12 +797,12 @@ const isDisabled = selectedImages.length === 0;
 const styles = StyleSheet.create({
   overlay: { 
     flex: 1, 
-    backgroundColor: "#FFF" // Removido o transparente para parecer uma tela cheia
+    backgroundColor: colors.white // Removido o transparente para parecer uma tela cheia
   },
   modalContainer: {
     width: WIDTH,
     height: HEIGHT, // Ocupa a altura total
-    backgroundColor: "#FFF",
+    backgroundColor: colors.white,
     borderRadius: 0, // Remove arredondamento para colar nas bordas
     padding: 15,
     paddingTop: 40, // Espaço para não cobrir a barra de status do celular
@@ -813,36 +814,36 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#EEE" 
+    borderBottomColor: colors.border 
   },
   title: { fontSize: 20, fontWeight: "bold" },
   refreshIcon: { left: 40 },
   closeIcon: { right: 4 },
   label: { marginTop: 15, fontWeight: "bold", fontSize: 14 },
-  buttonClose: { marginTop: 20, backgroundColor: "#4E3182", padding: 15, borderRadius: 8, alignItems: "center" },
+  buttonClose: { marginTop: 20, backgroundColor: colors.primary, padding: 15, borderRadius: 8, alignItems: "center" },
   buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  textButtonClose: { color: "#FFF", fontWeight: "bold", marginLeft: 8 },
-  buttonNavigation: { backgroundColor: "#4E3182" },
-  buttonDisabled: { backgroundColor: "#9CA3AF", opacity: 0.6 },
+  textButtonClose: { color: colors.white, fontWeight: "bold", marginLeft: 8 },
+  buttonNavigation: { backgroundColor: colors.primary },
+  buttonDisabled: { backgroundColor: colors.muted, opacity: 0.6 },
   timerContainer: {
     marginVertical: 20,
     padding: 15,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     alignItems: 'center',
     width: '100%',
     zIndex: 99
   },
   btnDisabled: {
-    backgroundColor: '#BDC3C7',
+    backgroundColor: colors.border,
     borderWidth: 1,
-    borderColor: '#95A5A6',
+    borderColor: colors.muted,
     elevation: 0,
     opacity: 0.8,
   },
   timerLabel: {
     fontSize: 13,
-    color: '#666',
+    color: colors.bodytext,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -856,25 +857,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   mainButtonText: {
-    color: '#FFF',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   btnStart: {
-    backgroundColor: '#4E3182',
+    backgroundColor: colors.primary,
   },
   btnPause: {
-    backgroundColor: '#E67E22',
+    backgroundColor: colors.warning,
   },
   btnResume: {
-    backgroundColor: '#27AE60',
+    backgroundColor: colors.success,
   },
   gridImages: { flexDirection: "row", flexWrap: "wrap", marginTop: 10 },
   imageWrapper: { width: IMAGE_SIZE, height: IMAGE_SIZE, marginRight: 10, marginBottom: 10, position: "relative" },
@@ -886,9 +887,9 @@ const styles = StyleSheet.create({
   width: '100%',
   height: 150,
   borderWidth: 1,
-  borderColor: '#28a745',
+  borderColor: colors.success,
   borderRadius: 8,
-  backgroundColor: '#fff',
+  backgroundColor: colors.white,
   justifyContent: 'center',
   alignItems: 'center',
   marginBottom: 15,
@@ -905,11 +906,11 @@ reSignButton: {
   padding: 6,
   borderRadius: 6,
   borderWidth: 1,
-  borderColor: '#eee'
+  borderColor: colors.border
 },
-reSignText: { color: '#4E3182', fontSize: 12, fontWeight: '600' },
+reSignText: { color: colors.primary, fontSize: 12, fontWeight: '600' },
 buttonSignatureOpen: {
-  backgroundColor: '#4E3182',
+  backgroundColor: colors.primary,
   flexDirection: 'row',
   padding: 16,
   borderRadius: 8,
@@ -918,5 +919,5 @@ buttonSignatureOpen: {
   marginBottom: 15,
   gap: 10
 },
-buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+buttonText: { color: colors.white, fontWeight: 'bold', fontSize: 16 },
 });
