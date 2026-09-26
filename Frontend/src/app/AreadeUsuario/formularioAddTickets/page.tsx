@@ -1,241 +1,172 @@
-// src/app/AreadeUsuario/formularioAddTickets/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { api } from '@/services/api';
-import { getCookieClient } from '@/lib/cookieClient';
-import styles from '../formularioAddTickets.module.scss'
-import { FaClipboardList, FaTimes } from 'react-icons/fa';
-import { JwtPayload } from '@/lib/JWTpayload.type';
-import { UsuariosProps } from '@/lib/getUsuario.type';
-import { jwtDecode } from 'jwt-decode';
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getCookie } from "cookies-next";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
+import { TbBuilding, TbSend, TbUser, TbUsers } from "react-icons/tb";
+import { api } from "@/services/api";
+import { apiErrorMessage } from "@/lib/apiError";
+import { toArray } from "@/lib/toArray";
+import type { JwtPayload } from "@/lib/JWTpayload.type";
+import type { UsuariosProps } from "@/lib/getUsuario.type";
+import { UserPortalShell } from "@/components/auth/UserPortalShell";
+import { Button, Card, CardHeader, Field, Input, Select, Textarea } from "@/components/ui";
 
-interface TipoDeChamado {
-  id: string;
-  name: string;
+type Option = { id: string; name: string };
+
+// "Ticket" type of service order — chamados opened by end users are always tickets.
+const TIPO_OS_TICKET = "94e32deb-2a02-41f1-9573-b4b5c265e80a";
+
+function gerarNumeroOS() {
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
+function userIdFromToken() {
+  const token = getCookie("session");
+  if (typeof token !== "string") return undefined;
+  try {
+    return jwtDecode<JwtPayload>(token).sub;
+  } catch {
+    return undefined;
+  }
 }
 
 export default function FormularioAddTickets() {
-  const [tiposDeChamado, setTiposDeChamado] = useState<TipoDeChamado[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [usuario, setUsuario] = useState<UsuariosProps | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const router = useRouter();
-
-  function gerarNumeroOS(): string {
-    return Math.floor(10000 + Math.random() * 90000).toString();
-  }
-
-  useEffect(() => {
-    async function fetchTiposDeChamado() {
-      try {
-        const token = await getCookieClient();
-        const response = await api.get('/listtipodechamado', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-        setTiposDeChamado(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar tipos de chamado:', error);
-      }
-    }
-    fetchTiposDeChamado();
-  }, []);
+  const [tipos, setTipos] = useState<Option[]>([]);
+  const [usuario, setUsuario] = useState<UsuariosProps | null>(null);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    async function fetchUserData() {
-      const token = await getCookieClient();
-      if (!token) return;
-
-      try {
-        const decoded = jwtDecode<JwtPayload>(token);
-        const user_id = decoded.sub;
-
-        const response = await api.get('/users/detail', {
-          params: { user_id },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setUsuario(response.data as UsuariosProps);
-      } catch (error) {
-        console.error('Erro ao buscar dados do usuário autenticado:', error);
-      }
-    }
-
-    fetchUserData();
+    api
+      .get("/listtipodechamado")
+      .then((response) => setTipos(toArray<Option>(response.data)))
+      .catch(() => toast.error("Não foi possível carregar os tipos de chamado."));
+    api
+      .get("/users/detail")
+      .then((response) => setUsuario(response.data as UsuariosProps))
+      .catch(() => undefined);
   }, []);
 
- async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (sending) return;
 
-  if (loading) return;
+    const form = new FormData(event.currentTarget);
+    const text = (key: string) => form.get(key)?.toString().trim() ?? "";
 
-  const formData = new FormData(event.currentTarget);
-  const name = formData.get('name')?.toString().trim();
-  const tipodeChamado_id = formData.get('tipodeChamado_id')?.toString().trim();
-  const descricaodoProblemaouSolicitacao = formData.get('descricaodoProblemaouSolicitacao')?.toString().trim();
-  const patrimoniodoequipamento = formData.get('patrimoniodoequipamento')?.toString().trim();
-  const nomedoContatoaserProcuradonoLocal =
-    formData.get('nomedoContatoaserProcuradonoLocal')?.toString().trim() || null;
-
-  if (!name || !tipodeChamado_id || !descricaodoProblemaouSolicitacao || !patrimoniodoequipamento) {
-    alert('Preencha todos os campos obrigatórios.');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const token = await getCookieClient();
-    if (!token) {
-      alert('Token de autenticação não encontrado. Faça login novamente.');
-      setLoading(false);
+    const user_id = usuario?.id ?? userIdFromToken();
+    if (!user_id) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      router.push("/AreadeUsuario");
       return;
     }
 
-    const decoded = jwtDecode<JwtPayload>(token);
-    const user_id = decoded.sub;
-    const numeroOS = gerarNumeroOS(); 
-
-    const payload: any = {
-      numeroOS,
-      name,
-      tipodeChamado_id,
-      tipodeOrdemdeServico_id: '94e32deb-2a02-41f1-9573-b4b5c265e80a',
-      descricaodoProblemaouSolicitacao,
-      patrimoniodoequipamento,
-      nomedoContatoaserProcuradonoLocal,
+    const payload: Record<string, unknown> = {
+      numeroOS: gerarNumeroOS(),
+      name: text("name"),
+      tipodeChamado_id: text("tipodeChamado_id"),
+      tipodeOrdemdeServico_id: TIPO_OS_TICKET,
+      descricaodoProblemaouSolicitacao: text("descricaodoProblemaouSolicitacao"),
+      patrimoniodoequipamento: text("patrimoniodoequipamento"),
+      nomedoContatoaserProcuradonoLocal: text("nomedoContatoaserProcuradonoLocal") || null,
       user_id,
     };
-
     if (usuario?.cliente?.id) payload.cliente_id = usuario.cliente.id;
     if (usuario?.instituicaoUnidade?.id) payload.instituicaoUnidade_id = usuario.instituicaoUnidade.id;
     if (usuario?.tecnico?.id) payload.tecnico_id = usuario.tecnico.id;
 
-    await api.post('/ordemdeservico', payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    router.push('/AreadeUsuario/formularioenviado');
-  } catch (err) {
-    console.error('Erro ao enviar ordem de serviço:', err);
-    alert('Erro ao enviar. Verifique os campos e tente novamente.');
-    setLoading(false);
+    setSending(true);
+    try {
+      await api.post("/ordemdeservico", payload);
+      router.push("/AreadeUsuario/formularioenviado");
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Erro ao enviar. Verifique os campos e tente novamente."));
+      setSending(false);
+    }
   }
-}
+
+  const local = usuario?.instituicaoUnidade?.name ?? usuario?.cliente?.name;
 
   return (
-  <div className={styles.container}>
-    <div className={styles.panelsContainer}>
-      
-      <div className={`${styles.panel} ${styles.leftPanel}`}>
-        <div className={styles.content}>
-          <h3>Bem Vindo ao Fire OS</h3>
-          <p>
-            Gerencie suas solicitações de forma rápida <br /> 
-            e integrada ao nosso sistema.
+    <UserPortalShell>
+      <div className="relative mb-6 overflow-hidden rounded-xl bg-lightprimary px-6 py-7 sm:px-8">
+        <div className="relative z-10">
+          <h1 className="text-2xl font-semibold text-link">
+            {usuario ? `Olá, ${usuario.name.split(" ")[0]}!` : "Bem-vindo ao Fire OS"}
+          </h1>
+          <p className="mt-2 max-w-xl text-bodytext">
+            Descreva o problema abaixo e nossa equipe técnica entrará em contato para o atendimento.
           </p>
+        </div>
+        <div aria-hidden className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-primary/10" />
+      </div>
 
-          {usuario && (
-            <div className={styles.usuarioBox}>
-              <h3>Usuário Logado</h3>
-              <div className={styles.usuarioInfo}>
-                <p><strong>Nome:</strong> {usuario.name}</p>
-                <p><strong>Setor:</strong> {usuario.setor?.name || "Desenvolvedor Fullstack"}</p>
-              </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Nova ordem de serviço" subtitle="Campos com * são obrigatórios." />
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <Field label="Nome do solicitante" htmlFor="name" required>
+              <Input id="name" name="name" placeholder="Nome completo" required defaultValue={usuario?.name} key={usuario?.id} />
+            </Field>
+            <Field label="Tipo de chamado" htmlFor="tipodeChamado_id" required>
+              <Select id="tipodeChamado_id" name="tipodeChamado_id" required defaultValue="">
+                <option value="" disabled>
+                  {tipos.length ? "Selecione" : "Carregando..."}
+                </option>
+                {tipos.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Descrição do problema ou solicitação" htmlFor="descricao" required className="md:col-span-2">
+              <Textarea
+                id="descricao"
+                name="descricaodoProblemaouSolicitacao"
+                rows={5}
+                placeholder="Descreva o problema com o máximo de detalhes possível..."
+                required
+              />
+            </Field>
+            <Field label="Patrimônio do equipamento" htmlFor="patrimonio" required hint="Número da etiqueta de patrimônio.">
+              <Input id="patrimonio" name="patrimoniodoequipamento" placeholder="Ex.: 56971" required />
+            </Field>
+            <Field label="Contato no local" htmlFor="contato" hint="Opcional — quem o técnico deve procurar.">
+              <Input id="contato" name="nomedoContatoaserProcuradonoLocal" placeholder="Nome do contato" />
+            </Field>
+            <div className="flex justify-end border-t border-border pt-5 md:col-span-2">
+              <Button type="submit" size="lg" loading={sending} icon={<TbSend className="h-4 w-4" />}>
+                Enviar chamado
+              </Button>
             </div>
-          )}
-        </div>
+          </form>
+        </Card>
+
+        <Card className="h-fit">
+          <CardHeader title="Seus dados" subtitle="Vinculados automaticamente ao chamado." />
+          <ul className="flex flex-col gap-4">
+            {[
+              { icon: <TbUser />, label: "Usuário", value: usuario?.name },
+              { icon: <TbUsers />, label: "Setor", value: usuario?.setor?.name },
+              { icon: <TbBuilding />, label: "Local", value: local },
+            ].map((item) => (
+              <li key={item.label} className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-lightprimary text-lg text-primary">
+                  {item.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted">{item.label}</p>
+                  <p className="truncate text-sm font-medium text-link">{item.value ?? "—"}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </div>
-
-      {/* PAINEL DIREITO (BRANCO) - Focado na Ação de Nova Ordem */}
-      <div className={`${styles.panel} ${styles.rightPanel}`}>
-        <div className={styles.content}>
-          <h3 style={{ color: '#444' }}>Abra sua Ordem de Serviço</h3>
-          <p style={{ color: '#666' }}>
-            Clique no botão abaixo para iniciar <br /> o preenchimento da sua solicitação.
-          </p>
-          
-          <button 
-            className={`${styles.btn} ${styles.solid}`} 
-            onClick={() => setIsModalOpen(true)}
-          >
-            Nova Ordem
-          </button>
-        </div>
-      </div>
-    </div>
-
-    {/* MODAL DE FORMULÁRIO */}
-    {isModalOpen && (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContent}>
-          <button className={styles.closeModal} onClick={() => setIsModalOpen(false)}>
-            <FaTimes />
-          </button>
-          
-          <div className={styles.signinSignup}>
-            <form onSubmit={handleSubmit} className={styles.signInForm}>
-              <h2 className={styles.title}>Nova Ordem de Serviço</h2>
-
-              <p>Nome do Cliente / Solicitante</p>
-              <div className={styles.inputField}>
-                <FaClipboardList className={styles.icon} />
-                <input type="text" name="name" placeholder="Nome completo" required />
-              </div>
-
-              <p>Tipo de Chamado</p>
-              <div className={styles.inputField}>
-                <FaClipboardList className={styles.icon} />
-                <select name="tipodeChamado_id" required className={styles.select}>
-                  <option value="" disabled hidden>Selecione o Tipo de Chamado</option>
-                  {tiposDeChamado.map((tipo) => (
-                    <option key={tipo.id} value={tipo.id}>{tipo.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <p>Descrição Detalhada</p>
-              <div className={`${styles.inputField} ${styles.textArea}`}>
-                <FaClipboardList className={styles.icon} />
-                <textarea
-                  name="descricaodoProblemaouSolicitacao"
-                  placeholder="Descreva o problema detalhadamente..."
-                  required
-                />
-              </div>
-
-              <p>Contato no Local (Opcional)</p>
-              <div className={styles.inputField}>
-                <FaClipboardList className={styles.icon} />
-                <input
-                  type="text"
-                  name="nomedoContatoaserProcuradonoLocal"
-                  placeholder="Nome de quem procurar no local"
-                />
-              </div>
-
-              <p>Patrimônio do Equipamento</p>
-              <div className={styles.inputField}>
-                <FaClipboardList className={styles.icon} />
-                <input
-                  type="text"
-                  name="patrimoniodoequipamento" 
-                  placeholder="Ex: 56971"
-                />
-              </div>
-
-              <button type="submit" className={`${styles.btn} ${styles.solid}`} disabled={loading}>
-                {loading ? <div className={styles.spinner} /> : "Enviar Ordem"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-);
+    </UserPortalShell>
+  );
 }

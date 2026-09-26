@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="33 40 576 120" width="576" height="120" role="img" aria-label="Fire OS">
+  <title>Fire OS</title>
+  <g fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M100 47 H40 V153 M40 100 H88" />
+    <path d="M138 87 V153" />
+    <circle cx="138" cy="57" r="8" fill="#ffffff" stroke="none" />
+    <path d="M176 153 V113 A26 26 0 0 1 202 87" />
+    <path d="M271 120 H304 A33 33 0 1 0 295 143" />
+    <g stroke="#ffffff">
+      <circle cx="451" cy="100" r="53" />
+      <path d="M598 60.25 A30 26.5 0 1 0 572 100 A30 26.5 0 1 1 546 139.75" />
+    </g>
+  </g>
+</svg>

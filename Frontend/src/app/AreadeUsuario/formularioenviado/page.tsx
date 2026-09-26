@@ -1,50 +1,22 @@
-// src/app/AreadeUsuario/formularioAddTickets/page.tsx
-'use client';
+import { TbCircleCheck, TbPlus } from "react-icons/tb";
+import { UserPortalShell } from "@/components/auth/UserPortalShell";
+import { ButtonLink, Card } from "@/components/ui";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { api } from '@/services/api';
-import { getCookieClient } from '@/lib/cookieClient';
-import styles from '../logindeUsuario.module.scss';
-import { FaClipboardList } from 'react-icons/fa';
-import { redirect } from "next/navigation";
-
-interface TipoDeChamado {
-  id: string;
-  name: string;
-}
-
-
-export default function formularioenviado() {
-  const router = useRouter();
-
-  function handleRedirect() {
-    router.push('/AreadeUsuario/formularioAddTickets');
-  }
-
+export default function FormularioEnviado() {
   return (
-    <div className={styles.container}>
-      <div className={styles.formsContainer}>
-        <div className={styles.signinSignup}>
-        <form className={styles.signInForm}>
-        <h4 className={styles.title}>Voltar para tela de Abertura de Chamados</h4>
-        <button type='button' className={`${styles.btn} ${styles.solid}`} 
-        onClick={handleRedirect}>
-             Clique Aqui !
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div className={styles.panelsContainer}>
-        <div className={`${styles.panel} ${styles.leftPanel}`}>
-          <div className={styles.content}>
-            <h3>Chamado enviado com sucesso! ✅</h3>
-            <p>Recebemos sua solicitação e em breve entraremos em contato para o atendimento. Obrigado!</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  
+    <UserPortalShell>
+      <Card className="mx-auto max-w-lg py-12 text-center">
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-lightsuccess text-3xl text-successtext">
+          <TbCircleCheck />
+        </span>
+        <h1 className="mt-5 text-2xl font-semibold text-link">Chamado enviado!</h1>
+        <p className="mx-auto mt-2 max-w-sm text-bodytext">
+          Recebemos sua solicitação e em breve entraremos em contato para o atendimento. Obrigado!
+        </p>
+        <ButtonLink href="/AreadeUsuario/formularioAddTickets" className="mt-8" icon={<TbPlus className="h-4 w-4" />}>
+          Abrir outro chamado
+        </ButtonLink>
+      </Card>
+    </UserPortalShell>
   );
 }
