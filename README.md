@@ -1,4 +1,4 @@
-# Ordem Next — Service Order Management SaaS
+# Fire OS — Service Order Management SaaS
 
 > Antes chamado **Fire OS**.
 
@@ -9,7 +9,7 @@ https://github.com/user-attachments/assets/e92169b7-23c2-4fe3-bc6a-10abf8c70550
 
 ### *"Ordens de serviço do chamado à assinatura, em 2 telas."*
 
-Técnicos de campo gastam mais tempo preenchendo sistema do que resolvendo problemas. O Ordem Next reduz cada atendimento de 5–6 telas para 2. Nasceu no suporte de TI e hoje atende qualquer empresa de serviços: TI, climatização, elétrica, oficinas e mais.
+Técnicos de campo gastam mais tempo preenchendo sistema do que resolvendo problemas. O Fire OS reduz cada atendimento de 5–6 telas para 2. Nasceu no suporte de TI e hoje atende qualquer empresa de serviços: TI, climatização, elétrica, oficinas e mais.
 
 <p align="center">
   <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" /></a>
@@ -39,7 +39,7 @@ Técnicos de campo gastam mais tempo preenchendo sistema do que resolvendo probl
 
 Empresas de serviço em campo, a começar pelas de TI terceirizada que atendem prefeituras, escolas e postos de saúde, costumam depender de sistemas legados. Neles, o técnico precisa navegar por **5 a 6 telas diferentes** para registrar uma única ordem de serviço, e acaba gastando mais tempo no software do que no serviço.
 
-**O Ordem Next resolve isso.** Identifiquei o problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: um app mobile para o técnico em campo e um painel web para o gestor. Os clientes abrem chamados por uma área própria.
+**O Fire OS resolve isso.** Identifiquei o problema atuando como técnico de helpdesk N2 e construí, solo, um sistema que unifica todo o fluxo em **2 telas**: um app mobile para o técnico em campo e um painel web para o gestor. Os clientes abrem chamados por uma área própria.
 
 ---
 
@@ -47,7 +47,7 @@ Empresas de serviço em campo, a começar pelas de TI terceirizada que atendem p
 
 O sistema foi implantado em ambiente real de trabalho para validação, processando ordens de serviço de equipes técnicas que atendem instituições públicas.
 
-| Métrica | Antes (Sistema Legado) | Depois (Ordem Next) | Ganho |
+| Métrica | Antes (Sistema Legado) | Depois (Fire OS) | Ganho |
 |---|---|---|---|
 | Telas por OS | 5–6 telas | **2 telas** | **−66% complexidade** |
 | Esforço de input | 100% manual/fragmentado | Fluxo otimizado | **−83% esforço** |
@@ -61,7 +61,7 @@ O sistema foi implantado em ambiente real de trabalho para validação, processa
 
 ## 🏗️ Arquitetura do Sistema
 
-O Ordem Next é um **monorepo com 3 aplicações** que falam com a mesma API REST:
+O Fire OS é um **monorepo com 3 aplicações** que falam com a mesma API REST:
 
 ```mermaid
 graph TB
@@ -186,7 +186,7 @@ Fire-OS-Service-Order-SaaS/            # Monorepo
 │
 ├── Frontend/                          # Next.js 16 — Landing, portal web e área do usuário
 │   ├── public/
-│   │   ├── brand/                     # Logotipo e ícone Ordem Next (SVG/PNG)
+│   │   ├── brand/                     # Logotipo e ícone Fire OS (SVG/PNG)
 │   │   └── segments/                  # Fotos CC0 dos segmentos (WebP) + CREDITS.md
 │   ├── scripts/dev-mock.mjs           # `npm run dev:mock` — UI inteira sem backend
 │   └── src/
@@ -402,7 +402,7 @@ Hoje mantenho o projeto como portfólio autoral e continuo evoluindo a arquitetu
 - [x] **Frontend redesenhado:**
   - Design system em Tailwind v4, tema escuro e componentes genéricos.
   - Landing page, telas de login novas e calendário próprio no lugar do DHTMLX.
-  - Modo mock e rebrand para Ordem Next.
+  - Modo mock e rebrand para Fire OS.
 - [ ] **Sessão só no servidor (BFF):** levar as chamadas do navegador para o servidor Next.js e tornar o cookie de sessão `HttpOnly`.
 - [ ] **Testes de interface** com Playwright no frontend.
 - [ ] **API:**
