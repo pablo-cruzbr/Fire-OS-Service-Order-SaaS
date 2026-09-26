@@ -72,7 +72,7 @@ export default function Signin() {
       <View style={styles.circleTop} />
       <View style={styles.circleBottom} />
       <View style={styles.card}>
-        <Image style={styles.logo} source={require("../../assets/FireLogo2.png")} />
+        <Image style={styles.logo} source={require("../../assets/fire-os-wordmark.png")} />
         <Text style={styles.title}>Faça seu Login</Text>
 
         <View style={styles.fieldWrapper}>
@@ -179,8 +179,8 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   logo: {
-    width: 230,
-    height: 60,
+    width: 180,
+    height: 38,
     resizeMode: "contain",
     marginBottom: 15,
   },

@@ -263,7 +263,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
     <SafeAreaView style={styles.container}>
   
       <View style={styles.header}>
-        <Image source={require("../../assets/logoperfil2.png")} style={styles.profileImage} />
+        <Image source={require("../../assets/fire-os-mark-light.png")} style={styles.profileImage} />
         <Text style={styles.title}>Ordens de Serviço</Text>
         <View style={styles.headerIcons}>
           <SimpleLineIcons name="logout" size={20} color="#fff" style={styles.icon} onPress={signOut}/>
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
   },
-  profileImage: { width: 35, height: 35, borderRadius: 50 },
+  profileImage: { width: 35, height: 35 },
   title: { color: "#fff", fontSize: 20, fontWeight: "700", flex: 1, textAlign: "center" },
   headerIcons: { flexDirection: "row", alignItems: "center" },
   icon: { marginLeft: 15 },

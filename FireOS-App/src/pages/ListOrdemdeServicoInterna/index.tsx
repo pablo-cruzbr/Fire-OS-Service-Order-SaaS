@@ -240,7 +240,7 @@ export default function ListOrdemdeServicoInterna() {
       {/* Header */}
       <View style={styles.header}>
         <Image
-          source={require("../../assets/logoperfil2.png")}
+          source={require("../../assets/fire-os-mark-light.png")}
           style={styles.profileImage}
         />
         <Text style={styles.title}>Tickets Internos</Text>
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
   },
-  profileImage: { width: 35, height: 35, borderRadius: 50 },
+  profileImage: { width: 35, height: 35 },
   title: {
     color: "#fff",
     fontSize: 20,
