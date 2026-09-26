@@ -1,9 +1,9 @@
-// lib/exportExcel.ts
-import { api } from '@/services/api';
-import { getCookieClient } from '@/lib/cookieClient';
-import { toast } from 'sonner';
+import axios from "axios";
+import { toast } from "sonner";
+import { api } from "@/services/api";
+import { apiErrorMessage } from "@/lib/apiError";
 
-interface ExportParams {
+export interface ExportParams {
   startDate?: string;
   endDate?: string;
   tarefa_id?: string;
@@ -13,35 +13,51 @@ interface ExportParams {
   tipoOS_id?: string;
 }
 
-export async function exportOrdemServicoExcel(params: ExportParams) {
+const FALLBACK_ERROR = "Erro ao exportar relatório. Verifique sua conexão.";
+
+/** With `responseType: "blob"` the API error body arrives as a Blob — read it back as JSON. */
+async function exportErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+    try {
+      const body = JSON.parse(await error.response.data.text());
+      if (typeof body?.error === "string") return body.error;
+      if (typeof body?.message === "string") return body.message;
+    } catch {
+      // not JSON — fall through
+    }
+    return FALLBACK_ERROR;
+  }
+  return apiErrorMessage(error, FALLBACK_ERROR);
+}
+
+/**
+ * Downloads the OS spreadsheet from `/ordens/exportar`. Never throws: shows a
+ * toast and resolves to `false` on failure, so callers only handle loading.
+ */
+export async function exportOrdemServicoExcel(params: ExportParams): Promise<boolean> {
   try {
-    const token = await getCookieClient();
-    
-    const response = await api.get('/ordens/exportar', {
+    const response = await api.get("/ordens/exportar", {
       params,
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: 'blob',
+      responseType: "blob",
     });
 
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    
+
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', `Relatorio_OS_${new Date().getTime()}.xlsx`);
-    
+    link.setAttribute("download", `Relatorio_OS_${Date.now()}.xlsx`);
     document.body.appendChild(link);
     link.click();
-    
     link.remove();
     window.URL.revokeObjectURL(url);
-    
+
     toast.success("Excel gerado com sucesso!");
+    return true;
   } catch (error) {
-    console.error("Erro na exportação:", error);
-    toast.error("Erro ao exportar relatório. Verifique sua conexão.");
-    throw error; // Repassa o erro para o componente tratar o loading
+    toast.error(await exportErrorMessage(error));
+    return false;
   }
 }
