@@ -382,7 +382,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
 
         {/* Data */}
         <View style={styles.cardRowInfo}>
-          <Ionicons name="time-outline" size={12} color={colors.border} />
+          <Ionicons name="time-outline" size={12} color={colors.muted} />
           <Text style={styles.cardDateText}>{timeAgo(item?.created_at)}</Text>
         </View>
 
@@ -394,7 +394,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         ListEmptyComponent={
           !loading ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="document-text-outline" size={52} color={colors.border} />
+              <Ionicons name="document-text-outline" size={52} color={colors.muted} />
               <Text style={styles.emptyTitle}>Nenhuma OS encontrada</Text>
               <Text style={styles.emptySubtitle}>
                 {search || statusFilter || activeFiltersCount > 0
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
   },
   cardDateText: {
     fontSize: 11,
-    color: colors.border,
+    color: colors.muted,
   },
   fab: {
     position: "absolute",
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13,
-    color: colors.border,
+    color: colors.muted,
     textAlign: "center",
     paddingHorizontal: 40,
   },
