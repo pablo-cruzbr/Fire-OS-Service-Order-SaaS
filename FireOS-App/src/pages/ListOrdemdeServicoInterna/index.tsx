@@ -21,6 +21,7 @@ import { ModalFormTecnicoTickets } from "../../components/modalFormTecnicoTicket
 import { useNavigation } from "@react-navigation/native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { colors } from "../../theme/colors";
 
 export type OrdensDeServico = {
   id: string;
@@ -240,19 +241,19 @@ export default function ListOrdemdeServicoInterna() {
       {/* Header */}
       <View style={styles.header}>
         <Image
-          source={require("../../assets/logoperfil2.png")}
+          source={require("../../assets/fire-os-mark-light.png")}
           style={styles.profileImage}
         />
         <Text style={styles.title}>Tickets Internos</Text>
         <View style={styles.headerIcons}>
-          <Feather name="user" size={24} color="#fff" style={styles.icon} />
+          <Feather name="user" size={24} color={colors.white} style={styles.icon} />
           {loading ? (
-            <ActivityIndicator size="small" color="#fff" style={styles.icon} />
+            <ActivityIndicator size="small" color={colors.white} style={styles.icon} />
           ) : (
             <Ionicons
               name="refresh"
               size={22}
-              color="#fff"
+              color={colors.white}
               style={styles.icon}
               onPress={loadOrdens}
             />
@@ -338,7 +339,7 @@ export default function ListOrdemdeServicoInterna() {
         onPress={() => navigation.navigate("Dashboard" as never)}
         activeOpacity={0.7}
       >
-        <FontAwesome5 name="arrow-alt-circle-left" size={30} color="#fff" />
+        <FontAwesome5 name="arrow-alt-circle-left" size={30} color={colors.white} />
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -346,7 +347,7 @@ export default function ListOrdemdeServicoInterna() {
         onPress={() => setModalFormTicketInternoVisible(true)}
         activeOpacity={0.7}
       >
-        <AntDesign name="form" size={30} color="#fff" />
+        <AntDesign name="form" size={30} color={colors.white} />
 
       </TouchableOpacity>
 
@@ -399,7 +400,7 @@ export default function ListOrdemdeServicoInterna() {
                 Andar: {item.informacoesSetor?.andar}
               </Text>
             </View>
-            <Ionicons name="ellipsis-vertical" size={20} color="#333" />
+            <Ionicons name="ellipsis-vertical" size={20} color={colors.link} />
           </TouchableOpacity>
         )}
         contentContainerStyle={{
@@ -429,9 +430,9 @@ export default function ListOrdemdeServicoInterna() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F8F8" },
+  container: { flex: 1, backgroundColor: colors.surface },
   header: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -439,9 +440,9 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
   },
-  profileImage: { width: 35, height: 35, borderRadius: 50 },
+  profileImage: { width: 35, height: 35 },
   title: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 20,
     fontWeight: "700",
     flex: 1,
@@ -454,26 +455,26 @@ const styles = StyleSheet.create({
     marginTop: 10,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
   },
   statusButton: {
     width: 100,
     height: 30,
-    backgroundColor: "#eee",
+    backgroundColor: colors.border,
     borderRadius: 20,
     marginRight: 7,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
   },
-  statusButtonActive: { backgroundColor: "#4E3182" },
-  statusText: { fontSize: 11, color: "#333", fontWeight: "600" },
-  statusTextActive: { color: "#fff" },
+  statusButtonActive: { backgroundColor: colors.primary },
+  statusText: { fontSize: 11, color: colors.link, fontWeight: "600" },
+  statusTextActive: { color: colors.white },
   card: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     marginHorizontal: 10,
     marginTop: 9,
     padding: 20,
@@ -484,13 +485,13 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1 },
   cardTitle: { fontWeight: "bold", fontSize: 14 },
   cardStatus: { fontWeight: "bold", fontSize: 14, marginTop: 4 },
-  cardSubtitle: { fontSize: 12, color: "#666" },
-  cardItem: { fontSize: 12, color: "#333" },
+  cardSubtitle: { fontSize: 12, color: colors.bodytext },
+  cardItem: { fontSize: 12, color: colors.link },
   formtec: {
     position: "absolute",
     bottom: 70,
     right: 20,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     width: 55,
     height: 55,
     borderRadius: 30,
@@ -503,7 +504,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 140,
     right: 20,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     width: 55,
     height: 55,
     borderRadius: 30,
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
   picker: {
   height: 60,
   width: "100%",
-  backgroundColor: "#fff",
+  backgroundColor: colors.white,
   borderRadius: 8,
   marginBottom: 10,
 },

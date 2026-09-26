@@ -12,6 +12,7 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../../contexts/AuthContext";
+import { colors } from "../../theme/colors";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -72,7 +73,7 @@ export default function Signin() {
       <View style={styles.circleTop} />
       <View style={styles.circleBottom} />
       <View style={styles.card}>
-        <Image style={styles.logo} source={require("../../assets/FireLogo2.png")} />
+        <Image style={styles.logo} source={require("../../assets/fire-os-wordmark.png")} />
         <Text style={styles.title}>Faça seu Login</Text>
 
         <View style={styles.fieldWrapper}>
@@ -84,7 +85,7 @@ export default function Signin() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholderTextColor="#aaa"
+            placeholderTextColor={colors.muted}
           />
           {!!errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         </View>
@@ -99,7 +100,7 @@ export default function Signin() {
               onChangeText={(v) => { setPassword(v); clearFieldError("password"); }}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.muted}
             />
             <TouchableOpacity
               onPress={() => setShowPassword((prev) => !prev)}
@@ -109,7 +110,7 @@ export default function Signin() {
               <Ionicons
                 name={showPassword ? "eye-off-outline" : "eye-outline"}
                 size={20}
-                color="#888"
+                color={colors.muted}
               />
             </TouchableOpacity>
           </View>
@@ -131,7 +132,7 @@ export default function Signin() {
       {loadingAuth && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingBox}>
-            <ActivityIndicator size={48} color="#4E3182" />
+            <ActivityIndicator size={48} color={colors.primary} />
             <Text style={styles.loadingText}>Entrando...</Text>
           </View>
         </View>
@@ -143,7 +144,7 @@ export default function Signin() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -167,27 +168,27 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "90%",
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     borderRadius: 25,
     padding: 25,
     alignItems: "center",
     elevation: 6,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     zIndex: 2,
   },
   logo: {
-    width: 230,
-    height: 60,
+    width: 180,
+    height: 38,
     resizeMode: "contain",
     marginBottom: 15,
   },
   title: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#444",
+    color: colors.link,
     marginBottom: 20,
   },
   fieldWrapper: {
@@ -197,21 +198,21 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 50,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colors.surface,
     borderRadius: 25,
     paddingHorizontal: 15,
     fontSize: 16,
-    color: "#333",
+    color: colors.link,
     borderWidth: 1.5,
     borderColor: "transparent",
   },
   inputError: {
-    borderColor: "#E74C3C",
+    borderColor: colors.error,
   },
   passwordWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colors.surface,
     borderRadius: 25,
     borderWidth: 1.5,
     borderColor: "transparent",
@@ -221,13 +222,13 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     fontSize: 16,
-    color: "#333",
+    color: colors.link,
   },
   eyeButton: {
     padding: 4,
   },
   errorText: {
-    color: "#E74C3C",
+    color: colors.errorText,
     fontSize: 12,
     fontWeight: "500",
     marginTop: 5,
@@ -236,14 +237,14 @@ const styles = StyleSheet.create({
   button: {
     width: "60%",
     height: 50,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 10,
   },
   buttonText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 16,
     fontWeight: "600",
     textTransform: "uppercase",
@@ -263,20 +264,20 @@ const styles = StyleSheet.create({
     zIndex: 99,
   },
   loadingBox: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     borderRadius: 16,
     paddingVertical: 28,
     paddingHorizontal: 40,
     alignItems: "center",
     gap: 14,
     elevation: 8,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
   loadingText: {
-    color: "#4E3182",
+    color: colors.primary,
     fontSize: 15,
     fontWeight: "600",
   },

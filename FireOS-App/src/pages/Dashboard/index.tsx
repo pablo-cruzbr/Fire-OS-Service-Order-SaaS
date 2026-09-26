@@ -22,6 +22,7 @@ import { api } from "../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ModalDetailOrder } from "../../components/modalDetailOrder";
 import { useNavigation } from "@react-navigation/native";
+import { colors } from "../../theme/colors";
 
 export type OrdensDeServico = {
   id: string;
@@ -68,21 +69,21 @@ type TipodeOrdem = { id: string; name: string };
 type Prioridade = { id: string; name: string };
 
 const STATUS_COLORS: Record<string, string> = {
-  "ABERTA": "#27AE60",
-  "EM ANDAMENTO": "#2980B9",
-  "CONCLUIDA": "#95A5A6",
-  "PAUSADA": "#F39C12",
+  "ABERTA": colors.success,
+  "EM ANDAMENTO": colors.info,
+  "CONCLUIDA": colors.muted,
+  "PAUSADA": colors.warning,
 };
 
 function getStatusColor(name?: string | null): string {
-  return STATUS_COLORS[name?.trim().toUpperCase() ?? ""] ?? "#BDC3C7";
+  return STATUS_COLORS[name?.trim().toUpperCase() ?? ""] ?? colors.border;
 }
 
 function getPrioridadeColor(name: string): string {
   const l = name.toLowerCase();
-  if (l.includes("alta") || l.includes("urgent") || l.includes("crít")) return "#E74C3C";
-  if (l.includes("méd") || l.includes("med")) return "#F39C12";
-  return "#27AE60";
+  if (l.includes("alta") || l.includes("urgent") || l.includes("crít")) return colors.error;
+  if (l.includes("méd") || l.includes("med")) return colors.warning;
+  return colors.success;
 }
 
 function timeAgo(dateStr?: string | null): string {
@@ -263,18 +264,18 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
     <SafeAreaView style={styles.container}>
   
       <View style={styles.header}>
-        <Image source={require("../../assets/logoperfil2.png")} style={styles.profileImage} />
+        <Image source={require("../../assets/fire-os-mark-light.png")} style={styles.profileImage} />
         <Text style={styles.title}>Ordens de Serviço</Text>
         <View style={styles.headerIcons}>
-          <SimpleLineIcons name="logout" size={20} color="#fff" style={styles.icon} onPress={signOut}/>
-          <Feather name="user" size={24} color="#fff" style={styles.icon} />
+          <SimpleLineIcons name="logout" size={20} color={colors.white} style={styles.icon} onPress={signOut}/>
+          <Feather name="user" size={24} color={colors.white} style={styles.icon} />
           {loading ? (
-            <ActivityIndicator size="small" color="#fff" style={styles.icon} />
+            <ActivityIndicator size="small" color={colors.white} style={styles.icon} />
           ) : (
             <Ionicons
               name="refresh"
               size={22}
-              color="#fff"
+              color={colors.white}
               style={styles.icon}
               onPress={loadOrdens}
             />
@@ -296,7 +297,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         onPress={() => setFilterModalVisible(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="options-outline" size={18} color="#4E3182" />
+        <Ionicons name="options-outline" size={18} color={colors.primary} />
         <Text style={styles.filterButtonText}>Filtros</Text>
         {activeFiltersCount > 0 && (
           <View style={styles.filterBadge}>
@@ -355,7 +356,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         {/* Local do chamado */}
         {!!local && (
           <View style={styles.cardRowInfo}>
-            <Ionicons name="business" size={14} color="#4E3182" />
+            <Ionicons name="business" size={14} color={colors.primary} />
             <Text style={styles.cardLocalText} numberOfLines={1}>{local}</Text>
           </View>
         )}
@@ -372,7 +373,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         {/* Descrição do problema */}
         {!!item?.descricaodoProblemaouSolicitacao && (
           <View style={styles.cardRowInfo}>
-            <Ionicons name="chatbubble-outline" size={13} color="#888" />
+            <Ionicons name="chatbubble-outline" size={13} color={colors.muted} />
             <Text style={styles.cardProblemText} numberOfLines={1}>
               {item.descricaodoProblemaouSolicitacao}
             </Text>
@@ -381,7 +382,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
 
         {/* Data */}
         <View style={styles.cardRowInfo}>
-          <Ionicons name="time-outline" size={12} color="#bbb" />
+          <Ionicons name="time-outline" size={12} color={colors.muted} />
           <Text style={styles.cardDateText}>{timeAgo(item?.created_at)}</Text>
         </View>
 
@@ -393,7 +394,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         ListEmptyComponent={
           !loading ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="document-text-outline" size={52} color="#ccc" />
+              <Ionicons name="document-text-outline" size={52} color={colors.muted} />
               <Text style={styles.emptyTitle}>Nenhuma OS encontrada</Text>
               <Text style={styles.emptySubtitle}>
                 {search || statusFilter || activeFiltersCount > 0
@@ -423,7 +424,7 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
         onPress={() => navigation.navigate("ListOrdemdeServicoInterna" as never)}
         activeOpacity={0.7}
       >
-        <MaterialCommunityIcons name="form-select" size={30} color="#fff" />
+        <MaterialCommunityIcons name="form-select" size={30} color={colors.white} />
       </TouchableOpacity>
 
       {/* Modal de filtros — bottom sheet */}
@@ -543,9 +544,9 @@ console.log("DADOS COMPLETOS:", JSON.stringify(response.data.controles, null, 2)
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F8F8" },
+  container: { flex: 1, backgroundColor: colors.surface },
   header: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -553,8 +554,8 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
   },
-  profileImage: { width: 35, height: 35, borderRadius: 50 },
-  title: { color: "#fff", fontSize: 20, fontWeight: "700", flex: 1, textAlign: "center" },
+  profileImage: { width: 35, height: 35 },
+  title: { color: colors.white, fontSize: 20, fontWeight: "700", flex: 1, textAlign: "center" },
   headerIcons: { flexDirection: "row", alignItems: "center" },
   icon: { marginLeft: 15 },
   input: {
@@ -563,64 +564,64 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
   },
   filterRow: { flexDirection: "row", marginHorizontal: 10, marginBottom: 10 },
   dropdown: {
     height: 48,
-    backgroundColor: "#F4F4F8",
+    backgroundColor: colors.surface,
     borderRadius: 10,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: colors.border,
     marginTop: 6,
     marginBottom: 4,
   },
   dropdownPlaceholder: {
     fontSize: 13,
-    color: "#aaa",
+    color: colors.muted,
   },
   dropdownSelected: {
     fontSize: 13,
-    color: "#0F1431",
+    color: colors.link,
     fontWeight: "600",
   },
   dropdownSearchInput: {
     height: 40,
     fontSize: 13,
     borderRadius: 8,
-    borderColor: "#ddd",
+    borderColor: colors.border,
   },
   dropdownContainer: {
     borderRadius: 10,
-    borderColor: "#ddd",
+    borderColor: colors.border,
     elevation: 4,
   },
   statusRow: { flexDirection: "row", paddingHorizontal: 10, marginBottom: 10, flexWrap: "wrap" },
   statusButton: {
     width: 100,
     height: 30,
-    backgroundColor: "#eee",
+    backgroundColor: colors.border,
     borderRadius: 20,
     marginRight: 7,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
   },
-  statusButtonActive: { backgroundColor: "#4E3182" },
-  statusText: { fontSize: 11, color: "#333", fontWeight: "600" },
-  statusTextActive: { color: "#fff" },
+  statusButtonActive: { backgroundColor: colors.primary },
+  statusText: { fontSize: 11, color: colors.link, fontWeight: "600" },
+  statusTextActive: { color: colors.white },
   card: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     marginHorizontal: 10,
     marginTop: 9,
     borderRadius: 10,
     overflow: "hidden",
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -644,7 +645,7 @@ const styles = StyleSheet.create({
   cardNumber: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#0F1431",
+    color: colors.link,
   },
   statusBadge: {
     borderRadius: 20,
@@ -664,13 +665,13 @@ const styles = StyleSheet.create({
   },
   cardInfoText: {
     fontSize: 12,
-    color: "#555",
+    color: colors.bodytext,
     flex: 1,
   },
   cardLocalText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2C1F5E",
+    color: colors.link,
     flex: 1,
   },
   priorityBadge: {
@@ -686,19 +687,19 @@ const styles = StyleSheet.create({
   },
   cardProblemText: {
     fontSize: 12,
-    color: "#666",
+    color: colors.bodytext,
     flex: 1,
     fontStyle: "italic",
   },
   cardDateText: {
     fontSize: 11,
-    color: "#bbb",
+    color: colors.muted,
   },
   fab: {
     position: "absolute",
     bottom: 120,
     right: 20,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     width: 55,
     height: 55,
     borderRadius: 30,
@@ -711,7 +712,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 50,
     right: 20,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     width: 55,
     height: 55,
     borderRadius: 30,
@@ -723,7 +724,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 115,
     right: 20,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     width: 55,
     height: 55,
     borderRadius: 30,
@@ -742,11 +743,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#aaa",
+    color: colors.muted,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: "#bbb",
+    color: colors.muted,
     textAlign: "center",
     paddingHorizontal: 40,
   },
@@ -762,17 +763,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: "#4E3182",
-    backgroundColor: "#fff",
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
     gap: 6,
   },
   filterButtonText: {
-    color: "#4E3182",
+    color: colors.primary,
     fontWeight: "700",
     fontSize: 13,
   },
   filterBadge: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -781,7 +782,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   filterBadgeText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 11,
     fontWeight: "700",
   },
@@ -792,7 +793,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.45)",
   },
   filterSheet: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 16,
@@ -803,7 +804,7 @@ const styles = StyleSheet.create({
   filterHandle: {
     width: 40,
     height: 4,
-    backgroundColor: "#ddd",
+    backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: "center",
     marginBottom: 14,
@@ -817,17 +818,17 @@ const styles = StyleSheet.create({
   filterTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#0F1431",
+    color: colors.link,
   },
   filterClearText: {
     fontSize: 13,
-    color: "#E74C3C",
+    color: colors.errorText,
     fontWeight: "600",
   },
   filterLabel: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#555",
+    color: colors.bodytext,
     marginTop: 14,
     marginBottom: 2,
     textTransform: "uppercase",
@@ -835,13 +836,13 @@ const styles = StyleSheet.create({
   },
   filterApplyButton: {
     marginTop: 14,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
   },
   filterApplyText: {
-    color: "#fff",
+    color: colors.white,
     fontWeight: "700",
     fontSize: 15,
   },
