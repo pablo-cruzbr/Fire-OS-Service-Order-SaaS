@@ -64,7 +64,7 @@ export function AuthShell({
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-[#2a1760]/50 to-transparent" />
 
         <div className="flex items-start justify-between gap-6">
-          <Link href="/" aria-label="Ordem Next, início" className="text-white">
+          <Link href="/" aria-label="Fire OS, início" className="text-white">
             <Logo className="h-7" />
           </Link>
           <div aria-hidden className="flex max-w-[280px] items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3 text-white shadow-lg backdrop-blur-md">
@@ -97,7 +97,7 @@ export function AuthShell({
 
       <main className="flex flex-col px-6 py-8 sm:px-10 lg:col-span-5">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" aria-label="Ordem Next, início" className="text-link lg:invisible">
+          <Link href="/" aria-label="Fire OS, início" className="text-link lg:invisible">
             <Logo className="h-6" />
           </Link>
           <div className="flex items-center gap-3 text-sm text-bodytext">
@@ -126,7 +126,7 @@ export function AuthShell({
         </div>
 
         <p className="text-center text-xs text-muted">
-          © {new Date().getFullYear()} Ordem Next · Fundado por{" "}
+          © {new Date().getFullYear()} Fire OS · Fundado por{" "}
           <a
             href="https://pablocruz.vercel.app/"
             target="_blank"

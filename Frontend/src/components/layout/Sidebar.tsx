@@ -111,7 +111,7 @@ export function Sidebar({ sections, open, onClose }: SidebarProps) {
         )}
       >
         <div className="flex h-[70px] shrink-0 items-center px-6">
-          <Link href="/dashboard" onClick={onClose} aria-label="Ordem Next, painel" className="text-link">
+          <Link href="/dashboard" onClick={onClose} aria-label="Fire OS, painel" className="text-link">
             <Logo className="h-6" />
           </Link>
         </div>
