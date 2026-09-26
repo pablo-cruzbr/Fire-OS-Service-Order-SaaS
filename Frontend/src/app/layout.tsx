@@ -13,12 +13,12 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ordem Next — Ordens de serviço do chamado à assinatura",
-    template: "%s · Ordem Next",
+    default: "Fire OS — Ordens de serviço do chamado à assinatura",
+    template: "%s · Fire OS",
   },
   description:
     "Gestão de ordens de serviço e chamados para equipes de campo: agenda técnica, OS digital com assinatura, controle de equipamentos e relatórios.",
-  applicationName: "Ordem Next",
+  applicationName: "Fire OS",
 };
 
 export default function RootLayout({

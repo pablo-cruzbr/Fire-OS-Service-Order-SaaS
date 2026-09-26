@@ -73,7 +73,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" aria-label="Ordem Next, início" className="text-link">
+          <Link href="/" aria-label="Fire OS, início" className="text-link">
             <Logo className="h-6" />
           </Link>
           <nav aria-label="Seções" className="hidden items-center gap-7 text-sm font-medium text-link lg:flex">
@@ -157,7 +157,7 @@ export default function LandingPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center justify-between text-[11px] text-white/60">
-                        <span>Ordem Next</span>
+                        <span>Fire OS</span>
                         <span>agora</span>
                       </p>
                       <p className="truncate text-sm font-semibold">{note.title}</p>
@@ -221,7 +221,7 @@ export default function LandingPage() {
               <p className="text-sm font-semibold uppercase tracking-wide text-primary">Segmentos</p>
               <h2 className="mt-2 text-3xl font-bold text-link sm:text-4xl">Feito para quem vive de prestar serviço</h2>
               <p className="mt-3 text-bodytext">
-                Veja como a ordem de serviço do Ordem Next se adapta ao dia a dia de cada tipo de negócio.
+                Veja como a ordem de serviço do Fire OS se adapta ao dia a dia de cada tipo de negócio.
               </p>
             </div>
             <div className="mt-12">
@@ -338,7 +338,7 @@ export default function LandingPage() {
         </div>
         <div className="border-t border-border">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-bodytext sm:flex-row sm:px-6">
-            <p>© {new Date().getFullYear()} Ordem Next. Todos os direitos reservados.</p>
+            <p>© {new Date().getFullYear()} Fire OS. Todos os direitos reservados.</p>
             <p>
               Fundado por{" "}
               <a
