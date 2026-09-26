@@ -15,6 +15,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { api } from "../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { colors } from "../../theme/colors";
 
 interface ModalDetailOrderTecnicoProps {
   ordemId: string;
@@ -232,7 +233,7 @@ const handlePesquisarUsuario = async () => {
     container: {
       width: WIDTH - 30,
       maxHeight: HEIGHT - 100,
-      backgroundColor: "#fff",
+      backgroundColor: colors.white,
       padding: 20,
       borderRadius: 12,
     },
@@ -241,7 +242,7 @@ const handlePesquisarUsuario = async () => {
   if (loadingData) {
     return (
       <View style={styles.overlay}>
-        <ActivityIndicator size="large" color="#fff" />
+        <ActivityIndicator size="large" color={colors.white} />
       </View>
     );
   }
@@ -347,7 +348,7 @@ const handlePesquisarUsuario = async () => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.white} />
               ) : (
                 <Text style={styles.buttonText}>Salvar Ordem</Text>
               )}
@@ -383,13 +384,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 15,
-    color: "#111111",
+    color: colors.link,
   },
   label: {
     fontSize: 14,
     fontWeight: "bold",
     marginBottom: 5,
-    color: "#333",
+    color: colors.link,
   },
   row: {
     flexDirection: "row",
@@ -398,12 +399,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 6,
     padding: 10,
     marginBottom: 12,
     fontSize: 14,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
   },
   textArea: {
     height: 80,
@@ -411,32 +412,32 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 6,
     marginBottom: 12,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
   },
   infoCard: {
     padding: 10,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: colors.border,
     borderRadius: 8,
     marginBottom: 12,
-    backgroundColor: "#fafafa",
+    backgroundColor: colors.surface,
   },
   infoTitle: {
     fontWeight: "bold",
     marginBottom: 6,
   },
   button: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 6,
     alignItems: "center",
     marginBottom: 10,
   },
   buttonSmall: {
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -444,18 +445,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonTextSmall: {
-    color: "#fff",
+    color: colors.white,
     fontWeight: "bold",
     fontSize: 13,
   },
   buttonClose: {
-    backgroundColor: "#888",
+    backgroundColor: colors.muted,
     padding: 12,
     borderRadius: 6,
     alignItems: "center",
   },
   buttonText: {
-    color: "#fff",
+    color: colors.white,
     fontWeight: "bold",
   },
 });

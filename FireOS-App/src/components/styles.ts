@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { colors } from "../theme/colors";
 
 export const styles = StyleSheet.create({
   container: {
@@ -21,7 +22,7 @@ export const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     margin: 40,
-    backgroundColor: "#2563EB", 
+    backgroundColor: colors.info, 
     opacity: 0.85,
     elevation: 3, 
   },

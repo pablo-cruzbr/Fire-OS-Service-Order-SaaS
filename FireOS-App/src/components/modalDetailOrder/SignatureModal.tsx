@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Modal, SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert, TextInput } from 'react-native';
 import SignatureScreen, { SignatureViewRef } from 'react-native-signature-canvas';
 import { MaterialIcons } from '@expo/vector-icons';
+import { colors } from '../../theme/colors';
 
 interface SignatureModalProps {
   visible: boolean;
@@ -40,7 +41,7 @@ export function SignatureModal({ visible, onClose, onSave }: SignatureModalProps
         <View style={styles.header}>
           <Text style={styles.title}>Assinatura Digital</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <MaterialIcons name="close" size={28} color="#4E3182" />
+            <MaterialIcons name="close" size={28} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -88,15 +89,15 @@ export function SignatureModal({ visible, onClose, onSave }: SignatureModalProps
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  container: { flex: 1, backgroundColor: colors.white },
+  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.surface },
+  title: { fontSize: 18, fontWeight: 'bold', color: colors.link },
   inputContainer: { paddingHorizontal: 20, paddingTop: 15, paddingBottom: 10 },
-  label: { marginBottom: 8, fontSize: 14, color: '#333', fontWeight: '500' },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fafafa' },
-  canvasWrapper: { flex: 1, backgroundColor: '#fff' },
-  footer: { flexDirection: 'row', padding: 20, gap: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-  buttonClear: { flex: 1, backgroundColor: '#6c757d', padding: 16, borderRadius: 8, alignItems: 'center' },
-  buttonSave: { flex: 2, backgroundColor: '#28a745', padding: 16, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  label: { marginBottom: 8, fontSize: 14, color: colors.link, fontWeight: '500' },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: colors.surface },
+  canvasWrapper: { flex: 1, backgroundColor: colors.white },
+  footer: { flexDirection: 'row', padding: 20, gap: 15, borderTopWidth: 1, borderTopColor: colors.surface },
+  buttonClear: { flex: 1, backgroundColor: colors.muted, padding: 16, borderRadius: 8, alignItems: 'center' },
+  buttonSave: { flex: 2, backgroundColor: colors.success, padding: 16, borderRadius: 8, alignItems: 'center' },
+  buttonText: { color: colors.white, fontWeight: 'bold', fontSize: 16 },
 });

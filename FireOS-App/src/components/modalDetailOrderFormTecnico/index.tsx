@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SignatureScreen, { SignatureViewRef } from 'react-native-signature-canvas';
 import { MultiSelect } from 'react-native-element-dropdown';
 import { MaterialIcons } from '@expo/vector-icons';
+import { colors } from '../../theme/colors';
 
 interface ModalDetailOrderTecnicoProps {
   ordemId: string;
@@ -140,7 +141,7 @@ useEffect(() => {
               value={selectedItems}
               onChange={item => setSelectedItems(item)}
               selectedStyle={styles.selectedBadge}
-              placeholderStyle={{ color: '#999', fontSize: 14 }}
+              placeholderStyle={{ color: colors.muted, fontSize: 14 }}
             />
 
             <TextInput
@@ -168,7 +169,7 @@ useEffect(() => {
                   resizeMode="contain" 
                 />
                 <TouchableOpacity style={styles.reSignButton} onPress={() => setShowSignatureModal(true)}>
-                  <MaterialIcons name="refresh" size={16} color="#4E3182" />
+                  <MaterialIcons name="refresh" size={16} color={colors.primary} />
                   <Text style={styles.reSignText}>Refazer assinatura</Text>
                 </TouchableOpacity>
               </View>
@@ -177,7 +178,7 @@ useEffect(() => {
                 style={styles.buttonSignatureOpen} 
                 onPress={() => setShowSignatureModal(true)}
               >
-                <MaterialIcons name="edit" size={20} color="#fff" />
+                <MaterialIcons name="edit" size={20} color={colors.white} />
                 <Text style={styles.buttonText}>COLETAR ASSINATURA</Text>
               </TouchableOpacity>
             )}
@@ -187,7 +188,7 @@ useEffect(() => {
               onPress={handleSubmit}
               disabled={loading || !signature || !assinante}
             >
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Salvar PROGRESSO</Text>}
+              {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Salvar PROGRESSO</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.buttonClose} onPress={handleCloseModal}>
@@ -202,7 +203,7 @@ useEffect(() => {
           <View style={styles.modalSignatureHeader}>
             <Text style={styles.modalSignatureTitle}>Assinatura Digital</Text>
             <TouchableOpacity onPress={() => setShowSignatureModal(false)}>
-              <MaterialIcons name="close" size={28} color="#4E3182" />
+              <MaterialIcons name="close" size={28} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -235,23 +236,23 @@ useEffect(() => {
 
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: '#fff' },
+  overlay: { flex: 1, backgroundColor: colors.white },
   scrollContent: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 40, paddingBottom: 40 },
   container: { flex: 1 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#111' },
-  label: { marginBottom: 8, fontWeight: '600', fontSize: 14, color: '#4E3182' },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 15, fontSize: 16 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: colors.link },
+  label: { marginBottom: 8, fontWeight: '600', fontSize: 14, color: colors.primary },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginBottom: 15, fontSize: 16 },
   textArea: { height: 90, textAlignVertical: 'top' },
-  dropdown: { height: 55, borderColor: '#ddd', borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, marginBottom: 15 },
-  selectedBadge: { borderRadius: 20, backgroundColor: '#eee' },
+  dropdown: { height: 55, borderColor: colors.border, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, marginBottom: 15 },
+  selectedBadge: { borderRadius: 20, backgroundColor: colors.border },
   
   signaturePreviewContainer: {
     width: '100%',
     height: 150,
     borderWidth: 1,
-    borderColor: '#28a745',
+    borderColor: colors.success,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 25,
@@ -269,12 +270,12 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#eee'
+    borderColor: colors.border
   },
-  reSignText: { color: '#4E3182', fontSize: 12, fontWeight: '600' },
+  reSignText: { color: colors.primary, fontSize: 12, fontWeight: '600' },
   
   buttonSignatureOpen: {
-    backgroundColor: '#6c757d',
+    backgroundColor: colors.muted,
     flexDirection: 'row',
     padding: 16,
     borderRadius: 8,
@@ -284,32 +285,32 @@ const styles = StyleSheet.create({
     gap: 10
   },
 
-  modalSignatureContainer: { flex: 1, backgroundColor: '#fff' },
+  modalSignatureContainer: { flex: 1, backgroundColor: colors.white },
   modalSignatureHeader: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     padding: 20, 
     alignItems: 'center', 
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: colors.surface
   },
   modalSignatureTitle: { fontSize: 18, fontWeight: 'bold' },
   canvasWrapper: { 
     flex: 1, 
-    backgroundColor: '#fff' 
+    backgroundColor: colors.white 
   },
   modalSignatureFooter: { 
     flexDirection: 'row', 
     padding: 20, 
     gap: 15, 
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0'
+    borderTopColor: colors.surface
   },
-  modalButtonClear: { flex: 1, backgroundColor: '#6c757d', padding: 16, borderRadius: 8, alignItems: 'center' },
-  modalButtonSave: { flex: 2, backgroundColor: '#28a745', padding: 16, borderRadius: 8, alignItems: 'center' },
+  modalButtonClear: { flex: 1, backgroundColor: colors.muted, padding: 16, borderRadius: 8, alignItems: 'center' },
+  modalButtonSave: { flex: 2, backgroundColor: colors.success, padding: 16, borderRadius: 8, alignItems: 'center' },
 
-  buttonPrimary: { backgroundColor: '#4E3182', padding: 18, borderRadius: 8, alignItems: 'center', marginBottom: 12 },
+  buttonPrimary: { backgroundColor: colors.primary, padding: 18, borderRadius: 8, alignItems: 'center', marginBottom: 12 },
   buttonClose: { padding: 10, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  buttonTextClose: { color: '#888', fontWeight: '600' },
+  buttonText: { color: colors.white, fontWeight: 'bold', fontSize: 16 },
+  buttonTextClose: { color: colors.muted, fontWeight: '600' },
 });

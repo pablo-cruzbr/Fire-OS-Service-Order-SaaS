@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OrdensDeServico } from "../../pages/Dashboard";
 import { api } from "../../services/api";
 import { ModalEditFormTicketInterno } from "../modalFormEditTicketInterno";
+import { colors } from "../../theme/colors";
 
 interface ModalDetailOsProps {
   ordem: OrdensDeServico | null;
@@ -123,10 +124,10 @@ export function ModalDetailTicketInterno({
               <View style={styles.header}>
                 <Text style={styles.title}>Detalhes do Ticket</Text>
                  <TouchableOpacity onPress={atualizarOrdem} style={styles.refreshIcon}>
-                                <MaterialIcons name="refresh" size={24} color="#0F1431" />
+                                <MaterialIcons name="refresh" size={24} color={colors.link} />
                               </TouchableOpacity>
                 <TouchableOpacity onPress={handleCloseModal}>
-                  <MaterialIcons name="close" size={24} color="#0F1431" />
+                  <MaterialIcons name="close" size={24} color={colors.link} />
                 </TouchableOpacity>
               </View>
 
@@ -193,7 +194,7 @@ export function ModalDetailTicketInterno({
                 onPress={() => setModalTecnicoOpen(true)}
               >
                 <View style={styles.buttonContent}>
-                  <MaterialIcons name="description" size={20} color="#FFF" />
+                  <MaterialIcons name="description" size={20} color={colors.white} />
                   <Text style={styles.textButtonClose}>
                     EDITAR DESCRIÇÃO TÉCNICA
                   </Text>
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: WIDTH - 30,
     maxHeight: HEIGHT - 100,
-    backgroundColor: "#FFF",
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 20,
   },
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   },
   buttonClose: {
     marginTop: 15,
-    backgroundColor: "#4E3182",
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
     left: 40,
   },
   textButtonClose: {
-    color: "#FFF",
+    color: colors.white,
     fontWeight: "bold",
   },
   buttonContent: {
