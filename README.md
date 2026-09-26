@@ -66,7 +66,7 @@ O Fire OS é um **monorepo com 3 aplicações** que falam com a mesma API REST:
 ```mermaid
 graph TB
   subgraph Clients["Clientes da API"]
-    WEB["🌐 Web — Next.js 16 (App Router)<br/>Landing · Portal admin/técnico · Área do usuário<br/>Server Components + Tailwind v4"]
+    WEB["🌐 Web — Next.js 16 (App Router)<br/>Portal admin/técnico · Área do usuário<br/>Server Components + Tailwind v4"]
     APP["📱 App do técnico — React Native + Expo<br/>Timer · Fotos · Assinatura · Navegação"]
   end
 
@@ -184,14 +184,18 @@ O upload não bloqueia mais a requisição: a API só entrega um job por foto e 
 ```
 Fire-OS-Service-Order-SaaS/            # Monorepo
 │
-├── Frontend/                          # Next.js 16 — Landing, portal web e área do usuário
+├── Landing/                           # Next.js 16 — Landing page, deploy próprio na Vercel
+│   ├── public/segments/               # Fotos CC0 dos segmentos (WebP)
+│   └── src/                           # page.tsx, features/landing, Logo/Button/tema
+│
+├── Frontend/                          # Next.js 16 — Portal web e área do usuário
 │   ├── public/
 │   │   ├── brand/                     # Logotipo e ícone Fire OS (SVG/PNG)
 │   │   └── segments/                  # Fotos CC0 dos segmentos (WebP) + CREDITS.md
 │   ├── scripts/dev-mock.mjs           # `npm run dev:mock` — UI inteira sem backend
 │   └── src/
 │       ├── app/
-│       │   ├── page.tsx               # Landing page
+│       │   ├── page.tsx               # Redireciona para /login (landing em Landing/)
 │       │   ├── login/                 # Portal administrativo (admin/técnico)
 │       │   ├── AreadeUsuario/         # Login e abertura de chamados do cliente
 │       │   ├── signup_*/              # Cadastro de usuários (somente ADMIN)
