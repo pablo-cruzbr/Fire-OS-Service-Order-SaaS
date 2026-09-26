@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens — modelled on the Modernize admin template (purple skin),
+ * tuned to the Fire OS brand. Components only reference the semantic
+ * tokens below, so dark mode is a matter of swapping these values.
+ */
+:root {
+  --primary: #6d44e4;
+  --primary-emphasis: #5a33cc;
+  --secondary: #49beff;
+  --success: #13deb9;
+  --warning: #ffae1f;
+  --error: #fa896b;
+  --info: #539bff;
+  --brand: #4e3182;
+
+  --lightprimary: color-mix(in oklab, var(--primary) 12%, transparent);
+  --lightsecondary: color-mix(in oklab, var(--secondary) 14%, transparent);
+  --lightsuccess: color-mix(in oklab, var(--success) 14%, transparent);
+  --lightwarning: color-mix(in oklab, var(--warning) 16%, transparent);
+  --lighterror: color-mix(in oklab, var(--error) 16%, transparent);
+  --lightinfo: color-mix(in oklab, var(--info) 14%, transparent);
+
+  --background: #ffffff;
+  --card: #ffffff;
+  --surface: #f6f9fc;
+  --border: #e5eaef;
+  --link: #2a3547;
+  --bodytext: #5a6a85;
+  --muted: #7c8fac;
+
+  --success-text: #0e9f84;
+  --warning-text: #c77f00;
+  --error-text: #e0542f;
+}
+
+.dark {
+  --primary: #8b69f0;
+  --primary-emphasis: #7a55ea;
+  --lightprimary: color-mix(in oklab, var(--primary) 18%, transparent);
+
+  --background: #151b26;
+  --card: #1e2735;
+  --surface: #232d3d;
+  --border: #333f55;
+  --link: #e6ecf5;
+  --bodytext: #9aa9c2;
+  --muted: #7c8fac;
+
+  --success-text: #13deb9;
+  --warning-text: #ffae1f;
+  --error-text: #fa896b;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: var(--primary);
+  --color-primaryemphasis: var(--primary-emphasis);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --color-brand: var(--brand);
+
+  --color-lightprimary: var(--lightprimary);
+  --color-lightsecondary: var(--lightsecondary);
+  --color-lightsuccess: var(--lightsuccess);
+  --color-lightwarning: var(--lightwarning);
+  --color-lighterror: var(--lighterror);
+  --color-lightinfo: var(--lightinfo);
+
+  --color-successtext: var(--success-text);
+  --color-warningtext: var(--warning-text);
+  --color-errortext: var(--error-text);
+
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-link: var(--link);
+  --color-bodytext: var(--bodytext);
+  --color-muted: var(--muted);
+
+  --shadow-md: 0 0 2px 0 rgb(145 158 171 / 0.3), 0 12px 24px -4px rgb(145 158 171 / 0.12);
+  --shadow-dark-md: 0 0 2px 0 rgb(145 158 171 / 0.3), 0 12px 24px -4px rgb(145 158 171 / 0.02);
+  --shadow-btn: 0 9px 17.5px rgb(0 0 0 / 0.05);
+
+  --animate-marquee: marquee 70s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@layer base {
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-background font-sans text-sm text-bodytext antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold text-link;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--primary) 30%, transparent) transparent;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
