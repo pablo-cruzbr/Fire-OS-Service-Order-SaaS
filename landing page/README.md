@@ -14,7 +14,7 @@ Sem `.env`, os links apontam para `http://localhost:3000`, onde roda o `Frontend
 ## Deploy na Vercel
 
 1. Na Vercel, **Add New → Project** e importe este repositório.
-2. Em **Root Directory**, escolha `Landing`. A Vercel detecta o Next.js sozinha; não precisa mudar os comandos de build.
+2. Em **Root Directory**, escolha `landing page`. A Vercel detecta o Next.js sozinha; não precisa mudar os comandos de build.
 3. Em **Environment Variables**, adicione:
 
    | Nome | Valor |
