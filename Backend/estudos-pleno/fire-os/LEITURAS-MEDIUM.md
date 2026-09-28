@@ -226,6 +226,8 @@ Pirâmide clássica                 Testing Trophy
                                        \Unit/      só o essencial
 ```
 
+- **[Mastering Unit Testing in JavaScript: Testing Using Vitest](https://medium.com/@hanszeng.p/mastering-unit-testing-in-javascript-testing-using-vitest-baa4f6ea85dd)** — antes de falar de pirâmide/trophy, o básico: o que é um teste unitário, com o Vitest que seu projeto já usa (não Jest genérico).
+- **[Unit Testing in JavaScript/TypeScript with Jest — Concepts, Best Practices & Examples](https://medium.com/@karim.m.fayed/unit-testing-in-javascript-typescript-with-jest-concepts-best-practices-examples-5c8ae2c88db9)** — o exemplo é em Jest, mas o conceito (padrão AAA — Arrange, Act, Assert — e como/quando mockar uma dependência) é o mesmo em qualquer framework de teste.
 - **[Test Pyramid, Test Honeycomb, Test Trophy: A Triumphant Trio](https://medium.com/@manishsaini74.ms/test-pyramid-test-honeycomb-test-trophy-a-triumphant-trio-for-effective-testing-d48507ed7ba4)** — passa pelos 3 formatos, com desenho de cada um.
 - **[Beyond the Pyramid: Navigating Modern Strategies in Software Testing](https://medium.com/@sanclk/beyond-the-pyramid-navigating-modern-strategies-in-software-testing-5e448ed4dc47)** — foca no "por quê" da mudança: teste de integração pega bug real com menos testes que unitário, porque não depende de detalhe de implementação.
 - **[On the Diverse and Fantastical Shapes of Testing](https://martinfowler.com/articles/2021-test-shapes.html)** — não é Medium, é do Martin Fowler, mas é a referência que todo mundo cita quando fala de testing trophy — vale a leitura extra se o tema pegou seu interesse.
