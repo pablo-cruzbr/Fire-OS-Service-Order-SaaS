@@ -8,7 +8,6 @@ import {
   TbChartBar,
   TbCheck,
   TbClipboardCheck,
-  TbExternalLink,
   TbFileSpreadsheet,
   TbFileText,
   TbFlask,
@@ -26,11 +25,10 @@ import {
   TbUsersGroup,
 } from "react-icons/tb";
 import { ButtonLink } from "@/components/ui";
-import { Logo } from "@/components/brand/Logo";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
 import { SegmentCarousel } from "@/features/landing/SegmentCarousel";
 import { SegmentShowcase } from "@/features/landing/SegmentShowcase";
-import { segments } from "@/features/landing/segments";
 import { appUrl } from "@/lib/appUrl";
 
 const workflow = [
@@ -72,28 +70,7 @@ const steps = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" aria-label="Fire OS, início" className="text-link">
-            <Logo className="h-6" />
-          </Link>
-          <nav aria-label="Seções" className="hidden items-center gap-7 text-sm font-medium text-link lg:flex">
-            <a href="#recursos" className="hover:text-primary">Recursos</a>
-            <a href="#segmentos" className="hover:text-primary">Segmentos</a>
-            <a href="#como-funciona" className="hover:text-primary">Como funciona</a>
-            <Link href={appUrl("/AreadeUsuario")} className="hover:text-primary">Área do usuário</Link>
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            <ButtonLink href={appUrl("/login")} variant="ghost" className="hidden sm:inline-flex">
-              Entrar
-            </ButtonLink>
-            <ButtonLink href={appUrl("/login")} icon={<TbArrowRight className="h-4 w-4" />}>
-              Acessar o portal
-            </ButtonLink>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main>
         {/* Hero */}
@@ -303,57 +280,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border bg-surface">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <Logo className="h-6 text-link" />
-            <p className="mt-4 max-w-xs text-sm text-bodytext">
-              Software de ordens de serviço e chamados para empresas de assistência técnica e manutenção.
-            </p>
-          </div>
-          <div className="md:col-span-2">
-            <h3 className="text-sm font-semibold text-link">Produto</h3>
-            <ul className="mt-4 flex flex-col gap-2.5 text-sm text-bodytext">
-              <li><a href="#recursos" className="hover:text-primary">Recursos</a></li>
-              <li><a href="#como-funciona" className="hover:text-primary">Como funciona</a></li>
-              <li><a href="#segmentos" className="hover:text-primary">Segmentos</a></li>
-            </ul>
-          </div>
-          <div className="md:col-span-4">
-            <h3 className="text-sm font-semibold text-link">Segmentos</h3>
-            <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm text-bodytext">
-              {segments.map((segment) => (
-                <li key={segment.id}>
-                  <a href="#segmentos" className="hover:text-primary">{segment.short}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="md:col-span-2">
-            <h3 className="text-sm font-semibold text-link">Acesso</h3>
-            <ul className="mt-4 flex flex-col gap-2.5 text-sm text-bodytext">
-              <li><Link href={appUrl("/login")} className="hover:text-primary">Portal administrativo</Link></li>
-              <li><Link href={appUrl("/AreadeUsuario")} className="hover:text-primary">Área do usuário</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-border">
-          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-bodytext sm:flex-row sm:px-6">
-            <p>© {new Date().getFullYear()} Fire OS. Todos os direitos reservados.</p>
-            <p>
-              Fundado por{" "}
-              <a
-                href="https://pablocruz.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-              >
-                Pablo Cruz <TbExternalLink className="h-3.5 w-3.5" aria-hidden />
-              </a>
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
