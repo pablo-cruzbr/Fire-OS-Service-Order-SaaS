@@ -184,7 +184,7 @@ O upload não bloqueia mais a requisição: a API só entrega um job por foto e 
 ```
 Fire-OS-Service-Order-SaaS/            # Monorepo
 │
-├── landing page/                      # Next.js 16 — Landing page, deploy próprio na Vercel
+├── landing-page/                      # Next.js 16 — Landing page, deploy próprio na Vercel
 │   ├── public/segments/               # Fotos CC0 dos segmentos (WebP)
 │   └── src/                           # page.tsx, features/landing, Logo/Button/tema
 │
@@ -195,7 +195,7 @@ Fire-OS-Service-Order-SaaS/            # Monorepo
 │   ├── scripts/dev-mock.mjs           # `npm run dev:mock` — UI inteira sem backend
 │   └── src/
 │       ├── app/
-│       │   ├── page.tsx               # Redireciona para /login (landing em "landing page/")
+│       │   ├── page.tsx               # Redireciona para /login (landing em "landing-page/")
 │       │   ├── login/                 # Portal administrativo (admin/técnico)
 │       │   ├── AreadeUsuario/         # Login e abertura de chamados do cliente
 │       │   ├── signup_*/              # Cadastro de usuários (somente ADMIN)
