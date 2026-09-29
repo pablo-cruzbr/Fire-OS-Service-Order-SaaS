@@ -14,7 +14,9 @@ Sem `.env`, os links apontam para `http://localhost:3000`, onde roda o `Frontend
 ## Deploy na Vercel
 
 1. Na Vercel, **Add New → Project** e importe este repositório.
-2. Em **Root Directory**, escolha `landing page`. A Vercel detecta o Next.js sozinha; não precisa mudar os comandos de build.
+2. Em **Root Directory**, escolha `landing-page`. A Vercel detecta o Next.js sozinha; não precisa mudar os comandos de build.
+
+> **Importante:** o nome não pode ter espaço — a Vercel deriva o nome da serverless function a partir do caminho, e nomes com espaço são inválidos (`A Serverless Function has an invalid name`). Foi exatamente por isso que a pasta deixou de se chamar "landing page" (com espaço) para "landing-page".
 3. Em **Environment Variables**, adicione:
 
    | Nome | Valor |
