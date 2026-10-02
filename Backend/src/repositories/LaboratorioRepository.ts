@@ -27,6 +27,26 @@ class LaboratorioRepository {
   delete(id: string) {
     return prismaClient.controleDeLaboratorio.delete({ where: { id } });
   }
+
+  findAll() {
+    return prismaClient.controleDeLaboratorio.findMany({
+      orderBy: { created_at: "desc" },
+      include: {
+        equipamento: { select: { id: true, name: true, patrimonio: true } },
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
+        cliente: { select: { id: true, name: true } },
+        statusControledeLaboratorio: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.controleDeLaboratorio.count();
+  }
+
+  countByStatusName(name: string) {
+    return prismaClient.controleDeLaboratorio.count({ where: { statusControledeLaboratorio: { name } } });
+  }
 }
 
 const laboratorioRepository = new LaboratorioRepository();
