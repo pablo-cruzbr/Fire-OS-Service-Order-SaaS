@@ -22,6 +22,21 @@ class InformacoesSetorRepository {
   update(id: string, data: Prisma.InformacoesSetorUncheckedUpdateInput) {
     return prismaClient.informacoesSetor.update({ where: { id }, data, select: DEFAULT_SELECT });
   }
+
+  findAll() {
+    return prismaClient.informacoesSetor.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        usuario: true,
+        ramal: true,
+        andar: true,
+        setor: { select: { id: true, name: true } },
+        cliente: { select: { id: true, name: true, endereco: true, cnpj: true } },
+        instituicaoUnidade: { select: { name: true, endereco: true } },
+      },
+    });
+  }
 }
 
 const informacoesSetorRepository = new InformacoesSetorRepository();

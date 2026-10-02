@@ -32,6 +32,42 @@ class UserRepository {
   update(id: string, data: Prisma.UserUpdateInput) {
     return prismaClient.user.update({ where: { id }, data, select: DEFAULT_SELECT });
   }
+
+  findAll() {
+    return prismaClient.user.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        tecnico_id: true,
+        created_at: true,
+        setor: { select: { name: true } },
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
+        cliente: { select: { id: true, name: true, endereco: true } },
+      },
+    });
+  }
+
+  count() {
+    return prismaClient.user.count();
+  }
+
+  findById(id: string) {
+    return prismaClient.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        setor: { select: { id: true, name: true } },
+        cliente: { select: { id: true, name: true, endereco: true } },
+        instituicaoUnidade: { select: { id: true, name: true, endereco: true } },
+      },
+    });
+  }
 }
 
 const userRepository = new UserRepository();
