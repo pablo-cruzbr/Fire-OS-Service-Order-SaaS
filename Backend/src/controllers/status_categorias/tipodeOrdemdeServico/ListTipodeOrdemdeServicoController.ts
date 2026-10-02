@@ -1,14 +1,18 @@
-import { Response, Request } from "express";
-import { ListtipodeOrdemdeServicoService } from "../../../services/status_categorias/tipodeOrdemdeServico/ListtipodeOrdemdeServicoService";
+import { Request, Response } from "express";
+import { ListLookupCategoriaService } from "../../../services/status_categorias/ListLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
-class ListtipodeOrdemdeServicoController{
-    async handle (req: Request, res: Response){
-        const listtipodeOrdemdeServicoService = new ListtipodeOrdemdeServicoService();
+class ListtipodeOrdemdeServicoController {
+  constructor(
+    private service: ListLookupCategoriaService = new ListLookupCategoriaService(
+      new LookupCategoriaRepository("tipodeOrdemdeServico")
+    )
+  ) {}
 
-        const status = await listtipodeOrdemdeServicoService.execute();
-
-        return res.json(status);
-    }
+  handle = async (req: Request, res: Response) => {
+    const status = await this.service.execute();
+    return res.json(status);
+  }
 }
 
-export {ListtipodeOrdemdeServicoController}
+export { ListtipodeOrdemdeServicoController };

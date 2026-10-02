@@ -1,13 +1,18 @@
-import { Response, Request } from "express";
-import { ListtipodeEquipamentoService } from "../../../services/status_categorias/tipodeEquipamento/ListTipodeEquipamentoService";
-class ListtipodeEquipamentoController{
-    async handle (req: Request, res: Response){
-        const listtipodeEquipamentoService = new ListtipodeEquipamentoService();
+import { Request, Response } from "express";
+import { ListLookupCategoriaService } from "../../../services/status_categorias/ListLookupCategoriaService";
+import { LookupCategoriaRepository } from "../../../repositories/LookupCategoriaRepository";
 
-        const status = await listtipodeEquipamentoService.execute();
+class ListtipodeEquipamentoController {
+  constructor(
+    private service: ListLookupCategoriaService = new ListLookupCategoriaService(
+      new LookupCategoriaRepository("tipodeEquipamento")
+    )
+  ) {}
 
-        return res.json(status);
-    }
+  handle = async (req: Request, res: Response) => {
+    const status = await this.service.execute();
+    return res.json(status);
+  }
 }
 
-export {ListtipodeEquipamentoController}
+export { ListtipodeEquipamentoController };
