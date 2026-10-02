@@ -209,7 +209,7 @@ Você já não está começando do zero — existem 4 arquivos de teste (`AuthUs
 - [x] Testes de integração + E2E pra pelo menos o fluxo de autenticação. **Feito em 18/09** — TestContainers (Postgres efêmero, não o Docker Compose local nem o banco real do `.env`) + supertest batendo no Express de verdade. Achado no processo: um bug crítico presente desde o primeiro piloto (48 controllers devolvendo 500 sempre que a rota fosse chamada de verdade) — só apareceu porque esse era o primeiro teste que realmente passava pelo Express, não pelo Service direto. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
 - [x] Replicar testes de integração/E2E pros outros fluxos além de auth. **Feito em 21-22/09** — OrdemdeServico, `user`, os 3 módulos técnicos com ownership, as 3 entidades de `status_categorias` com bugs reais documentados, os 5 módulos de `controles_forms` sem ownership, o padrão genérico de lookup, e o ciclo de controle de tempo de OrdemdeServico. 54 testes de integração/E2E no total (9 arquivos). Dois achados reais na própria infra de teste no caminho: uma corrida entre arquivos de integração (resolvida centralizando a limpeza de tabelas num helper único, FK-safe) e um travamento de ~20-30s por request no cliente Redis quando ele cai (resolvido com `enableOfflineQueue: false`). Deixado fora de propósito: assinatura de OrdemdeServico, upload/fila, exports, eventos, e os Deletes de `controles_forms` fora de Equipamento. Detalhe completo: `GUIA-TESTES-INTEGRACAO-E2E.md`.
 
-**Estudar:** pirâmide de testes (unitário vs. integração vs. e2e); por que mockar tudo dá falso verde — ver o exemplo real disso no glossário, item 8.
+**Estudar:** o que é um teste unitário e como mockar uma dependência (padrão AAA — Arrange, Act, Assert) antes de comparar as camadas; depois, pirâmide de testes (unitário vs. integração vs. e2e); por que mockar tudo dá falso verde — ver o exemplo real disso no glossário, item 8.
 
 ---
 
@@ -298,7 +298,7 @@ Vale, e é uma das coisas de maior retorno pra entrevista de pleno. Ninguém esp
 
 - [ ] **RBAC** — diferença entre autenticação (quem é você) e autorização (o que você pode fazer).
 - [ ] **Validação de entrada (Zod)** — por que validar na borda do sistema; "parse, don't validate".
-- [ ] **Pirâmide de testes** — unitário vs. integração vs. e2e, e por que mockar tudo dá falso verde.
+- [ ] **Teste unitário e pirâmide de testes** — o que é um teste unitário e como mockar uma dependência, antes de comparar unitário vs. integração vs. e2e, e por que mockar tudo dá falso verde.
 - [ ] **CI/CD** — o que cada estágio de um pipeline faz e por que a ordem importa (lint/type-check → test → build → deploy).
 - [ ] **Docker** — diferença entre imagem e container, por que multi-stage build existe.
 - [ ] **System Design** — como documentar arquitetura e argumentar trade-offs de escala mesmo num projeto pequeno.
