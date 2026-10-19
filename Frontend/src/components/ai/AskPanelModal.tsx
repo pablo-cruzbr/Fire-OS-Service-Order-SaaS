@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
-import { TbCheck, TbMenu2, TbRobot, TbSend2, TbSparkles, TbTool, TbUser, TbUserShare } from "react-icons/tb";
+import { TbCheck, TbExternalLink, TbMenu2, TbRobot, TbSend2, TbSparkles, TbTool, TbUser, TbUserShare } from "react-icons/tb";
 import { Badge, Button, Modal, Spinner } from "@/components/ui";
 
 /** Fictitious name for the assistant persona — Fire OS's own AI, not a generic "IA". */
@@ -10,7 +11,7 @@ const ASSISTANT_NAME = "Ígnis";
 const tecnicosDisponiveis = ["Carlos Souza", "Mariana Lima", "Rafael Pereira", "Juliana Rocha"];
 
 /** A confirm can just state what was done, or state it AND suggest the next action — it doesn't have to be a dead end. */
-type ConfirmResult = string | { text: string; action?: NextAction };
+type ConfirmResult = string | { text: string; action?: NextAction; link?: { label: string; href: string } };
 
 type NextAction = {
   label: string;
@@ -30,6 +31,8 @@ type ChatMessage = {
   action?: NextAction;
   /** Once the gestor picks an option from `action`, we record it here and show the result instead of the menu. */
   actionResult?: string;
+  /** Some confirmations hand off to the real tool instead of faking the result (e.g. scheduling → the actual calendar). */
+  link?: { label: string; href: string };
 };
 
 /*
@@ -144,9 +147,28 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
       label: "O que fazer com o tempo de atendimento de Carlos Souza?",
       options: ["Agendar treinamento técnico", "Redistribuir próximos chamados dele"],
       confirm: ([opcao]) =>
-        opcao === "Agendar treinamento técnico"
-          ? "Treinamento técnico agendado para Carlos Souza — ele foi notificado com a data sugerida."
-          : "Os próximos chamados da categoria dele passam a ser distribuídos para Juliana Rocha e Rafael Pereira.",
+        // "Agendar treinamento técnico" é sempre interceptado pelo followUp abaixo antes de chegar aqui.
+        opcao === "Redistribuir próximos chamados dele"
+          ? "Os próximos chamados da categoria dele passam a ser distribuídos para Juliana Rocha e Rafael Pereira."
+          : "Treinamento técnico agendado para Carlos Souza.",
+      followUp: ([opcao]) => {
+        if (opcao !== "Agendar treinamento técnico") return undefined;
+        return {
+          label:
+            "A agenda de Carlos Souza está livre quinta-feira às 14h, logo após o horário de pico de chamados — quer agendar nesse horário?",
+          options: ["Confirmar quinta-feira, 14h", "Ver outros horários no calendário"],
+          confirm: ([horario]) =>
+            horario === "Confirmar quinta-feira, 14h"
+              ? {
+                  text: "Treinamento agendado para quinta-feira, 14h. Carlos Souza foi notificado e o evento já está no Calendário técnico.",
+                  link: { label: "Ver no Calendário técnico", href: "/dashboard/ticketscount" },
+                }
+              : {
+                  text: "Abra o Calendário técnico pra escolher outro horário disponível com a equipe.",
+                  link: { label: "Abrir Calendário técnico", href: "/dashboard/ticketscount" },
+                },
+        };
+      },
     },
   },
   {
@@ -261,11 +283,11 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
     });
 
     const result = action.confirm(selected);
-    const resolved = typeof result === "string" ? { text: result, action: undefined } : result;
+    const resolved = typeof result === "string" ? { text: result, action: undefined, link: undefined } : result;
 
     setLoading(true);
     timeoutRef.current = setTimeout(() => {
-      setMessages((prev) => [...prev, { role: "ai", text: resolved.text, action: resolved.action }]);
+      setMessages((prev) => [...prev, { role: "ai", text: resolved.text, action: resolved.action, link: resolved.link }]);
       setLoading(false);
     }, 700);
   }
@@ -409,6 +431,16 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
                     </Badge>
                   ))}
                 </div>
+              )}
+
+              {message.link && (
+                <Link
+                  href={message.link.href}
+                  onClick={handleClose}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  <TbExternalLink className="h-3.5 w-3.5" /> {message.link.label}
+                </Link>
               )}
 
               {message.action && (
