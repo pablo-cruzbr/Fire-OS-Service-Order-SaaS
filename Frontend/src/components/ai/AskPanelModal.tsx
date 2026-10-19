@@ -9,13 +9,16 @@ const ASSISTANT_NAME = "Ígnis";
 
 const tecnicosDisponiveis = ["Carlos Souza", "Mariana Lima", "Rafael Pereira", "Juliana Rocha"];
 
+/** A confirm can just state what was done, or state it AND suggest the next action — it doesn't have to be a dead end. */
+type ConfirmResult = string | { text: string; action?: NextAction };
+
 type NextAction = {
   label: string;
   options: string[];
   /** Checkboxes instead of single-pick buttons — Ígnis waits for a "Confirmar" click. */
   multi?: boolean;
   /** Confirmation message once the gestor finishes picking — not a generic "Feito: X". */
-  confirm: (selected: string[]) => string;
+  confirm: (selected: string[]) => ConfirmResult;
   /** Picking an option can drill into another question instead of confirming right away (e.g. "which técnicos?"). */
   followUp?: (selected: string[]) => NextAction | undefined;
 };
@@ -109,7 +112,17 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
       confirm: ([opcao]) =>
         opcao === "Priorizar os que aguardam início"
           ? "Os 13 chamados aguardando início foram priorizados e subiram na fila dos técnicos disponíveis."
-          : "Abri o detalhamento por técnico — você pode conferir a distribuição completa na tela de Chamados.",
+          : {
+              text: "Por técnico: Carlos Souza (9), Mariana Lima (6), Rafael Pereira (5), Juliana Rocha (3). Carlos Souza está com quase o dobro dos demais.",
+              action: {
+                label: "Carlos Souza está sobrecarregado — o que fazer?",
+                options: ["Redistribuir parte da carga dele", "Manter como está"],
+                confirm: ([escolha]) =>
+                  escolha === "Redistribuir parte da carga dele"
+                    ? "3 chamados de Carlos Souza foram redistribuídos para Juliana Rocha. Os dois técnicos foram notificados no app."
+                    : "Ok, mantendo a distribuição atual — vou avisar se a diferença aumentar.",
+              },
+            },
     },
   },
   {
@@ -247,10 +260,12 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
       return next;
     });
 
-    const confirmation = action.confirm(selected);
+    const result = action.confirm(selected);
+    const resolved = typeof result === "string" ? { text: result, action: undefined } : result;
+
     setLoading(true);
     timeoutRef.current = setTimeout(() => {
-      setMessages((prev) => [...prev, { role: "ai", text: confirmation }]);
+      setMessages((prev) => [...prev, { role: "ai", text: resolved.text, action: resolved.action }]);
       setLoading(false);
     }, 700);
   }
