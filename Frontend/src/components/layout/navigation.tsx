@@ -54,6 +54,7 @@ export const navigation: NavSection[] = [
       { label: "Calendário técnico", icon: <TbCalendarEvent />, href: "/dashboard/ticketscount" },
       { label: "Relatório mensal (IA)", icon: <TbSparkles />, href: "/dashboard/relatorios/insights" },
       { label: "Roteiro inteligente (IA)", icon: <TbSparkles />, href: "/dashboard/relatorios/rota-inteligente" },
+      { label: "Triagem de chamados (IA)", icon: <TbSparkles />, href: "/dashboard/relatorios/triagem-ia" },
       {
         label: "Controles",
         icon: <TbSettingsAutomation />,

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { TbCheck, TbRobot, TbSend2, TbSparkles, TbTool, TbUser, TbUserShare } from "react-icons/tb";
+import { TbCheck, TbMenu2, TbRobot, TbSend2, TbSparkles, TbTool, TbUser, TbUserShare } from "react-icons/tb";
 import { Badge, Button, Modal, Spinner } from "@/components/ui";
 
 const tecnicosDisponiveis = ["Carlos Souza", "Mariana Lima", "Rafael Pereira", "Juliana Rocha"];
@@ -122,6 +122,7 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function ask(text: string) {
@@ -131,6 +132,7 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
     setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
     setQuestion("");
     setLoading(true);
+    setMenuOpen(false);
 
     const answer = answerFor(trimmed);
     timeoutRef.current = setTimeout(() => {
@@ -171,6 +173,7 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
     setMessages([]);
     setQuestion("");
     setLoading(false);
+    setMenuOpen(true);
     onClose();
   }
 
@@ -191,8 +194,18 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
         Protótipo de interface — as respostas abaixo são fixas (exemplos), ainda sem IA real por trás.
       </div>
 
-      {messages.length === 0 && (
-        <div className="mb-5 flex flex-col gap-3.5">
+      {messages.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setMenuOpen((value) => !value)}
+          className="mb-3 flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+        >
+          <TbMenu2 className="h-3.5 w-3.5" /> {menuOpen ? "Ocultar perguntas" : "Ver mais perguntas"}
+        </button>
+      )}
+
+      {menuOpen && (
+        <div className="mb-5 flex flex-col gap-3.5 border-b border-border pb-5">
           {questionGroups.map((group) => (
             <div key={group.label}>
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">{group.label}</p>
