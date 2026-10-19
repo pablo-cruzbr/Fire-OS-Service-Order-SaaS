@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
-import { TbCheck, TbExternalLink, TbMenu2, TbRobot, TbSend2, TbSparkles, TbTool, TbUser, TbUserShare } from "react-icons/tb";
+import {
+  TbBulb,
+  TbCheck,
+  TbExternalLink,
+  TbMenu2,
+  TbRobot,
+  TbSend2,
+  TbSparkles,
+  TbTool,
+  TbUser,
+  TbUserShare,
+} from "react-icons/tb";
 import { Badge, Button, Modal, Spinner } from "@/components/ui";
 
 /** Fictitious name for the assistant persona — Fire OS's own AI, not a generic "IA". */
@@ -247,6 +258,68 @@ function answerFor(question: string) {
   return cannedAnswers.find((entry) => entry.match.test(question)) ?? fallbackAnswer;
 }
 
+/**
+ * Generic "analyze again" — the gestor can ask Ígnis to re-read any answer and propose
+ * what to do next, even ones whose original action already ran its course. Keyed off the
+ * answer's own text so it still feels specific to the case, with a generic fallback.
+ */
+function moreActionsFor(text: string): NextAction {
+  if (/Carlos Souza/.test(text)) {
+    return {
+      label: "Analisando de novo — quer que eu continue em cima do caso de Carlos Souza?",
+      options: ["Ver histórico de desempenho dele", "Agendar 1:1 de feedback"],
+      confirm: ([opcao]) =>
+        opcao === "Ver histórico de desempenho dele"
+          ? "Abri o histórico de desempenho de Carlos Souza dos últimos 3 meses — ele vem melhorando desde o treinamento de agosto."
+          : "1:1 de feedback agendado com Carlos Souza para essa semana. Ele foi notificado.",
+    };
+  }
+  if (/impressora|equipamento/i.test(text)) {
+    return {
+      label: "Analisando de novo — quer saber mais sobre esse equipamento?",
+      options: ["Ver histórico de manutenções", "Agendar manutenção preventiva"],
+      confirm: ([opcao]) =>
+        opcao === "Ver histórico de manutenções"
+          ? "Esse equipamento já teve 5 manutenções nos últimos 6 meses — o custo acumulado já passou do valor de um equipamento novo."
+          : "Manutenção preventiva agendada para a próxima semana.",
+    };
+  }
+  if (/Secretaria de Educação/.test(text)) {
+    return {
+      label: "Analisando de novo — quer ver mais sobre a Secretaria de Educação?",
+      options: ["Ver todos os chamados dessa secretaria", "Comparar com o mês anterior"],
+      confirm: ([opcao]) =>
+        opcao === "Ver todos os chamados dessa secretaria"
+          ? {
+              text: "Abri a lista completa de chamados da Secretaria de Educação, filtrada por este mês.",
+              link: { label: "Abrir Chamados", href: "/dashboard/tickets" },
+            }
+          : "Em agosto foram 40 OS, contra 54 em setembro — alta de 35%, concentrada em impressoras e rede.",
+    };
+  }
+  if (/UBS Jardim das Flores|#48217/.test(text)) {
+    return {
+      label: "Analisando de novo — algo mais sobre a OS #48217?",
+      options: ["Avisar a UBS do novo prazo", "Ver o histórico completo dessa OS"],
+      confirm: ([opcao]) =>
+        opcao === "Avisar a UBS do novo prazo"
+          ? "UBS Jardim das Flores notificada com o novo prazo estimado."
+          : "Abri o histórico completo da OS #48217, desde a abertura.",
+    };
+  }
+  return {
+    label: "Analisando de novo — quer mais alguma ação em cima dessa resposta?",
+    options: ["Ver mais detalhes na tela de Chamados", "Exportar como PDF"],
+    confirm: ([opcao]) =>
+      opcao === "Ver mais detalhes na tela de Chamados"
+        ? {
+            text: "Abri a tela de Chamados com os filtros já aplicados dessa consulta.",
+            link: { label: "Abrir Chamados", href: "/dashboard/tickets" },
+          }
+        : "PDF gerado e pronto pra baixar ou compartilhar.",
+  };
+}
+
 export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
@@ -339,6 +412,24 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
       delete copy[messageIndex];
       return copy;
     });
+  }
+
+  /** Gestor asks Ígnis to look at an answer again and propose what to do next — works on any ai message, repeatably. */
+  function suggestNextStep(messageIndex: number) {
+    const message = messages[messageIndex];
+    if (!message || message.role !== "ai") return;
+
+    setLoading(true);
+    timeoutRef.current = setTimeout(() => {
+      setMessages((prev) => {
+        const next = [...prev];
+        const target = next[messageIndex];
+        if (!target) return prev;
+        next[messageIndex] = { ...target, action: moreActionsFor(target.text), actionResult: undefined };
+        return next;
+      });
+      setLoading(false);
+    }, 800);
   }
 
   function handleSubmit(event: FormEvent) {
@@ -502,6 +593,16 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
                     </div>
                   )}
                 </div>
+              )}
+
+              {message.role === "ai" && !(message.action && !message.actionResult) && (
+                <button
+                  type="button"
+                  onClick={() => suggestNextStep(index)}
+                  className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  <TbBulb className="h-3.5 w-3.5" /> Sugerir próximo passo
+                </button>
               )}
             </div>
           </div>
