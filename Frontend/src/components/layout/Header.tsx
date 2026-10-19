@@ -126,7 +126,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           className="flex h-10 items-center gap-1.5 rounded-full bg-lightprimary px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-white sm:px-4"
         >
           <TbSparkles className="h-4 w-4" />
-          <span className="hidden sm:inline">Perguntar à IA</span>
+          <span className="hidden sm:inline">Perguntar à Ígnis</span>
         </button>
         <ThemeToggle />
         <ProfileMenu user={user} />

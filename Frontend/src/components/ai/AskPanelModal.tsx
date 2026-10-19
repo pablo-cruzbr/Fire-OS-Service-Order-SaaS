@@ -4,11 +4,16 @@ import { FormEvent, useRef, useState } from "react";
 import { TbCheck, TbMenu2, TbRobot, TbSend2, TbSparkles, TbTool, TbUser, TbUserShare } from "react-icons/tb";
 import { Badge, Button, Modal, Spinner } from "@/components/ui";
 
+/** Fictitious name for the assistant persona — Fire OS's own AI, not a generic "IA". */
+const ASSISTANT_NAME = "Ígnis";
+
 const tecnicosDisponiveis = ["Carlos Souza", "Mariana Lima", "Rafael Pereira", "Juliana Rocha"];
 
 type NextAction = {
   label: string;
   options: string[];
+  /** Confirmation message once the gestor picks an option — not a generic "Feito: X". */
+  confirm: (option: string) => string;
 };
 
 type ChatMessage = {
@@ -58,14 +63,26 @@ const questionGroups: { label: string; questions: string[] }[] = [
 const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: NextAction }[] = [
   {
     match: /os mais atrasada|chamado mais atrasado/i,
-    text: "A OS mais atrasada é a #48217 (UBS Jardim das Flores) — parada há 6 dias aguardando peça, 3 dias além do prazo combinado. Ela ainda não tem técnico atribuído.",
+    text: "A OS mais atrasada é a #48217 (UBS Jardim das Flores) — parada há 6 dias aguardando peça, 3 dias além do prazo combinado. Ela ainda não tem técnico atribuído. Recomendo atribuir agora pra não passar mais um dia parada.",
     tools: ["osMaisAtrasada(criterio: sla)"],
-    action: { label: "Atribuir a um técnico", options: tecnicosDisponiveis },
+    action: {
+      label: "Atribuir a um técnico",
+      options: tecnicosDisponiveis,
+      confirm: (nome) => `OS #48217 atribuída a ${nome}. Ela foi notificada no app e a OS entrou na fila dela.`,
+    },
   },
   {
     match: /fora do prazo|sla/i,
-    text: "4 chamados estão fora do prazo combinado (mais de 48h sem atualização) — 3 deles são da Secretaria de Educação.",
+    text: "4 chamados estão fora do prazo combinado (mais de 48h sem atualização) — 3 deles são da Secretaria de Educação. Posso priorizar esses 4 agora, pra não acumularem mais atraso.",
     tools: ["chamadosForaDoPrazo(limiteHoras: 48)"],
+    action: {
+      label: "O que fazer com esses 4 chamados?",
+      options: ["Marcar como urgente", "Notificar os técnicos responsáveis"],
+      confirm: (opcao) =>
+        opcao === "Marcar como urgente"
+          ? "Os 4 chamados fora do prazo foram marcados como urgentes e subiram no topo da fila dos técnicos."
+          : "Os técnicos responsáveis pelos 4 chamados foram notificados agora, com o prazo já vencido em destaque.",
+    },
   },
   {
     match: /abert[oa]s? agora|quantos chamados.*abert/i,
@@ -74,8 +91,14 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
   },
   {
     match: /sobrecarregad|maior carga|mais chamados.*t[ée]cnico/i,
-    text: "Carlos Souza está com a maior carga: 28 chamados neste mês, 40% acima da média da equipe (20).",
+    text: "Carlos Souza está com a maior carga: 28 chamados neste mês, 40% acima da média da equipe (20). Juliana Rocha e Rafael Pereira estão com folga pra absorver parte disso.",
     tools: ["cargaPorTecnico(periodo: 2026-09)"],
+    action: {
+      label: "Redistribuir parte da carga de Carlos Souza",
+      options: ["Juliana Rocha (14 chamados)", "Rafael Pereira (18 chamados)"],
+      confirm: (nome) =>
+        `3 chamados de Carlos Souza foram redistribuídos para ${nome.split(" (")[0]}. Os dois técnicos foram notificados no app.`,
+    },
   },
   {
     match: /demora|tempo m[ée]dio/i,
@@ -94,8 +117,16 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
   },
   {
     match: /equipamento.*quebr|defeito recorrente|voltou.*vezes/i,
-    text: "A impressora HP LaserJet (patrimônio 00245) teve 3 chamados em 30 dias pelo mesmo defeito de rolete — considere avaliar a troca em vez de novo reparo.",
+    text: "A impressora HP LaserJet (patrimônio 00245) teve 3 chamados em 30 dias pelo mesmo defeito de rolete. Consertar de novo tende a custar mais do que trocar — o que prefere fazer?",
     tools: ["equipamentosRecorrentes(periodo: 30d)"],
+    action: {
+      label: "O que fazer com esse equipamento?",
+      options: ["Abrir solicitação de troca", "Manter em reparo"],
+      confirm: (opcao) =>
+        opcao === "Abrir solicitação de troca"
+          ? "Solicitação de compra criada para substituir a impressora (patrimônio 00245). O setor de Compras foi notificado."
+          : "Ok, mantendo em reparo — vou continuar de olho, e aviso se o defeito se repetir de novo.",
+    },
   },
   {
     match: /aguard.*peça|peça de reposição/i,
@@ -143,6 +174,9 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
 
   /** Gestor picked an option from a suggested next action (e.g. which técnico to assign). */
   function resolveAction(messageIndex: number, option: string) {
+    const action = messages[messageIndex]?.action;
+    if (!action) return;
+
     setMessages((prev) => {
       const next = [...prev];
       const target = next[messageIndex];
@@ -151,10 +185,7 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
       return next;
     });
 
-    const confirmation =
-      messages[messageIndex]?.action?.label === "Atribuir a um técnico"
-        ? `OS #48217 atribuída a ${option}. Ela foi notificada no app e a OS entrou na fila dela.`
-        : `Feito: ${option}.`;
+    const confirmation = action.confirm(option);
 
     setLoading(true);
     timeoutRef.current = setTimeout(() => {
@@ -184,10 +215,10 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
       size="lg"
       title={
         <span className="flex items-center gap-2">
-          <TbSparkles className="h-5 w-5 text-primary" /> Pergunte ao painel
+          <TbSparkles className="h-5 w-5 text-primary" /> {ASSISTANT_NAME}
         </span>
       }
-      subtitle="Faça uma pergunta em português sobre os chamados e ordens de serviço"
+      subtitle="Assistente de IA do Fire OS — pergunte sobre chamados e ordens de serviço"
     >
       <div className="mb-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-lightwarning px-3.5 py-2.5 text-xs text-warningtext">
         <TbTool className="mt-0.5 h-4 w-4 shrink-0" />
@@ -237,6 +268,7 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
               {message.role === "user" ? <TbUser /> : <TbRobot />}
             </span>
             <div className={`max-w-[80%] ${message.role === "user" ? "text-right" : ""}`}>
+              {message.role === "ai" && <p className="mb-1 text-xs font-semibold text-primary">{ASSISTANT_NAME}</p>}
               <div
                 className={`inline-block rounded-xl px-4 py-2.5 text-sm ${
                   message.role === "user" ? "bg-primary text-white" : "bg-surface text-link"
@@ -291,7 +323,7 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
               <TbRobot />
             </span>
             <div className="flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-sm text-bodytext">
-              <Spinner className="h-4 w-4" /> Consultando...
+              <Spinner className="h-4 w-4" /> {ASSISTANT_NAME} está consultando...
             </div>
           </div>
         )}
