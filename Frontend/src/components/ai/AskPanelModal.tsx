@@ -12,8 +12,12 @@ const tecnicosDisponiveis = ["Carlos Souza", "Mariana Lima", "Rafael Pereira", "
 type NextAction = {
   label: string;
   options: string[];
-  /** Confirmation message once the gestor picks an option — not a generic "Feito: X". */
-  confirm: (option: string) => string;
+  /** Checkboxes instead of single-pick buttons — Ígnis waits for a "Confirmar" click. */
+  multi?: boolean;
+  /** Confirmation message once the gestor finishes picking — not a generic "Feito: X". */
+  confirm: (selected: string[]) => string;
+  /** Picking an option can drill into another question instead of confirming right away (e.g. "which técnicos?"). */
+  followUp?: (selected: string[]) => NextAction | undefined;
 };
 
 type ChatMessage = {
@@ -68,7 +72,7 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
     action: {
       label: "Atribuir a um técnico",
       options: tecnicosDisponiveis,
-      confirm: (nome) => `OS #48217 atribuída a ${nome}. Ela foi notificada no app e a OS entrou na fila dela.`,
+      confirm: ([nome]) => `OS #48217 atribuída a ${nome}. Ela foi notificada no app e a OS entrou na fila dela.`,
     },
   },
   {
@@ -78,16 +82,35 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
     action: {
       label: "O que fazer com esses 4 chamados?",
       options: ["Marcar como urgente", "Notificar os técnicos responsáveis"],
-      confirm: (opcao) =>
-        opcao === "Marcar como urgente"
-          ? "Os 4 chamados fora do prazo foram marcados como urgentes e subiram no topo da fila dos técnicos."
-          : "Os técnicos responsáveis pelos 4 chamados foram notificados agora, com o prazo já vencido em destaque.",
+      confirm: () => "Os 4 chamados fora do prazo foram marcados como urgentes e subiram no topo da fila dos técnicos.",
+      followUp: ([opcao]) => {
+        if (opcao !== "Notificar os técnicos responsáveis") return undefined;
+        return {
+          label: "Quais técnicos notificar?",
+          options: ["Carlos Souza", "Mariana Lima", "Rafael Pereira", "Todos"],
+          multi: true,
+          confirm: (selected) => {
+            const todos = selected.includes("Todos");
+            const quem = todos ? "Todos os técnicos responsáveis" : selected.join(" e ");
+            const verbo = todos || selected.length > 1 ? "foram notificados" : "foi notificado";
+            return `${quem} ${verbo} agora, com o prazo já vencido em destaque.`;
+          },
+        };
+      },
     },
   },
   {
     match: /abert[oa]s? agora|quantos chamados.*abert/i,
     text: "Existem 23 chamados abertos agora: 5 em deslocamento, 5 em andamento e 13 aguardando início.",
     tools: ["chamadosPorStatus(status: ABERTA)"],
+    action: {
+      label: "O que fazer com esses chamados?",
+      options: ["Priorizar os que aguardam início", "Ver detalhamento por técnico"],
+      confirm: ([opcao]) =>
+        opcao === "Priorizar os que aguardam início"
+          ? "Os 13 chamados aguardando início foram priorizados e subiram na fila dos técnicos disponíveis."
+          : "Abri o detalhamento por técnico — você pode conferir a distribuição completa na tela de Chamados.",
+    },
   },
   {
     match: /sobrecarregad|maior carga|mais chamados.*t[ée]cnico/i,
@@ -96,7 +119,7 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
     action: {
       label: "Redistribuir parte da carga de Carlos Souza",
       options: ["Juliana Rocha (14 chamados)", "Rafael Pereira (18 chamados)"],
-      confirm: (nome) =>
+      confirm: ([nome]) =>
         `3 chamados de Carlos Souza foram redistribuídos para ${nome.split(" (")[0]}. Os dois técnicos foram notificados no app.`,
     },
   },
@@ -104,16 +127,40 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
     match: /demora|tempo m[ée]dio/i,
     text: "Carlos Souza também tem o maior tempo médio por atendimento: 2h40min, cerca de 45 minutos acima da média da equipe (1h55min).",
     tools: ["tempoMedioPorTecnico(periodo: 2026-09)"],
+    action: {
+      label: "O que fazer com o tempo de atendimento de Carlos Souza?",
+      options: ["Agendar treinamento técnico", "Redistribuir próximos chamados dele"],
+      confirm: ([opcao]) =>
+        opcao === "Agendar treinamento técnico"
+          ? "Treinamento técnico agendado para Carlos Souza — ele foi notificado com a data sugerida."
+          : "Os próximos chamados da categoria dele passam a ser distribuídos para Juliana Rocha e Rafael Pereira.",
+    },
   },
   {
     match: /secretaria/i,
     text: "A Secretaria de Educação teve mais ordens de serviço em setembro: 54 no total, 35% a mais que em agosto. A UBS Jardim das Flores vem em segundo lugar, com 21 OS.",
     tools: ["osPorSecretaria(periodo: 2026-09)"],
+    action: {
+      label: "O que fazer com a Secretaria de Educação?",
+      options: ["Agendar reunião de alinhamento", "Enviar relatório detalhado por e-mail"],
+      confirm: ([opcao]) =>
+        opcao === "Agendar reunião de alinhamento"
+          ? "Reunião solicitada com a Secretaria de Educação — o contato responsável foi notificado."
+          : "Relatório detalhado de setembro enviado por e-mail para a Secretaria de Educação.",
+    },
   },
   {
     match: /cliente.*abriu|abriu.*chamados/i,
     text: "Construtora Horizonte Ltda abriu 9 chamados este mês, a maioria relacionada a equipamentos de rede.",
     tools: ["chamadosPorCliente(periodo: 2026-09)"],
+    action: {
+      label: "O que fazer com a Construtora Horizonte Ltda?",
+      options: ["Agendar visita técnica preventiva", "Enviar relatório dos equipamentos de rede"],
+      confirm: ([opcao]) =>
+        opcao === "Agendar visita técnica preventiva"
+          ? "Visita técnica preventiva agendada com a Construtora Horizonte Ltda."
+          : "Relatório dos equipamentos de rede enviado para a Construtora Horizonte Ltda.",
+    },
   },
   {
     match: /equipamento.*quebr|defeito recorrente|voltou.*vezes/i,
@@ -122,7 +169,7 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
     action: {
       label: "O que fazer com esse equipamento?",
       options: ["Abrir solicitação de troca", "Manter em reparo"],
-      confirm: (opcao) =>
+      confirm: ([opcao]) =>
         opcao === "Abrir solicitação de troca"
           ? "Solicitação de compra criada para substituir a impressora (patrimônio 00245). O setor de Compras foi notificado."
           : "Ok, mantendo em reparo — vou continuar de olho, e aviso se o defeito se repetir de novo.",
@@ -132,11 +179,27 @@ const cannedAnswers: { match: RegExp; text: string; tools: string[]; action?: Ne
     match: /aguard.*peça|peça de reposição/i,
     text: "6 equipamentos estão parados aguardando peça de reposição, 2 deles há mais de 10 dias.",
     tools: ["equipamentosPorStatus(status: AGUARDANDO_PECA)"],
+    action: {
+      label: "O que fazer com esses equipamentos?",
+      options: ["Cobrar fornecedor das peças atrasadas", "Priorizar os parados há mais de 10 dias"],
+      confirm: ([opcao]) =>
+        opcao === "Cobrar fornecedor das peças atrasadas"
+          ? "Cobrança enviada ao fornecedor sobre as peças em atraso."
+          : "Os equipamentos parados há mais de 10 dias foram priorizados na fila de reparo.",
+    },
   },
   {
     match: /pausad/i,
     text: "Existem 6 chamados pausados agora, 4 deles aguardando peça de reposição há mais de 5 dias.",
     tools: ["chamadosPorStatus(status: PAUSADA)"],
+    action: {
+      label: "O que fazer com os chamados pausados?",
+      options: ["Cobrar fornecedor das peças pendentes", "Reativar os que já têm peça disponível"],
+      confirm: ([opcao]) =>
+        opcao === "Cobrar fornecedor das peças pendentes"
+          ? "Cobrança enviada ao fornecedor sobre as peças pendentes dos chamados pausados."
+          : "Os chamados com peça já disponível foram reativados e voltaram para a fila dos técnicos.",
+    },
   },
 ];
 
@@ -154,6 +217,8 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(true);
+  /** Selections in progress for multi-select actions, keyed by message index. */
+  const [selections, setSelections] = useState<Record<number, string[]>>({});
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function ask(text: string) {
@@ -172,26 +237,71 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
     }, 900);
   }
 
-  /** Gestor picked an option from a suggested next action (e.g. which técnico to assign). */
-  function resolveAction(messageIndex: number, option: string) {
-    const action = messages[messageIndex]?.action;
-    if (!action) return;
-
+  /** Marks the action as resolved and schedules Ígnis's confirmation message. */
+  function finishAction(messageIndex: number, action: NextAction, selected: string[], resultLabel: string) {
     setMessages((prev) => {
       const next = [...prev];
       const target = next[messageIndex];
       if (!target?.action) return prev;
-      next[messageIndex] = { ...target, actionResult: option };
+      next[messageIndex] = { ...target, actionResult: resultLabel };
       return next;
     });
 
-    const confirmation = action.confirm(option);
-
+    const confirmation = action.confirm(selected);
     setLoading(true);
     timeoutRef.current = setTimeout(() => {
       setMessages((prev) => [...prev, { role: "ai", text: confirmation }]);
       setLoading(false);
     }, 700);
+  }
+
+  /** Gestor picked a single option (e.g. which técnico to assign). May drill into a follow-up question instead of confirming right away. */
+  function pickOption(messageIndex: number, option: string) {
+    const action = messages[messageIndex]?.action;
+    if (!action) return;
+
+    const next = action.followUp?.([option]);
+    if (next) {
+      setMessages((prev) => {
+        const copy = [...prev];
+        const target = copy[messageIndex];
+        if (!target?.action) return prev;
+        copy[messageIndex] = { ...target, action: next };
+        return copy;
+      });
+      return;
+    }
+
+    finishAction(messageIndex, action, [option], option);
+  }
+
+  /** Toggles one técnico in/out of a multi-select action; picking "Todos" clears the rest, and vice versa. */
+  function toggleMultiOption(messageIndex: number, option: string) {
+    setSelections((prev) => {
+      const current = prev[messageIndex] ?? [];
+      let nextSelected: string[];
+      if (option === "Todos") {
+        nextSelected = current.includes("Todos") ? [] : ["Todos"];
+      } else if (current.includes(option)) {
+        nextSelected = current.filter((item) => item !== option);
+      } else {
+        nextSelected = [...current.filter((item) => item !== "Todos"), option];
+      }
+      return { ...prev, [messageIndex]: nextSelected };
+    });
+  }
+
+  function confirmMultiSelect(messageIndex: number) {
+    const action = messages[messageIndex]?.action;
+    const selected = selections[messageIndex];
+    if (!action || !selected?.length) return;
+
+    finishAction(messageIndex, action, selected, selected.includes("Todos") ? "Todos" : selected.join(", "));
+    setSelections((prev) => {
+      const copy = { ...prev };
+      delete copy[messageIndex];
+      return copy;
+    });
   }
 
   function handleSubmit(event: FormEvent) {
@@ -297,18 +407,51 @@ export function AskPanelModal({ open, onClose }: { open: boolean; onClose: () =>
                       <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-link">
                         <TbUserShare className="h-3.5 w-3.5 text-primary" /> {message.action.label}
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {message.action.options.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => resolveAction(index, option)}
-                            className="rounded-full bg-lightprimary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                      {message.action.multi ? (
+                        <>
+                          <div className="flex flex-wrap gap-1.5">
+                            {message.action.options.map((option) => {
+                              const checked = (selections[index] ?? []).includes(option);
+                              return (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  onClick={() => toggleMultiOption(index, option)}
+                                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                                    checked
+                                      ? "border-primary bg-primary text-white"
+                                      : "border-border bg-transparent text-link hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  {checked && <TbCheck className="h-3 w-3" />}
+                                  {option}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2.5"
+                            disabled={!(selections[index] ?? []).length}
+                            onClick={() => confirmMultiSelect(index)}
                           >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
+                            Confirmar
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {message.action.options.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => pickOption(index, option)}
+                              className="rounded-full bg-lightprimary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
