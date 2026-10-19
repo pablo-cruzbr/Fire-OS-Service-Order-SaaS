@@ -6,6 +6,7 @@ import {
   TbFileText,
   TbLayoutDashboard,
   TbSettingsAutomation,
+  TbSparkles,
   TbSquarePlus,
   TbTicket,
   TbTool,
@@ -51,6 +52,7 @@ export const navigation: NavSection[] = [
     roles: ["ADMIN"],
     items: [
       { label: "Calendário técnico", icon: <TbCalendarEvent />, href: "/dashboard/ticketscount" },
+      { label: "Relatório mensal (IA)", icon: <TbSparkles />, href: "/dashboard/relatorios/insights" },
       {
         label: "Controles",
         icon: <TbSettingsAutomation />,

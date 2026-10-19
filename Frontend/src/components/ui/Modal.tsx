@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { TbX } from "react-icons/tb";
 import { cn } from "@/lib/cn";
 
@@ -40,7 +41,12 @@ export function Modal({ open, onClose, title, subtitle, size = "lg", children, f
 
   if (!open) return null;
 
-  return (
+  // Rendered into document.body: if Modal were opened from inside an
+  // ancestor with backdrop-filter/filter/transform (e.g. the header's
+  // `backdrop-blur`), that ancestor becomes the containing block for our
+  // `fixed` overlay, and "cover the whole screen" breaks into "cover that
+  // ancestor's own box" instead. A portal sidesteps the whole class of bug.
+  return createPortal(
     <div
       className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#1c2536]/50 backdrop-blur-[2px] sm:items-center sm:p-4"
       onMouseDown={(event) => {
@@ -76,6 +82,7 @@ export function Modal({ open, onClose, title, subtitle, size = "lg", children, f
           <div className="flex flex-wrap justify-end gap-2 border-t border-border px-6 py-4">{footer}</div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

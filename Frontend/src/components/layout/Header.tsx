@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { TbLogout, TbMenu2, TbTicket, TbUser } from "react-icons/tb";
+import { TbLogout, TbMenu2, TbSparkles, TbTicket, TbUser } from "react-icons/tb";
 import { logoutAction } from "@/actions/logout";
+import { AskPanelModal } from "@/components/ai/AskPanelModal";
 import type { SessionUser } from "@/lib/session";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -106,6 +107,8 @@ type HeaderProps = {
 };
 
 export function Header({ user, onMenuClick }: HeaderProps) {
+  const [askOpen, setAskOpen] = useState(false);
+
   return (
     <header className="flex h-[70px] items-center gap-2 bg-background/90 px-4 backdrop-blur sm:px-6">
       <button
@@ -117,9 +120,18 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         <TbMenu2 />
       </button>
       <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <button
+          type="button"
+          onClick={() => setAskOpen(true)}
+          className="flex h-10 items-center gap-1.5 rounded-full bg-lightprimary px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-white sm:px-4"
+        >
+          <TbSparkles className="h-4 w-4" />
+          <span className="hidden sm:inline">Perguntar à IA</span>
+        </button>
         <ThemeToggle />
         <ProfileMenu user={user} />
       </div>
+      <AskPanelModal open={askOpen} onClose={() => setAskOpen(false)} />
     </header>
   );
 }
